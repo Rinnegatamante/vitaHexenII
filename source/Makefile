@@ -1,4 +1,4 @@
-TARGET		:= vitaQuake
+TARGET		:= vitaHexenII
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
@@ -60,6 +60,7 @@ COMMON_OBJS =	chase.o \
 	d_zpoint.o \
 	draw.o \
 	model.o \
+	fnmatch.o \
 	nonintel.o \
 	r_aclip.o \
 	r_alias.o \
@@ -92,8 +93,8 @@ OBJS     := $(addsuffix .o,$(BINFILES)) $(CFILES:.c=.o) $(CPPFILES:.cpp=.o)
 PREFIX  = arm-vita-eabi
 CC      = $(PREFIX)-gcc
 CXX      = $(PREFIX)-g++
-CFLAGS  = -Wl,-q -Wall -O3
-CXXFLAGS  = $(CFLAGS) -fno-exceptions
+CFLAGS  = -Wl,-q -Wall -O3 -Did386="0" -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
+CXXFLAGS  = $(CFLAGS) -fno-rtti -Wcast-qual
 ASFLAGS = $(CFLAGS)
 
 all: $(TARGET).velf
