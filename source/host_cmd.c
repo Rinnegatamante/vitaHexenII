@@ -5,6 +5,7 @@
 #include "quakedef.h"
 #include <time.h>
 #include <sys/stat.h>
+//#include <dirent.h>
 #include <unistd.h>
 
 extern  cvar_t	pausable;
@@ -357,9 +358,9 @@ Restarts the current server for a dead player
 void Host_Restart_f (void)
 {
 	char	mapname[MAX_QPATH];
-//#ifdef QUAKE2RJ
+#ifdef QUAKE2RJ
 	char	startspot[MAX_QPATH];
-//#endif
+#endif
 
 	if (cls.demoplayback || !sv.active)
 		return;
@@ -779,7 +780,7 @@ void Host_Loadgame_f (void)
 	}
 }
 
-//#ifdef QUAKE2RJ
+#ifdef QUAKE2RJ
 void SaveGamestate(qboolean ClientsOnly)
 {
 //	char	name[MAX_OSPATH],tempdir[MAX_OSPATH];
@@ -853,8 +854,8 @@ retry:
 	for (i=start ; i<end ; i++)
 	{
 		ent = EDICT_NUM(i);
-		//if ((int)ent->v.flags & FL_ARCHIVE_OVERRIDE)
-		//	continue;
+		if ((int)ent->v.flags & FL_ARCHIVE_OVERRIDE)
+			continue;
 		if (ClientsOnly)
 		{
 			if (host_client->active)
@@ -984,7 +985,7 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 		fscanf (f, "%s\n",mapname);
 		fscanf (f, "%f\n",&time);
 				
-		//SV_SpawnServer (mapname, startspot);
+		SV_SpawnServer (mapname, startspot);
 
 		if (!sv.active)
 		{
@@ -1034,7 +1035,7 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 		{
 			ED_ParseGlobals (start);
 			// Need to restore this
-			//pr_global_struct->startspot = sv.startspot - pr_strings;
+			pr_global_struct->startspot = sv.startspot - pr_strings;
 		}
 		else
 		{
@@ -1132,11 +1133,11 @@ void Host_Changelevel2_f (void)
 	// try to restore the new level
 	if (LoadGamestate (level, startspot, 0))
 	{
-		//SV_SpawnServer (level, startspot);
+		SV_SpawnServer (level, startspot);
 		RestoreClients();
 	}
 }
-//#endif
+#endif
 
 
 //============================================================================

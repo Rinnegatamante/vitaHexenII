@@ -10,7 +10,7 @@ server_t		sv;
 server_static_t	svs;
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
-//#if RJNET
+#if RJNET
 cvar_t	sv_sound_distance = {"sv_sound_distance","800", true};
 
 cvar_t	sv_update_player	= {"sv_update_player","1", true};
@@ -21,7 +21,7 @@ cvar_t	sv_update_misc		= {"sv_update_misc","1", true};
 cvar_t	sv_ce_scale			= {"sv_ce_scale","0", true};
 cvar_t	sv_ce_max_size		= {"sv_ce_max_size","0", true};
 
-//#endif
+#endif
 
 unsigned int	info_mask, info_mask2;
 int		sv_kingofhill;
@@ -745,7 +745,7 @@ void SV_PrepareClientEntities (client_t *client, edict_t *clent, sizebuf_t *msg)
 			{
 				e = reference->states[i].index;
 				ent = EDICT_NUM(e);
-				/*if (ent->baseline.ClearCount[client_num] < CLEAR_LIMIT)
+				if (ent->baseline.ClearCount[client_num] < CLEAR_LIMIT)
 				{
 					ent->baseline.ClearCount[client_num]++;
 				}
@@ -753,7 +753,7 @@ void SV_PrepareClientEntities (client_t *client, edict_t *clent, sizebuf_t *msg)
 				{
 					ent->baseline.ClearCount[client_num] = 3;
 					reference->states[i].flags &= ~ENT_CLEARED;
-				}*/
+				}
 			}
 		client->current_frame = 1;
 		client->current_sequence++;
@@ -768,14 +768,14 @@ void SV_PrepareClientEntities (client_t *client, edict_t *clent, sizebuf_t *msg)
 
 	DoPlayer = DoMonsters = DoMissiles = DoMisc = false;
 
-	/*if ((int)sv_update_player.value)
+	if ((int)sv_update_player.value)
 		DoPlayer = (client->current_sequence % ((int)sv_update_player.value)) == 0;
 	if ((int)sv_update_monsters.value)
 		DoMonsters = (client->current_sequence % ((int)sv_update_monsters.value)) == 0;
 	if ((int)sv_update_missiles.value)
 		DoMissiles = (client->current_sequence % ((int)sv_update_missiles.value)) == 0;
 	if ((int)sv_update_misc.value)
-		DoMisc = (client->current_sequence % ((int)sv_update_misc.value)) == 0;*/
+		DoMisc = (client->current_sequence % ((int)sv_update_misc.value)) == 0;
 
 	build = &state->frames[client->current_frame];
 	memset(build,0,sizeof(*build));
@@ -803,11 +803,11 @@ void SV_PrepareClientEntities (client_t *client, edict_t *clent, sizebuf_t *msg)
 	{
 		DoRemove = false;
 		// don't send if flagged for NODRAW and there are no lighting effects
-		/*if (ent->v.effects == EF_NODRAW)
+		if (ent->v.effects == EF_NODRAW)
 		{
 			DoRemove = true;
 			goto skipA;
-		}*/
+		}
 
 		// ignore if not touching a PV leaf
 		if (ent != clent)	// clent is ALWAYS sent
@@ -907,11 +907,11 @@ skipA:
 
 		set_ent = &build->states[build->count];
 		build->count++;
-		/*if (ent->baseline.ClearCount[client_num] < CLEAR_LIMIT)
+		if (ent->baseline.ClearCount[client_num] < CLEAR_LIMIT)
 		{
 			memset(ref_ent,0,sizeof(*ref_ent));
 			ref_ent->index = e;
-		}*/
+		}
 		*set_ent = *ref_ent;
 
 		if (IgnoreEnt)
@@ -1004,11 +1004,11 @@ skipA:
 			set_ent->abslight = (int)(ent->v.abslight*255.0)&255;
 		}
 
-		/*if (ent->baseline.ClearCount[client_num] < CLEAR_LIMIT)
+		if (ent->baseline.ClearCount[client_num] < CLEAR_LIMIT)
 		{
 			bits |= U_CLEAR_ENT;
 			set_ent->flags |= ENT_CLEARED;
-		}*/
+		}
 
 		if (!bits && FoundInList)
 		{

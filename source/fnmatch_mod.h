@@ -7,4 +7,4 @@
 #define	FNM_CASEFOLD	(0x08)	/* Pattern is matched case-insensitive */
 #define	FNM_LEADING_DIR	(0x10)	/* Ignore /<tail> after Imatch. */
 
-int fnmatch(const char *pattern, const char *string, int flags);
+int fnmatch_mod(const char *pattern, const char *string, int flags);
