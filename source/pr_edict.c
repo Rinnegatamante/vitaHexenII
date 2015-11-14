@@ -1274,13 +1274,13 @@ void PR_LoadProgs (void)
 void PR_LoadInfoStrings(void)
 {
 	int i,count,start,Length;
-	char NewLineChar;
+	signed char NewLineChar;
 
 	pr_global_info_strings = (char *)COM_LoadHunkFile ("infolist.txt");
 	if (!pr_global_info_strings)
 		Sys_Error ("PR_LoadInfoStrings: couldn't load infolist.txt");
 
-	NewLineChar = 13;
+	NewLineChar = -1;
 
 	for(i=count=0; pr_global_info_strings[i] != 0; i++)
 	{
@@ -1325,19 +1325,19 @@ void PR_LoadInfoStrings(void)
 void PR_LoadStrings(void)
 {
 	int i,count,start,Length;
-	char NewLineChar;
+	signed char NewLineChar;
 
 	pr_global_strings = (char *)COM_LoadHunkFile ("strings.txt");
 	if (!pr_global_strings)
 		Sys_Error ("PR_LoadStrings: couldn't load strings.txt");
 
-	NewLineChar = 13;
+	NewLineChar = -1;
 
 	for(i=count=0; pr_global_strings[i] != 0; i++)
 	{
 		if (pr_global_strings[i] == 13 || pr_global_strings[i] == 10) 
 		{
-			if (NewLineChar == pr_global_strings[i])
+			if (NewLineChar == pr_global_strings[i] || NewLineChar == -1)
 			{
 				NewLineChar = pr_global_strings[i];
 				count++;
@@ -1348,7 +1348,7 @@ void PR_LoadStrings(void)
 
 	if (!count)
 	{
-		Sys_Error ("PR_LoadStrings: no strings found.");
+		Sys_Error ("PR_LoadStrings: no string lines found");
 	}
 
 	pr_string_index = (int *)Hunk_AllocName ((count+1)*4, "string_index");
