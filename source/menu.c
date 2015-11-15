@@ -799,7 +799,7 @@ void M_Main_Key (int key)
 {
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		key_dest = key_game;
 		m_state = m_none;
 		cls.demonum = m_save_demonum;
@@ -819,7 +819,8 @@ void M_Main_Key (int key)
 			m_main_cursor = MAIN_ITEMS - 1;
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		m_entersound = true;
 
 		switch (m_main_cursor)
@@ -888,7 +889,7 @@ void M_Difficulty_Key (int key)
 	case K_LEFTARROW:
 	case K_RIGHTARROW:
 		break;
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Class_f ();
 		break;
 		
@@ -903,7 +904,8 @@ void M_Difficulty_Key (int key)
 		if (--m_diff_cursor < 0)
 			m_diff_cursor = DIFF_ITEMS - 1;
 		break;
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		Cvar_SetValue ("skill", m_diff_cursor);
 		m_entersound = true;
 		// Con_ToggleConsole_f();
@@ -971,7 +973,7 @@ void M_Class_Key (int key)
 	case K_LEFTARROW:
 	case K_RIGHTARROW:
 		break;
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_SinglePlayer_f ();
 		break;
 		
@@ -987,7 +989,8 @@ void M_Class_Key (int key)
 			m_class_cursor = CLASS_ITEMS - 1;
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 //		sv_player->v.playerclass=m_class_cursor+1;
 		Cbuf_AddText ( va ("playerclass %d\n", m_class_cursor+1) );
 		m_entersound = true;
@@ -1045,7 +1048,7 @@ void M_SinglePlayer_Draw (void)
 		M_DrawBigString (72,60+(3*20),"OLD MISSION");
 #endif
 	
-	M_DrawBigString (72,60+(4*20),"VIEW INTRO");
+	M_DrawBigString (72,60+(4*20),"VIEW DEMO");
 	
 	f = (int)(host_time * 10)%8;
 	M_DrawTransPic (43, 54 + m_singleplayer_cursor * 20,Draw_CachePic( va("gfx/menu/menudot%i.lmp", f+1 ) ) );
@@ -1056,7 +1059,7 @@ void M_SinglePlayer_Key (int key)
 {
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Main_f ();
 		break;
 		
@@ -1081,7 +1084,8 @@ void M_SinglePlayer_Key (int key)
 				m_singleplayer_cursor =2;
 		}		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		m_entersound = true;
 
 		m_enter_portals = 0;
@@ -1113,7 +1117,7 @@ void M_SinglePlayer_Key (int key)
 
 		case 4:
 			key_dest = key_game;
-			Cbuf_AddText("playdemo t9\n");
+			Cbuf_AddText("playdemo demo1\n");
 			break;
 		}
 	}
@@ -1212,11 +1216,12 @@ void M_Load_Key (int k)
 {	
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_SinglePlayer_f ();
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		S_LocalSound ("raven/menu2.wav");
 		if (!loadable[load_cursor])
 			return;
@@ -1254,11 +1259,12 @@ void M_Save_Key (int k)
 {
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_SinglePlayer_f ();
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		m_state = m_none;
 		key_dest = key_game;
 		Cbuf_AddText (va("save s%i\n", load_cursor));
@@ -1349,11 +1355,12 @@ void M_MLoad_Key (int k)
 {	
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_MultiPlayer_f ();
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		S_LocalSound ("raven/menu2.wav");
 		if (!loadable[load_cursor])
 			return;
@@ -1395,11 +1402,12 @@ void M_MSave_Key (int k)
 {
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_MultiPlayer_f ();
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		m_state = m_none;
 		key_dest = key_game;
 		Cbuf_AddText (va("save ms%i\n", load_cursor));
@@ -1479,7 +1487,7 @@ void M_MultiPlayer_Key (int key)
 {
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Main_f ();
 		break;
 		
@@ -1495,7 +1503,8 @@ void M_MultiPlayer_Key (int key)
 			m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		m_entersound = true;
 		switch (m_multiplayer_cursor)
 		{
@@ -1619,7 +1628,7 @@ void M_Setup_Key (int k)
 
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_MultiPlayer_f ();
 		break;
 
@@ -1695,7 +1704,8 @@ forward:
 			break;
 		}
 		break;
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		if (setup_cursor < 6)
 			break;
 		if (setup_cursor == 2 || setup_cursor == 3 || setup_cursor == 4)
@@ -1836,7 +1846,7 @@ void M_Net_Key (int k)
 again:
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_MultiPlayer_f ();
 		break;
 		
@@ -1851,7 +1861,8 @@ again:
 			m_net_cursor = m_net_items - 1;
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		m_entersound = true;
 
 		switch (m_net_cursor)
@@ -2100,11 +2111,12 @@ void M_Options_Key (int k)
 {
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Main_f ();
 		break;
 		
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		m_entersound = true;
 		switch (options_cursor)
 		{
@@ -2117,6 +2129,21 @@ void M_Options_Key (int k)
 			break;
 		case OPT_DEFAULTS:
 			Cbuf_AddText ("exec default.cfg\n");
+			
+			// Set default PSVITA controls
+			Cbuf_AddText ("unbindall\n");
+			Cbuf_AddText ("bind CROSS +jump\n"); // Cross
+			Cbuf_AddText ("bind SQUARE +attack\n"); // Square
+			Cbuf_AddText ("bind CIRCLE +jump\n"); // Circle
+			Cbuf_AddText ("bind TRIANGLE \"impulse 10\"\n"); // Triangle
+			Cbuf_AddText ("bind LTRIGGER +crouch\n"); // Left Trigger
+			Cbuf_AddText ("bind RTRIGGER +attack\n"); // Right Trigger
+			Cbuf_AddText ("bind UPARROW +showinfo\n"); // Up
+			Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
+			Cbuf_AddText ("bind LEFTARROW invleft\n"); // Left
+			Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
+			Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
+			
 			break;
 		default:
 			M_AdjustSliders (1);
@@ -2352,7 +2379,7 @@ void M_Keys_Key (int k)
 	if (bind_grab)
 	{	// defining a key
 		S_LocalSound ("raven/menu1.wav");
-		if (k == K_ESCAPE)
+		if (k == K_ENTER)
 		{
 			bind_grab = false;
 		}
@@ -2368,7 +2395,7 @@ void M_Keys_Key (int k)
 	
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Options_f ();
 		break;
 
@@ -2388,7 +2415,8 @@ void M_Keys_Key (int k)
 			keys_cursor = 0;
 		break;
 
-	case K_ENTER:		// go into bind mode
+	case K_AUX1:
+	case K_AUX4:		// go into bind mode
 		M_FindKeysForCommand (bindnames[keys_cursor][0], keys);
 		S_LocalSound ("raven/menu2.wav");
 		if (keys[1] != -1)
@@ -2458,7 +2486,7 @@ void M_Help_Key (int key)
 {
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Main_f ();
 		break;
 		
@@ -2869,7 +2897,7 @@ void M_Quit_Key (int key)
 {
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 	case 'n':
 	case 'N':
 		if (wasInMenus)
@@ -2887,7 +2915,8 @@ void M_Quit_Key (int key)
 	case 'Y':
 	case 'y':
 #ifdef PSP
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 	case K_INS:
 #endif		
 	key_dest = key_console;
@@ -3111,7 +3140,8 @@ void M_OSK_Key (int key)
 		if (osk_pos_y < 0)
 			osk_pos_y = 0;
 		break;
-	case K_ENTER: 
+	case K_AUX1:
+	case K_AUX4: 
 		if (max_len > strlen(osk_buffer)) {
 			char *selected_line = osk_text[osk_pos_y]; 
 			char selected_char[2];
@@ -3135,7 +3165,7 @@ void M_OSK_Key (int key)
 		
 		m_state = m_old_state;
 		break;
-	case K_ESCAPE:
+	case K_ENTER:
 		m_state = m_old_state;
 		break;
 	default:
@@ -3169,7 +3199,8 @@ void Con_OSK_Key (int key)
 		if (osk_pos_y < 0)
 			osk_pos_y = 0;
 		break;
-	case K_ENTER: 
+	case K_AUX1:
+	case K_AUX4: 
 		if (max_len > strlen(osk_buffer)) {
 			char *selected_line = osk_text[osk_pos_y]; 
 			char selected_char[2];
@@ -3192,7 +3223,7 @@ void Con_OSK_Key (int key)
 		strncpy(osk_out_buff,osk_buffer,max_len);
 		Con_SetOSKActive(false);
 		break;
-	case K_ESCAPE:
+	case K_ENTER:
 		Con_SetOSKActive(false);
 		break;
 	default:
@@ -3332,7 +3363,7 @@ void M_SerialConfig_Key (int key)
 
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Net_f ();
 		break;
 
@@ -3413,7 +3444,8 @@ forward:
 
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		if (serialConfig_cursor < 3)
 			goto forward;
 
@@ -3560,7 +3592,7 @@ void M_ModemConfig_Key (int key)
 
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_SerialConfig_f ();
 		break;
 
@@ -3590,7 +3622,8 @@ void M_ModemConfig_Key (int key)
 		}
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		if (modemConfig_cursor == 0)
 		{
 			if (modemConfig_dialing == 'P')
@@ -3767,7 +3800,7 @@ void M_LanConfig_Key (int key)
 
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Net_f ();
 		break;
 
@@ -3806,7 +3839,8 @@ void M_LanConfig_Key (int key)
 			break;
 		}
 		break;
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		if ((JoiningGame && lanConfig_cursor <= 1) ||
 			(!JoiningGame && lanConfig_cursor == 0))
 			break;
@@ -4321,7 +4355,7 @@ void M_GameOptions_Key (int key)
 {
 	switch (key)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_Net_f ();
 		break;
 
@@ -4365,7 +4399,8 @@ void M_GameOptions_Key (int key)
 		M_NetStart_Change (1);
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		S_LocalSound ("raven/menu2.wav");
 		if (gameoptions_cursor == 0)
 		{
@@ -4512,7 +4547,7 @@ void M_ServerList_Key (int k)
 {
 	switch (k)
 	{
-	case K_ESCAPE:
+	case K_ENTER:
 		M_Menu_LanConfig_f ();
 		break;
 
@@ -4536,7 +4571,8 @@ void M_ServerList_Key (int k)
 			slist_cursor = 0;
 		break;
 
-	case K_ENTER:
+	case K_AUX1:
+	case K_AUX4:
 		S_LocalSound ("raven/menu2.wav");
 		m_return_state = m_state;
 		m_return_onerror = true;
