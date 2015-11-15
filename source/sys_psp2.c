@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define u64 uint64_t
 #include "sys.h"
 #include "quakedef.h"
-#include "fnmatch.h"
+#include "fnmatch_mod.h"
 
 extern uint8_t* decodeJpg(unsigned char* in,u64 size);
 
@@ -192,8 +192,8 @@ void Sys_Error (char *error, ...)
 
 void Sys_Printf (char *fmt, ...)
 {
-	//if(hostInitialized)
-	//	return;
+	if(hostInitialized)
+		return;
 
 	va_list argptr;
 	char buf[256];
@@ -343,7 +343,7 @@ char *Sys_FindNextFile (void)
 		sceIoDread(finddir, finddata);
 		if (finddata != NULL)
 		{
-			if (!fnmatch (findpattern, finddata->d_name, FNM_PATHNAME))
+			if (!fnmatch_mod(findpattern, finddata->d_name, FNM_PATHNAME))
 			{
 				if ( (stat(va("%s/%s", findpath, finddata->d_name), &test) == 0) && S_ISREG(test.st_mode) )
 					return finddata->d_name;
@@ -395,9 +395,11 @@ int main (int argc, char **argv)
 	console_set_color(WHITE);
 	static quakeparms_t    parms;
 
-	parms.memsize = 24*1024*1024;
+	parms.memsize = 20*1024*1024;
 	parms.membase = malloc (parms.memsize);
-	parms.basedir = ".";
+	char dir[1024];
+	sprintf(dir,"cache0:/");
+	parms.basedir = dir;
 
 	COM_InitArgv (argc, argv);
 
@@ -414,12 +416,12 @@ int main (int argc, char **argv)
 	Cbuf_AddText ("bind SQUARE +attack\n"); // Square
 	Cbuf_AddText ("bind CIRCLE +jump\n"); // Circle
 	Cbuf_AddText ("bind TRIANGLE \"impulse 10\"\n"); // Triangle
-	Cbuf_AddText ("bind LTRIGGER +speed\n"); // Left Trigger
+	Cbuf_AddText ("bind LTRIGGER +crouch\n"); // Left Trigger
 	Cbuf_AddText ("bind RTRIGGER +attack\n"); // Right Trigger
-	Cbuf_AddText ("bind UPARROW +moveup\n"); // Up
-	Cbuf_AddText ("bind DOWNARROW +movedown\n"); // Down
-	Cbuf_AddText ("bind LEFTARROW +moveleft\n"); // Left
-	Cbuf_AddText ("bind RIGHTARROW +moveright\n"); // Right
+	Cbuf_AddText ("bind UPARROW +showinfo\n"); // Up
+	Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
+	Cbuf_AddText ("bind LEFTARROW invleft\n"); // Left
+	Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
 	Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
 	
 	u64 lastTick;
