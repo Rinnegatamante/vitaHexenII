@@ -4,7 +4,7 @@ DATA		:=	data
 INCLUDES	:=	include
 
 LIBS = -lvita2d -lSceAudio_stub -lSceKernel_stub \
-	-lc -lSceDisplay_stub -lSceGxm_stub \
+	-lSceCommonDialog_stub -lc -lSceDisplay_stub -lSceGxm_stub \
 	-lSceSysmodule_stub -lSceCtrl_stub -lSceTouch_stub -lm \
 	-lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub \
 
