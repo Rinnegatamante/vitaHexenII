@@ -9,27 +9,24 @@
 
 // !!! if these are changed, they must be changed in asm_draw.h too !!!
 #define FULLY_CLIPPED_CACHED	0x80000000
-#define FRAMECOUNT_MASK			0x7FFFFFFF
+#define FRAMECOUNT_MASK		0x7FFFFFFF
 
 unsigned int	cacheoffset;
 
-int			c_faceclip;					// number of faces clipped
+int		c_faceclip;					// number of faces clipped
 
 zpointdesc_t	r_zpointdesc;
-
-polydesc_t		r_polydesc;
-
-
+polydesc_t	r_polydesc;
 
 clipplane_t	*entity_clipplanes;
 clipplane_t	view_clipplanes[4];
 clipplane_t	world_clipplanes[16];
 
-medge_t			*r_pedge;
+medge_t		*r_pedge;
 
-qboolean		r_leftclipped, r_rightclipped;
+qboolean	r_leftclipped, r_rightclipped;
 static qboolean	makeleftedge, makerightedge;
-qboolean		r_nearzionly;
+qboolean	r_nearzionly;
 
 int		sintable[SIN_BUFFER_SIZE];
 int		intsintable[SIN_BUFFER_SIZE];
@@ -48,7 +45,7 @@ float	r_nearzi;
 float	r_u1, r_v1, r_lzi1;
 int	r_ceilv1;
 
-qboolean	r_lastvertvalid;
+qboolean r_lastvertvalid;
 
 
 #if	!id386
@@ -61,13 +58,13 @@ R_EmitEdge
 void R_EmitEdge (mvertex_t *pv0, mvertex_t *pv1)
 {
 	edge_t	*edge, *pcheck;
-	int		u_check;
+	int	u_check;
 	float	u, u_step;
 	vec3_t	local, transformed;
 	float	*world;
-	int		v, v2, ceilv0;
+	int	v, v2, ceilv0;
 	float	scale, lzi0, u0, v0;
-	int		side;
+	int	side;
 
 	if (r_lastvertvalid)
 	{
@@ -870,7 +867,7 @@ R_ZDrawSubmodelPolys
 */
 void R_ZDrawSubmodelPolys (model_t *pmodel)
 {
-	int			i, numsurfaces;
+	int		i, numsurfaces;
 	msurface_t	*psurf;
 	float		dot;
 	mplane_t	*pplane;

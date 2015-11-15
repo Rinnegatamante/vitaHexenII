@@ -326,7 +326,7 @@ void R_AliasClipTriangle (mtriangle_t *ptri)
 		else if (currententity->drawflags & DRF_TRANSLUCENT)
 			D_PolysetDrawT ();
 		else if ((currententity->model->flags & EF_TRANSPARENT))
-			D_PolysetDrawT ();
+			D_PolysetDrawT2 ();
 		else if ((currententity->model->flags & EF_HOLEY))
 			D_PolysetDrawT3 ();
 		else

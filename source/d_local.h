@@ -68,6 +68,8 @@ void D_SpriteDrawSpansT (sspan_t *pspan);
 void D_SpriteDrawSpansT2 (sspan_t *pspan);
 
 void D_DrawSkyScans8 (espan_t *pspan);
+void D_DrawSkyScans8_V2 (espan_t *pspan);
+void D_DrawSkyScans8_V3 (espan_t *pspan);
 void D_DrawSkyScans16 (espan_t *pspan);
 
 void R_ShowSubDiv (void);

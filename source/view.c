@@ -108,7 +108,7 @@ float V_CalcBob (void)
 
 	bob = sqrtf(cl.velocity[0]*cl.velocity[0] + cl.velocity[1]*cl.velocity[1]) * cl_bob.value;
 //Con_Printf ("speed: %5.1f\n", Length(cl.velocity));
-	bob = bob*0.3 + bob*0.7*sin(cycle);
+	bob = bob*0.3 + bob*0.7*sinf(cycle);
 	if (bob > 4)
 		bob = 4;
 	else if (bob < -7)
@@ -313,7 +313,7 @@ void BuildGammaTable (float g)
 	
 	for (i=0 ; i<256 ; i++)
 	{
-		inf = 255 * pow ( (i+0.5)/255.5 , g ) + 0.5;
+		inf = 255 * powf ( (i+0.5f)/255.5f , g ) + 0.5;
 		if (inf < 0)
 			inf = 0;
 		if (inf > 255)

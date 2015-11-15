@@ -30,7 +30,7 @@ edge_t	*removeedges[MAXHEIGHT];
 
 espan_t	*span_p, *max_span_p;
 
-int		r_currentkey;
+int	r_currentkey;
 
 extern	int	screenwidth;
 
@@ -58,6 +58,7 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge);
 
 
 int show = 0;
+int transWater = 0;
 
 int TransCount;
 
@@ -301,14 +302,17 @@ R_CleanupSpan
 void R_CleanupSpan ()
 {
 	surf_t	*surf;
-	int		iu;
+	int	iu;
 	espan_t	*span;
 
 // now that we've reached the right edge of the screen, we're done with any
 // unfinished surfaces, so emit a span for whatever's on top
 	surf = surfaces[1].next;
 	iu = edge_tail_u_shift20;
-	if (iu > surf->last_u && !(surf->flags & SURF_TRANSLUCENT))
+	
+	
+	if (iu > surf->last_u && 
+	    !((surf->flags & SURF_TRANSLUCENT) || ((surf->flags & SURF_WATER) && transWater == 1)))
 	{
 		span = span_p++;
 		span->u = surf->last_u;
@@ -316,10 +320,7 @@ void R_CleanupSpan ()
 		span->v = current_iv;
 		span->pnext = surf->spans;
 		surf->spans = span;
-		//if (show == 1) Con_Printf("Cleanup: %d,%d\n",span->u,span->count);
 	}
-	//else if (surf->flags & SURF_TRANSLUCENT) 
-	//	FoundTrans = true;
 
 // reset spanstate for all surfaces in the surface stack
 	do
@@ -340,7 +341,8 @@ void R_CleanupSpanT ()
 // unfinished surfaces, so emit a span for whatever's on top
 	surf = surfaces[1].next;
 	iu = edge_tail_u_shift20;
-	if (iu > surf->last_u && (surf->flags & SURF_TRANSLUCENT))
+	if (iu > surf->last_u && 
+	   ((surf->flags & SURF_TRANSLUCENT) || ((surf->flags & SURF_WATER) && transWater == 1)))
 	{
 		span = span_p++;
 		span->u = surf->last_u;
@@ -444,10 +446,10 @@ gotposition:
 R_TrailingEdge
 ==============
 */
-void R_TrailingEdge (surf_t *surf, edge_t *edge)
+void R_TrailingEdgeOld (surf_t *surf, edge_t *edge)
 {
 	espan_t			*span;
-	int				iu;
+	int			iu;
 
 // don't generate a span if this is an inverted span, with the end
 // edge preceding the start edge (that is, we haven't seen the
@@ -461,7 +463,8 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 		{
 		// emit a span (current top going away)
 			iu = edge->u >> 20;
-			if (iu > surf->last_u && !(surf->flags & SURF_TRANSLUCENT))
+			if (iu > surf->last_u && 
+			   !((surf->flags & SURF_TRANSLUCENT) || ((surf->flags & SURF_WATER) && transWater == 1)))
 			{
 				span = span_p++;
 				span->u = surf->last_u;
@@ -469,10 +472,7 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 				span->v = current_iv;
 				span->pnext = surf->spans;
 				surf->spans = span;
-				//if (show == 1) Con_Printf("Trailing: %d,%d\n",span->u,span->count);
 			}
-			//else if (surf->flags & SURF_TRANSLUCENT) 
-			//	FoundTrans = true;
 
 		// set last_u on the surface below
 			surf->next->last_u = iu;
@@ -484,10 +484,51 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 	else surf->spanstate = 0;
 }
 
+void R_TrailingEdge (surf_t *surf, edge_t *edge)
+{
+	espan_t			*span;
+	int				    iu;
+
+	if ((surf->flags & SURF_TRANSLUCENT) || ((surf->flags & SURF_WATER) && transWater == 1))
+	{
+		FoundTrans = true;
+		// inverted span
+	}
+	else if ( (surf->spanstate - 1) != 0) {
+		surf->spanstate	= surf->spanstate - 1;
+	}
+	else
+	{
+		surf->spanstate--;
+
+		if (surf->insubmodel)
+			r_bmodelactive--;
+
+		if (surf == surfaces[1].next)
+		{
+			iu = edge->u >> 20;
+			if (iu > surf->last_u)
+			{
+				span = span_p++;
+				span->u = surf->last_u;
+				span->count = iu - span->u;
+				span->v = current_iv;
+				span->pnext = surf->spans;
+				surf->spans = span;
+			} 
+			surf->next->last_u = iu;
+		}
+
+		surf->prev->next = surf->next;
+		surf->next->prev = surf->prev;
+	}
+}
+
+
 void R_TrailingEdgeT (surf_t *surf, edge_t *edge)
 {
 	espan_t			*span;
-	int				iu;
+	int			iu;
 
 // don't generate a span if this is an inverted span, with the end
 // edge preceding the start edge (that is, we haven't seen the
@@ -501,7 +542,8 @@ void R_TrailingEdgeT (surf_t *surf, edge_t *edge)
 		{
 		// emit a span (current top going away)
 			iu = edge->u >> 20;
-			if (iu > surf->last_u && (surf->flags & SURF_TRANSLUCENT))
+			if (iu > surf->last_u && 
+			    (surf->flags & SURF_TRANSLUCENT || ((surf->flags & SURF_WATER) && transWater == 1)))
 			{
 				span = span_p++;
 				span->u = surf->last_u;
@@ -539,7 +581,7 @@ void R_LeadingEdge (edge_t *edge)
 	{
 	// it's adding a new surface in, so find the correct place
 		surf = &surfaces[edge->surfs[1]];
-		if (surf->flags & SURF_TRANSLUCENT) 
+		if ((surf->flags & SURF_TRANSLUCENT) || ((surf->flags & SURF_WATER) && transWater == 1)) 
 		{
 			FoundTrans = true;
 			if (show == 0) show = 1;
@@ -565,19 +607,17 @@ void R_LeadingEdge (edge_t *edge)
 			{
 			// must be two bmodels in the same leaf; sort on 1/z
 				fu = (float)(edge->u - 0xFFFFF) * (1.0 / 0x100000);
-				newzi = surf->d_ziorigin + fv*surf->d_zistepv +
-						fu*surf->d_zistepu;
-				newzibottom = newzi * 0.99;
+				newzi = surf->d_ziorigin + fv*surf->d_zistepv + fu*surf->d_zistepu;
+				newzibottom = newzi * 0.999;
 
-				testzi = surf2->d_ziorigin + fv*surf2->d_zistepv +
-						fu*surf2->d_zistepu;
+				testzi = surf2->d_ziorigin + fv*surf2->d_zistepv + fu*surf2->d_zistepu;
 
 				if (newzibottom >= testzi)
 				{
 					goto newtop;
 				}
 
-				newzitop = newzi * 1.01;
+				newzitop = newzi * 1.001;
 				if (newzitop >= testzi)
 				{
 					if (surf->d_zistepu >= surf2->d_zistepu)
@@ -603,19 +643,17 @@ continue_search:
 
 			// must be two bmodels in the same leaf; sort on 1/z
 				fu = (float)(edge->u - 0xFFFFF) * (1.0 / 0x100000);
-				newzi = surf->d_ziorigin + fv*surf->d_zistepv +
-						fu*surf->d_zistepu;
-				newzibottom = newzi * 0.99;
+				newzi = surf->d_ziorigin + fv*surf->d_zistepv + fu*surf->d_zistepu;
+				newzibottom = newzi * 0.999;
 
-				testzi = surf2->d_ziorigin + fv*surf2->d_zistepv +
-						fu*surf2->d_zistepu;
+				testzi = surf2->d_ziorigin + fv*surf2->d_zistepv + fu*surf2->d_zistepu;
 
 				if (newzibottom >= testzi)
 				{
 					goto gotposition;
 				}
 
-				newzitop = newzi * 1.01;
+				newzitop = newzi * 1.001;
 				if (newzitop >= testzi)
 				{
 					if (surf->d_zistepu >= surf2->d_zistepu)
@@ -633,7 +671,8 @@ newtop:
 		// emit a span (obscures current top)
 			iu = edge->u >> 20;
 
-			if (iu > surf2->last_u && !(surf2->flags & SURF_TRANSLUCENT))
+			if (iu > surf2->last_u && 
+			   !((surf2->flags & SURF_TRANSLUCENT) || ((surf2->flags & SURF_WATER) && transWater == 1)))
 			{
 				span = span_p++;
 				span->u = surf2->last_u;
@@ -641,10 +680,7 @@ newtop:
 				span->v = current_iv;
 				span->pnext = surf2->spans;
 				surf2->spans = span;
-				//if (show == 1) Con_Printf("Leading: %d,%d\n",span->u,span->count);
 			}
-			//else if (surf2->flags & SURF_TRANSLUCENT) 
-			//	FoundTrans = true;
 
 			// set last_u on the new span
 			surf->last_u = iu;
@@ -694,7 +730,7 @@ void R_LeadingEdgeT (edge_t *edge)
 				fu = (float)(edge->u - 0xFFFFF) * (1.0 / 0x100000);
 				newzi = surf->d_ziorigin + fv*surf->d_zistepv +
 						fu*surf->d_zistepu;
-				newzibottom = newzi * 0.99;
+				newzibottom = newzi * 0.999;
 
 				testzi = surf2->d_ziorigin + fv*surf2->d_zistepv +
 						fu*surf2->d_zistepu;
@@ -704,7 +740,7 @@ void R_LeadingEdgeT (edge_t *edge)
 					goto newtop;
 				}
 
-				newzitop = newzi * 1.01;
+				newzitop = newzi * 1.001;
 				if (newzitop >= testzi)
 				{
 					if (surf->d_zistepu >= surf2->d_zistepu)
@@ -732,7 +768,7 @@ continue_search:
 				fu = (float)(edge->u - 0xFFFFF) * (1.0 / 0x100000);
 				newzi = surf->d_ziorigin + fv*surf->d_zistepv +
 						fu*surf->d_zistepu;
-				newzibottom = newzi * 0.99;
+				newzibottom = newzi * 0.999;
 
 				testzi = surf2->d_ziorigin + fv*surf2->d_zistepv +
 						fu*surf2->d_zistepu;
@@ -742,7 +778,7 @@ continue_search:
 					goto gotposition;
 				}
 
-				newzitop = newzi * 1.01;
+				newzitop = newzi * 1.001;
 				if (newzitop >= testzi)
 				{
 					if (surf->d_zistepu >= surf2->d_zistepu)
@@ -760,7 +796,8 @@ newtop:
 		// emit a span (obscures current top)
 			iu = edge->u >> 20;
 
-			if (iu > surf2->last_u && (surf2->flags & SURF_TRANSLUCENT))
+			if (iu > surf2->last_u && 
+				((surf2->flags & SURF_TRANSLUCENT) || ((surf2->flags & SURF_WATER) && transWater == 1)))
 			{
 				span = span_p++;
 				span->u = surf2->last_u;
@@ -790,6 +827,11 @@ void R_GenerateTSpans (void) {
 	surf_t			*surf;
 
 	r_bmodelactive = 0;
+	
+	if (r_transwater.value)
+		transWater = 1;
+	else 
+		transWater = 0;
 
 	// clear active surfaces to just the background surface
 	surfaces[1].next = surfaces[1].prev = &surfaces[1];
@@ -827,6 +869,11 @@ void R_GenerateSpans (void)
 
 	r_bmodelactive = 0;
 	FoundTrans = false;
+	
+	if (r_transwater.value)
+		transWater = 1;
+	else 
+		transWater = 0;
 
 	// clear active surfaces to just the background surface
 	surfaces[1].next = surfaces[1].prev = &surfaces[1];
@@ -848,35 +895,8 @@ void R_GenerateSpans (void)
 
 		R_LeadingEdge (edge);
 	}
-
 	R_CleanupSpan ();
 
-	/*
-	if (!FoundTrans) return;
-
-	// clear active surfaces to just the background surface
-	surfaces[1].next = surfaces[1].prev = &surfaces[1];
-	surfaces[1].last_u = edge_head_u_shift20;
-
-	// generate spans
-	for (edge=edge_head.next ; edge != &edge_tail; edge=edge->next)
-	{			
-		if (edge->surfs[0])
-		{
-		// it has a left surface, so a surface is going away for this span
-			surf = &surfaces[edge->surfs[0]];
-
-			R_TrailingEdgeT (surf, edge);
-
-			if (!edge->surfs[1])
-				continue;
-		}
-
-		R_LeadingEdgeT (edge);
-	}
-
-	R_CleanupSpanT ();
-	*/
 }
 
 #endif	// !id386
@@ -926,7 +946,7 @@ Each surface has a linked list of its visible spans
 */
 void R_ScanEdges (qboolean Translucent)
 {
-	int		iv, bottom;
+	int	iv, bottom;
 	byte	basespans[MAXSPANS*sizeof(espan_t)+CACHE_SIZE];
 	espan_t	*basespan_p;
 	surf_t	*s;
@@ -1062,9 +1082,6 @@ void R_ScanEdges (qboolean Translucent)
 	{
 		D_DrawSurfaces (Translucent);
 	}
-
-/*	if (!Translucent)
-		Con_Printf("Trans = %d\n",TransCount);*/
 }
 
 

@@ -184,19 +184,23 @@ extern vec3_t	r_pright, r_pup, r_ppn;
 
 
 void D_PolysetDrawT (void);
-void D_PolysetDrawFinalVertsT (finalvert_t *p1, finalvert_t *p2, finalvert_t *p3);
 void D_PolysetDrawT2 (void);
 void D_PolysetDrawT3 (void);
 void D_PolysetDrawT5 (void);
+
+void D_PolysetDrawFinalVerts (finalvert_t *p1, finalvert_t *p2, finalvert_t *p3);
+void D_PolysetDrawFinalVertsT (finalvert_t *p1, finalvert_t *p2, finalvert_t *p3);
 void D_PolysetDrawFinalVertsT2 (finalvert_t *p1, finalvert_t *p2, finalvert_t *p3);
+void D_PolysetDrawFinalVertsT3 (finalvert_t *p1, finalvert_t *p2, finalvert_t *p3);
+void D_PolysetDrawFinalVertsT5 (finalvert_t *p1, finalvert_t *p2, finalvert_t *p3);
 
 void D_Aff8Patch (void *pcolormap);
 void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height);
 void D_DisableBackBufferAccess (void);
 void D_EndDirectRect (int x, int y, int width, int height);
 void D_PolysetDraw (void);
-void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts);
-// void D_PolysetDrawFinalVerts (finalvert_t *p1, finalvert_t *p2, finalvert_t *p3);
+// void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts);
+
 void D_DrawParticle (particle_t *pparticle);
 void D_DrawParticle1x1b (particle_t *pparticle);
 void D_DrawPoly (void);
@@ -222,8 +226,8 @@ void D_UpdateRects (vrect_t *prect);
 void D_PolysetUpdateTables (void);
 
 // these are currently for internal use only, and should not be used by drivers
-extern int				r_skydirect;
-extern byte				*r_skysource;
+extern int	r_skydirect;
+extern byte	*r_skysource;
 
 // transparency types for D_DrawRect ()
 #define DR_SOLID		0
@@ -273,7 +277,7 @@ extern float	skyspeed, skyspeed2;
 extern float	skytime;
 
 extern int		c_surf;
-extern vrect_t	scr_vrect;
+extern vrect_t		scr_vrect;
 
 extern byte		*r_warpbuffer;
 

@@ -49,9 +49,9 @@ For program optimization
 */
 void R_TimeRefresh_f (void)
 {
-	int			i;
-	float		start, stop, time;
-	int			startangle;
+	int		i;
+	double		start, stop, time;
+	int		startangle;
 	vrect_t		vr;
 
 	startangle = r_refdef.viewangles[1];

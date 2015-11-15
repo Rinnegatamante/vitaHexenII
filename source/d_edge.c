@@ -2,6 +2,7 @@
 
 #include "quakedef.h"
 #include "d_local.h"
+#include "r_local.h"
 
 static int	miplevel;
 
@@ -15,6 +16,9 @@ extern void	R_RotateBmodel (void);
 extern void	R_TransformFrustum (void);
 
 vec3_t		transformed_modelorg;
+
+extern 	cvar_t  r_skytype;
+extern 	cvar_t  r_skycolor;
 
 void D_DrawSpans8T (espan_t *pspan);
 /*
@@ -161,6 +165,7 @@ void D_DrawSurfaces (qboolean Translucent)
 	surfcache_t		*pcurrentcache;
 	vec3_t			world_transformed_modelorg;
 	vec3_t			local_modelorg;
+	int 			transWater; 
 
 	// Restore the settings
 	currententity = &cl_entities[0];
@@ -172,11 +177,17 @@ void D_DrawSurfaces (qboolean Translucent)
 
 	TransformVector (modelorg, transformed_modelorg);
 	VectorCopy (transformed_modelorg, world_transformed_modelorg);
+	
+	if (r_transwater.value)
+		transWater = 1;
+	else 
+		transWater = 0;
 
 // TODO: could preset a lot of this at mode set time
 	if (r_drawflat.value)
 	{
-		if (Translucent) return;
+		if (Translucent) 
+			return;
 
 		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
@@ -202,11 +213,14 @@ void D_DrawSurfaces (qboolean Translucent)
 
 				r_drawnpolycount++;
 
-				if (s->flags & SURF_TRANSLUCENT)
+				if ((s->flags & SURF_TRANSLUCENT))
 				{
 					continue;
 				}
-
+				if ((s->flags & SURF_WATER) && transWater == 1) {
+					continue;
+				}
+				
 				d_zistepu = s->d_zistepu;
 				d_zistepv = s->d_zistepv;
 				d_ziorigin = s->d_ziorigin;
@@ -219,13 +233,27 @@ void D_DrawSurfaces (qboolean Translucent)
 				}
 				if (s->flags & SURF_DRAWSKY)
 				{
-					if (!r_skymade)
-					{
-						R_MakeSky ();
+					if (r_skytype.value == 0) {
+						if (!r_skymade)
+						{
+							R_MakeSky ();
+						}
+	
+						D_DrawSkyScans8 (s->spans);
+						D_DrawZSpans (s->spans);
+					} else if (r_skytype.value == 1) {
+						if (!r_skymade)
+						{
+							R_MakeSky ();
+						}
+	
+						D_DrawSkyScans8_V2 (s->spans);
+						D_DrawZSpans (s->spans);
+					
+					} else if (r_skytype.value == 2) {
+						D_DrawSolidSurface (s, (int)r_skycolor.value & 0xFF);
+						D_DrawZSpans (s->spans);
 					}
-
-					D_DrawSkyScans8 (s->spans);
-					D_DrawZSpans (s->spans);
 				}
 				else if (s->flags & SURF_DRAWBACKGROUND)
 				{
@@ -338,7 +366,8 @@ void D_DrawSurfaces (qboolean Translucent)
 
 			for (s = &surfaces[1] ; s<surface_p ; s++)
 			{
-				if (!s->spans || !(s->flags & SURF_TRANSLUCENT))
+				if (!s->spans || 
+				    !((s->flags & SURF_TRANSLUCENT) || ((s->flags & SURF_WATER) && transWater == 1)))
 					continue;
 
 				count++;

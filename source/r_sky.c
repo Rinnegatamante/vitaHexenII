@@ -22,9 +22,9 @@ int r_skydirect;		// not used?
 byte	bottomsky[128*131];
 byte	bottommask[128*131];
 byte	newsky[128*256];	// newsky and topsky both pack in here, 128 bytes
-							//  of newsky on the left of each scan, 128 bytes
-							//  of topsky on the right, because the low-level
-							//  drawers need 256-byte scan widths
+				//  of newsky on the left of each scan, 128 bytes
+				//  of topsky on the right, because the low-level
+				//  drawers need 256-byte scan widths
 
 
 /*
@@ -36,8 +36,8 @@ A sky texture is 256*128, with the right side being a masked overlay
 */
 void R_InitSky (texture_t *mt)
 {
-	int			i, j;
-	byte		*src;
+	int	i, j;
+	byte	*src;
 
 	src = (byte *)mt + mt->offsets[0];
 
@@ -77,9 +77,9 @@ R_MakeSky
 */
 void R_MakeSky (void)
 {
-	int			x, y;
-	int			ofs, baseofs;
-	int			xshift, yshift;
+	int		x, y;
+	int		ofs, baseofs;
+	int		xshift, yshift;
 	unsigned	*pnewsky;
 	static int	xlast = -1, ylast = -1;
 
@@ -100,21 +100,17 @@ void R_MakeSky (void)
 
 // FIXME: clean this up
 #if UNALIGNED_OK
-
 		for (x=0 ; x<SKYSIZE ; x += 4)
 		{
 			ofs = baseofs + ((x+xshift) & SKYMASK);
 
-		// PORT: unaligned dword access to bottommask and bottomsky
-
+			// PORT: unaligned dword access to bottommask and bottomsky
 			*pnewsky = (*(pnewsky + (128 / sizeof (unsigned))) &
-						*(unsigned *)&bottommask[ofs]) |
-						*(unsigned *)&bottomsky[ofs];
+				    *(unsigned *)&bottommask[ofs]) |
+				    *(unsigned *)&bottomsky[ofs];
 			pnewsky++;
 		}
-
 #else
-
 		for (x=0 ; x<SKYSIZE ; x++)
 		{
 			ofs = baseofs + ((x+xshift) & SKYMASK);
@@ -124,7 +120,6 @@ void R_MakeSky (void)
 						*(byte *)&bottomsky[ofs];
 			pnewsky = (unsigned *)((byte *)pnewsky + 1);
 		}
-
 #endif
 
 		pnewsky += 128 / sizeof (unsigned);
@@ -141,9 +136,9 @@ R_GenSkyTile
 */
 void R_GenSkyTile (void *pdest)
 {
-	int			x, y;
-	int			ofs, baseofs;
-	int			xshift, yshift;
+	int		x, y;
+	int		ofs, baseofs;
+	int		xshift, yshift;
 	unsigned	*pnewsky;
 	unsigned	*pd;
 
@@ -200,10 +195,10 @@ R_GenSkyTile16
 */
 void R_GenSkyTile16 (void *pdest)
 {
-	int				x, y;
-	int				ofs, baseofs;
-	int				xshift, yshift;
-	byte			*pnewsky;
+	int		x, y;
+	int		ofs, baseofs;
+	int		xshift, yshift;
+	byte		*pnewsky;
 	unsigned short	*pd;
 
 	xshift = skytime * skyspeed;

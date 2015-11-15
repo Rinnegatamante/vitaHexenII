@@ -323,7 +323,7 @@ void R_AliasPreparePoints (void)
 			else if (currententity->drawflags & DRF_TRANSLUCENT)
 				D_PolysetDrawT ();
 			else if ((currententity->model->flags & EF_TRANSPARENT))
-				D_PolysetDrawT ();
+				D_PolysetDrawT2 ();
 			else if ((currententity->model->flags & EF_HOLEY))
 				D_PolysetDrawT3 ();
 			else
@@ -648,21 +648,6 @@ void R_AliasPrepareUnclippedPoints (void)
 	fv = pfinalverts;
 
 	R_AliasTransformAndProjectFinalVerts (fv, pstverts);
-#if 0
-	if (r_affinetridesc.drawtype)
-	{
-		if ((currententity->model->flags & EF_SPECIAL_TRANS))
-			D_PolysetDrawFinalVerts (fv, r_anumverts);
-		else if (currententity->drawflags & DRF_TRANSLUCENT)
-			D_PolysetDrawFinalVerts (fv, r_anumverts);
-		else if ((currententity->model->flags & EF_TRANSPARENT))
-			D_PolysetDrawFinalVerts (fv, r_anumverts);
-		else if ((currententity->model->flags & EF_HOLEY))
-			D_PolysetDrawFinalVerts (fv, r_anumverts);
-		else
-			D_PolysetDrawFinalVerts (fv, r_anumverts);
-	}
-#endif
 
 	r_affinetridesc.pfinalverts = pfinalverts;
 	r_affinetridesc.ptriangles = (mtriangle_t *)
@@ -697,40 +682,31 @@ void R_AliasPrepareUnclippedPoints (void)
 		{
 			if ((currententity->model->flags & EF_SPECIAL_TRANS))
 			{
-				//D_PolysetDrawFinalVerts (pfv[0],pfv[1],pfv[2]);
-				//D_PolysetDraw ();
-
+				D_PolysetDrawFinalVertsT5 (pfv[0],pfv[1],pfv[2]);
 				//D_PolysetDrawFinalVerts (fv, r_anumverts);
 				D_PolysetDrawT5 ();
 			}
 			else if (currententity->drawflags & DRF_TRANSLUCENT)
 			{
-				//D_PolysetDrawFinalVerts (pfv[0],pfv[1],pfv[2]);
-				//D_PolysetDraw ();
-
+				D_PolysetDrawFinalVertsT (pfv[0],pfv[1],pfv[2]);
 				//D_PolysetDrawFinalVerts (fv, r_anumverts);
 				D_PolysetDrawT ();
 			}
 			else if ((currententity->model->flags & EF_TRANSPARENT))
 			{
-				//D_PolysetDrawFinalVerts (pfv[0],pfv[1],pfv[2]);
-				//D_PolysetDraw ();
-
+				D_PolysetDrawFinalVertsT2 (pfv[0],pfv[1],pfv[2]);
 				//D_PolysetDrawFinalVerts (fv, r_anumverts);
-				D_PolysetDrawT ();
+				D_PolysetDrawT2 ();
 			}
 			else if ((currententity->model->flags & EF_HOLEY))
 			{
-				//D_PolysetDrawFinalVerts (pfv[0],pfv[1],pfv[2]);
-				//D_PolysetDraw ();
-
+				D_PolysetDrawFinalVertsT3 (pfv[0],pfv[1],pfv[2]);
 				//D_PolysetDrawFinalVerts (fv, r_anumverts);
 				D_PolysetDrawT3 ();
 			}
 			else
 			{
-				//D_PolysetDrawFinalVerts (pfv[0],pfv[1],pfv[2]);
-				
+				D_PolysetDrawFinalVerts (pfv[0],pfv[1],pfv[2]);
 				//D_PolysetDrawFinalVerts (fv, r_anumverts);
 				D_PolysetDraw ();
 			}
@@ -742,7 +718,7 @@ void R_AliasPrepareUnclippedPoints (void)
 			else if (currententity->drawflags & DRF_TRANSLUCENT)
 				D_PolysetDrawT ();
 			else if ((currententity->model->flags & EF_TRANSPARENT))
-				D_PolysetDrawT ();
+				D_PolysetDrawT2 ();
 			else if ((currententity->model->flags & EF_HOLEY))
 				D_PolysetDrawT3 ();
 			else
@@ -758,14 +734,14 @@ R_AliasSetupSkin
 */
 void R_AliasSetupSkin (void)
 {
-	int					skinnum;
-	int					i, numskins;
+	int			skinnum;
+	int			i, numskins;
 	maliasskingroup_t	*paliasskingroup;
-	float				*pskinintervals, fullskininterval;
-	float				skintargettime, skintime;
-	qpic_t		*stonepic;
+	float			*pskinintervals, fullskininterval;
+	float			skintargettime, skintime;
+	qpic_t			*stonepic;
 	char temp[40];
-	int				a_skinwidth;
+	int			a_skinwidth;
 
 	skinnum = currententity->skinnum;
 	if (skinnum >= 100) skinnum = 0;

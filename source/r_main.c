@@ -115,8 +115,10 @@ cvar_t	r_draworder = {"r_draworder","0"};
 cvar_t	r_speeds = {"r_speeds","0"};
 cvar_t	r_timegraph = {"r_timegraph","0"};
 cvar_t	r_graphheight = {"r_graphheight","10"};
-cvar_t	r_clearcolor = {"r_clearcolor","0"};
+cvar_t	r_clearcolor = {"r_clearcolor","0", true};
 cvar_t	r_waterwarp = {"r_waterwarp","1"};
+cvar_t	r_skytype = {"r_skytype","1",true};
+cvar_t	r_skycolor = {"r_skycolor","255", true};
 cvar_t	r_fullbright = {"r_fullbright","0"};
 cvar_t	r_drawentities = {"r_drawentities","1"};
 cvar_t	r_drawviewmodel = {"r_drawviewmodel","1"};
@@ -200,6 +202,8 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_ambient);
 	Cvar_RegisterVariable (&r_clearcolor);
 	Cvar_RegisterVariable (&r_waterwarp);
+	Cvar_RegisterVariable (&r_skytype);
+	Cvar_RegisterVariable (&r_skycolor);
 	Cvar_RegisterVariable (&r_fullbright);
 	Cvar_RegisterVariable (&r_drawentities);
 	Cvar_RegisterVariable (&r_drawviewmodel);
@@ -1300,8 +1304,8 @@ void R_InitTurb (void)
 	
 	for (i=0 ; i<(SIN_BUFFER_SIZE) ; i++)
 	{
-		sintable[i] = AMP + sin(i*3.14159*2/CYCLE)*AMP;
-		intsintable[i] = AMP2 + sin(i*3.14159*2/CYCLE)*AMP2;	// AMP2, not 20
+		sintable[i] = AMP + sinf(i*3.14159*2/CYCLE)*AMP;
+		intsintable[i] = AMP2 + sinf(i*3.14159*2/CYCLE)*AMP2;	// AMP2, not 20
 	}
 }
 

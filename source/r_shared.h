@@ -15,8 +15,8 @@
 #define MAXWORKINGVERTS	(MAXVERTS+4)	// max points in an intermediate
 										//  polygon (while processing)
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
-#define	MAXHEIGHT		1024
-#define	MAXWIDTH		1280
+#define	MAXHEIGHT		544
+#define	MAXWIDTH		960
 #define MAXDIMENSION	((MAXHEIGHT > MAXWIDTH) ? MAXHEIGHT : MAXWIDTH)
 
 #define SIN_BUFFER_SIZE	(MAXDIMENSION+CYCLE)
@@ -56,7 +56,7 @@ extern	entity_t *currententity;
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct espan_s
 {
-	int				u, v, count;
+	int    u, v, count;
 	struct espan_s	*pnext;
 } espan_t;
 
@@ -80,7 +80,7 @@ typedef struct surf_s
 	qboolean	insubmodel;
 	float		d_ziorigin, d_zistepu, d_zistepv;
 
-	int			pad[2];				// to 64 bytes
+	int		pad[2];				// to 64 bytes
 } surf_t;
 
 extern	surf_t	*surfaces, *surface_p, *surf_max;

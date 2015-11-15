@@ -261,7 +261,7 @@ void D_DrawSpans8T (espan_t *pspan)
 
 			do
 			{
-				btemp    = *(pbase + (s >> 16) + (t >> 16) * cachewidth);
+				btemp = *(pbase + (s >> 16) + (t >> 16) * cachewidth);
 				if (*pz <= (izi >> 16)) {
 					*pdest = mainTransTable[(btemp<<8) + (*pdest)];
 				}
@@ -290,13 +290,14 @@ Turbulent8
 */
 void Turbulent8 (surf_t *s)
 {
-	int		count;
+	int			count;
 	fixed16_t	snext, tnext;
 	float		sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float		sdivz16stepu, tdivz16stepu, zi16stepu;
 	byte		origscanList[SCAN_SIZE];
 	byte 		*ptra,*ptrb;
 	espan_t 	*pspan;
+	int 		transWater; 
 
 	pspan = s->spans;
 	r_turb_turb = sintable + ((int)(cl.time*SPEED)&(CYCLE-1));
@@ -310,14 +311,19 @@ void Turbulent8 (surf_t *s)
 	tdivz16stepu = d_tdivzstepu * 16;
 	zi16stepu = d_zistepu * 16;
 
+	if (r_transwater.value)
+		transWater = 1;
+	else 
+		transWater = 0;
+
 	do
 	{
 		r_turb_pdest = (unsigned char *)((byte *)d_viewbuffer +
 				(screenwidth * pspan->v) + pspan->u);
 
 		count = pspan->count;
-
-		if (r_transwater.value && s->flags & SURF_TRANSLUCENT)
+			
+		if (transWater && (s->flags & SURF_TRANSLUCENT || s->flags & SURF_WATER))
 		{
 			D_DrawSingleZSpans(pspan);
 			if (ZScanCount == count)  // fully blocked
@@ -421,7 +427,7 @@ void Turbulent8 (surf_t *s)
 			r_turb_s = r_turb_s & ((CYCLE<<16)-1);
 			r_turb_t = r_turb_t & ((CYCLE<<16)-1);
 
-			if (r_transwater.value && s->flags & SURF_TRANSLUCENT)
+			if (transWater && (s->flags & SURF_TRANSLUCENT || s->flags & SURF_WATER))
 			{
 				if (ZScanCount)
 				{
@@ -474,7 +480,7 @@ void D_DrawSpans8 (espan_t *pspan)
 
 		count = pspan->count;
 
-	// calculate the initial s/z, t/z, 1/z, s, and t and clamp
+		// calculate the initial s/z, t/z, 1/z, s, and t and clamp
 		du = (float)pspan->u;
 		dv = (float)pspan->v;
 
@@ -565,7 +571,10 @@ void D_DrawSpans8 (espan_t *pspan)
 
 			do
 			{
-				*pdest++ = *(pbase + (s >> 16) + (t >> 16) * cachewidth);
+				//if (count + spancount == pspan->count)
+				//	*pdest++ = (char) 255;
+				//else
+					*pdest++ = *(pbase + (s >> 16) + (t >> 16) * cachewidth);
 				s += sstep;
 				t += tstep;
 			} while (--spancount > 0);
