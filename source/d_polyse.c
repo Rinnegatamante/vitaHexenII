@@ -121,8 +121,8 @@ D_PolysetDraw
 */
 void D_PolysetDraw (void)
 {
-	spanpackage_t	spans[DPS_MAXSPANS + 1 +
-			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1];
+	spanpackage_t	*spans=malloc(sizeof(spanpackage_t)*(DPS_MAXSPANS + 1 +
+			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1));
 						// one extra because of cache line pretouching
 
 	a_spans = (spanpackage_t *)
@@ -136,12 +136,15 @@ void D_PolysetDraw (void)
 	{
 		D_DrawNonSubdiv ();
 	}
+	
+	free(spans);
+	
 }
 
 void D_PolysetDrawT3 (void)
 {
-	spanpackage_t	spans[DPS_MAXSPANS + 1 +
-			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1];
+	spanpackage_t	*spans=malloc(sizeof(spanpackage_t)*(DPS_MAXSPANS + 1 +
+			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1));
 						// one extra because of cache line pretouching
 
 	a_spans = (spanpackage_t *)
@@ -155,12 +158,14 @@ void D_PolysetDrawT3 (void)
 	{
 		D_DrawNonSubdiv ();
 	}
+	
+	free(spans);	
 }
 
 void D_PolysetDrawT (void)
 {
-	spanpackage_t	spans[DPS_MAXSPANS + 1 +
-			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1];
+	spanpackage_t	*spans=malloc(sizeof(spanpackage_t)*(DPS_MAXSPANS + 1 +
+			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1));
 						// one extra because of cache line pretouching
 
 	a_spans = (spanpackage_t *)
@@ -174,12 +179,14 @@ void D_PolysetDrawT (void)
 	{
 		D_DrawNonSubdiv ();
 	}
+	free(spans);
+	
 }
 
 void D_PolysetDrawT2 (void)
 {
-	spanpackage_t	spans[DPS_MAXSPANS + 1 +
-			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1];
+	spanpackage_t	*spans=malloc(sizeof(spanpackage_t)*(DPS_MAXSPANS + 1 +
+			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1));
 						// one extra because of cache line pretouching
 
 	a_spans = (spanpackage_t *)
@@ -193,12 +200,13 @@ void D_PolysetDrawT2 (void)
 	{
 		D_DrawNonSubdiv ();
 	}
+	free(spans);
 }
 
 void D_PolysetDrawT5 (void)
 {
-	spanpackage_t	spans[DPS_MAXSPANS + 1 +
-			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1];
+	spanpackage_t	*spans=malloc(sizeof(spanpackage_t)*(DPS_MAXSPANS + 1 +
+			((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1));
 						// one extra because of cache line pretouching
 
 	a_spans = (spanpackage_t *)
@@ -212,6 +220,7 @@ void D_PolysetDrawT5 (void)
 	{
 		D_DrawNonSubdiv ();
 	}
+	free(spans);
 }
 
 /*

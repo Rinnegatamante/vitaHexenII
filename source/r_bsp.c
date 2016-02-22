@@ -380,6 +380,7 @@ void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel)
 			}
 		}
 	}
+	
 }
 
 
@@ -630,7 +631,7 @@ void R_RenderWorld (void)
 {
 	int			i;
 	model_t		*clmodel;
-	btofpoly_t	btofpolys[MAX_BTOFPOLYS];
+	btofpoly_t	*btofpolys = malloc(MAX_BTOFPOLYS*sizeof(btofpoly_t));
 
 	pbtofpolys = btofpolys;
 
@@ -650,6 +651,9 @@ void R_RenderWorld (void)
 			R_RenderPoly (btofpolys[i].psurf, btofpolys[i].clipflags);
 		}
 	}
+	
+	free(btofpolys);
+	
 }
 
 

@@ -230,8 +230,8 @@ void CL_ParseServerInfo (void)
 	char	*str;
 	int		i;
 	int		nummodels, numsounds;
-	char	model_precache[MAX_MODELS][MAX_QPATH];
-	char	sound_precache[MAX_SOUNDS][MAX_QPATH];
+	static char	model_precache[MAX_MODELS][MAX_QPATH];
+	static char	sound_precache[MAX_SOUNDS][MAX_QPATH];
 	
 	Con_DPrintf ("Serverinfo packet received.\n");
 //
@@ -377,6 +377,7 @@ void CL_ParseServerInfo (void)
 	Hunk_Check ();		// make sure nothing is hurt
 	
 	noclip_anglehack = false;		// noclip is turned off at start	
+	
 }
 
 

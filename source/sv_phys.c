@@ -220,7 +220,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 	vec3_t		dir;
 	float		d;
 	int			numplanes;
-	vec3_t		planes[MAX_CLIP_PLANES];
+	vec3_t		*planes=malloc(sizeof(vec3_t)*MAX_CLIP_PLANES);
 	vec3_t		primal_velocity, original_velocity, new_velocity;
 //rjr	vec3_t		before_velocity;
 	int			i, j;
@@ -251,6 +251,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 		if (trace.allsolid)
 		{	// entity is trapped in another solid
 			VectorCopy (vec3_origin, ent->v.velocity);
+			free(planes);
 			return 3;
 		}
 
@@ -304,6 +305,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 		if (numplanes >= MAX_CLIP_PLANES)
 		{	// this shouldn't really happen
 			VectorCopy (vec3_origin, ent->v.velocity);
+			free(planes);
 			return 3;
 		}
 
@@ -336,6 +338,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 			{
 //				Con_Printf ("clip velocity, numplanes == %i\n",numplanes);
 				VectorCopy (vec3_origin, ent->v.velocity);
+				free(planes);
 				return 7;
 			}
 			CrossProduct (planes[0], planes[1], dir);
@@ -350,10 +353,12 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 		if (DotProduct (ent->v.velocity, primal_velocity) <= 0)
 		{
 			VectorCopy (vec3_origin, ent->v.velocity);
+			free(planes);
 			return blocked;
 		}
 	}
 
+	free(planes);
 	return blocked;
 }
 
@@ -517,13 +522,15 @@ void SV_PushMove (edict_t *pusher, float movetime, qboolean update_time)
 	vec3_t		mins, maxs, move;
 	vec3_t		entorig, pushorig;
 	int			num_moved;
-	edict_t		*moved_edict[MAX_EDICTS];
-	vec3_t		moved_from[MAX_EDICTS];
+	edict_t		**moved_edict=malloc(sizeof(edict_t)*MAX_EDICTS);
+	vec3_t		*moved_from=malloc(sizeof(vec3_t)*MAX_EDICTS);
 
 	if (!pusher->v.velocity[0] && !pusher->v.velocity[1] && !pusher->v.velocity[2])
 	{
 		if (update_time)
 			pusher->v.ltime += movetime;
+		free(moved_edict);
+		free(moved_from);
 		return;
 	}
 
@@ -626,10 +633,14 @@ void SV_PushMove (edict_t *pusher, float movetime, qboolean update_time)
 				VectorCopy (moved_from[i], moved_edict[i]->v.origin);
 				SV_LinkEdict (moved_edict[i], false);
 			}
+			free(moved_edict);
+			free(moved_from);
 			return;
 		}	
 	}
 
+	free(moved_edict);
+	free(moved_from);
 	
 }
 
@@ -789,8 +800,8 @@ void SV_PushRotate (edict_t *pusher, float movetime)
 	vec3_t		move, a, amove,mins,maxs,move2,move3,testmove;
 	vec3_t		entorig, pushorig,pushorigangles;
 	int			num_moved;
-	edict_t		*moved_edict[MAX_EDICTS];
-	vec3_t		moved_from[MAX_EDICTS];
+	edict_t		**moved_edict=malloc(sizeof(edict_t)*MAX_EDICTS);
+	vec3_t		*moved_from=malloc(sizeof(vec3_t)*MAX_EDICTS);
 	vec3_t		org, org2, check_center;
 	vec3_t		forward, right, up;
 	edict_t		*ground;
@@ -1126,6 +1137,8 @@ Con_DPrintf("%f %f %f\n", pusher->v.angles[0], pusher->v.angles[1], pusher->v.an
 					
 					SV_LinkEdict (moved_edict[i], false);
 				}
+				free(moved_edict);
+				free(moved_from);
 				return;
 			}
 //		}
@@ -1143,6 +1156,8 @@ for (i=0; i<slaves_moved; i++)
 }
 Con_DPrintf("\n");
 #endif
+free(moved_edict);
+free(moved_from);
 }
 #endif
 

@@ -1143,7 +1143,7 @@ void COM_Init (char *basedir)
 		LittleFloat = FloatNoSwap;
 	}
 	else
-	{
+	{ 
 		bigendien = true;
 		BigShort = ShortNoSwap;
 		LittleShort = ShortSwap;
@@ -1158,8 +1158,9 @@ void COM_Init (char *basedir)
 	Cvar_RegisterVariable (&cmdline);
 	Cvar_RegisterVariable (&sv_gamedir);
 	Cmd_AddCommand ("path", COM_Path_f);
-
+	Sys_Printf("\nInit Filesystem...");
 	COM_InitFilesystem ();
+	Sys_Printf("Done\nCheck Registered...");
 	COM_CheckRegistered ();
 }
 
@@ -1341,7 +1342,7 @@ void COM_CopyFile (char *netpath, char *cachepath)
 {
 	int             in, out;
 	int             remaining, count;
-	char    	buf[4096];
+	char    	*buf=malloc(sizeof(char)*4096);
 	
 	// Con_Printf ("CP %s -> %s\n",netpath,cachepath);
 		
@@ -1365,6 +1366,7 @@ void COM_CopyFile (char *netpath, char *cachepath)
 	
 	Sys_FileClose (in);
 	Sys_FileClose (out);    
+	free(buf);
 }
 
 /*
@@ -1378,8 +1380,8 @@ Sets com_filesize and one of handle or file
 int COM_FindFile (char *filename, int *handle, FILE **file, qboolean override_pack)
 {
 	searchpath_t    *search;
-	char            netpath[MAX_OSPATH];
-	char            cachepath[MAX_OSPATH];
+	char            *netpath=malloc(sizeof(char)*MAX_OSPATH);
+	char            *cachepath=malloc(sizeof(char)*MAX_OSPATH);
 	pack_t          *pak;
 	int                     i;
 	int                     findtime, cachetime;
@@ -1422,6 +1424,8 @@ int COM_FindFile (char *filename, int *handle, FILE **file, qboolean override_pa
 							fseek (*file, pak->files[i].filepos, SEEK_SET);
 					}
 					com_filesize = pak->files[i].filelen;
+					free(netpath);
+					free(cachepath);
 					return com_filesize;
 				}
 		}
@@ -1470,6 +1474,8 @@ int COM_FindFile (char *filename, int *handle, FILE **file, qboolean override_pa
 				Sys_FileClose (i);
 				*file = fopen (netpath, "rb");
 			}
+			free(netpath);
+			free(cachepath);
 			return com_filesize;
 		}
 		
@@ -1482,6 +1488,8 @@ int COM_FindFile (char *filename, int *handle, FILE **file, qboolean override_pa
 	else
 		*file = NULL;
 	com_filesize = -1;
+	free(netpath);
+	free(cachepath);
 	return -1;
 }
 
@@ -1642,12 +1650,12 @@ pack_t *COM_LoadPackFile (char *packfile)
 	int                     numpackfiles;
 	pack_t                  *pack;
 	int                     packhandle;
-	dpackfile_t             info[MAX_FILES_IN_PACK];
+	dpackfile_t             *info=malloc(sizeof(dpackfile_t) * MAX_FILES_IN_PACK);
 	unsigned short          crc;
-
 	if (Sys_FileOpenRead (packfile, &packhandle) == -1)
 	{
-//              Con_Printf ("Couldn't open %s\n", packfile);
+        Sys_Printf ("Couldn't open %s\n", packfile);
+		free(info);
 		return NULL;
 	}
 	Sys_FileRead (packhandle, (void *)&header, sizeof(header));
@@ -1664,7 +1672,7 @@ pack_t *COM_LoadPackFile (char *packfile)
 
 	if (numpackfiles != PAK0_COUNT && numpackfiles != PAK2_COUNT)
 		com_modified = true;    // not the original file
-
+	
 	Sys_FileSeek (packhandle, header.dirofs);
 	Sys_FileRead (packhandle, (void *)info, header.dirlen);
 
@@ -1674,7 +1682,7 @@ pack_t *COM_LoadPackFile (char *packfile)
 		CRC_ProcessByte (&crc, ((byte *)info)[i]);
 	if (crc != PAK0_CRC && crc != PAK2_CRC)
 		com_modified = true;
-
+	
 	newfiles = Hunk_AllocName (numpackfiles * sizeof(packfile_t), "packfile");
 
 // parse the directory
@@ -1690,8 +1698,8 @@ pack_t *COM_LoadPackFile (char *packfile)
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
-	
-	Con_Printf ("Added packfile %s (%i files)\n", packfile, numpackfiles);
+	free(info);
+	Sys_Printf ("Added packfile %s (%i files)\n", packfile, numpackfiles);
 	return pack;
 }
 
@@ -1709,7 +1717,7 @@ void COM_AddGameDirectory (char *dir)
 	int				i;
 	searchpath_t    *search;
 	pack_t			*pak;
-	char			pakfile[MAX_OSPATH];
+	char			*pakfile=malloc(sizeof(char)*MAX_OSPATH);
 
 	strcpy (com_gamedir, dir);
 
@@ -1719,6 +1727,7 @@ void COM_AddGameDirectory (char *dir)
 	for (i=0 ; i < 10; i++)
 	{
 		sprintf (pakfile, "%s/pak%i.pak", dir, i);
+		Sys_Printf("\nLoading pak file (%s)",pakfile);
 		pak = COM_LoadPackFile (pakfile);
 		if (!pak)
 			continue;
@@ -1741,6 +1750,7 @@ void COM_AddGameDirectory (char *dir)
 //
 // add the contents of the parms.txt file to the end of the command line
 //
+	free(pakfile);
 
 }
 
@@ -1752,7 +1762,7 @@ COM_InitFilesystem
 void COM_InitFilesystem (void)
 {
 	int             i, j;
-	char    basedir[MAX_OSPATH];
+	char    *basedir=malloc(sizeof(char)*MAX_OSPATH);
 	searchpath_t    *search;
 
 //
@@ -1792,10 +1802,12 @@ void COM_InitFilesystem (void)
 		com_cachedir[0] = 0;
 
 //
-// start up default PSVITA folders
+// start up default 3DS folders
 //
+	Sys_Printf("\nAdding data1 directory...");
 	COM_AddGameDirectory ("cache0:/data1");
 #ifndef NO_PRAVEUS
+	Sys_Printf("\nAdding portals directory...");
 	COM_AddGameDirectory ("cache0:/portals");
 #endif
 
@@ -1823,7 +1835,7 @@ void COM_InitFilesystem (void)
 		{
 			if (!com_argv[i] || com_argv[i][0] == '+' || com_argv[i][0] == '-')
 				break;
-			
+			Sys_Printf("\nHunk Alloc (%s)...",com_argv[i]);
 			search = Hunk_Alloc (sizeof(searchpath_t));
 			if ( !strcmp(COM_FileExtension(com_argv[i]), "pak") )
 			{
@@ -1850,7 +1862,7 @@ void COM_InitFilesystem (void)
 	{
 		strcpy(com_savedir,com_gamedir);
 	}
-
+	free(basedir);
 }
 
 

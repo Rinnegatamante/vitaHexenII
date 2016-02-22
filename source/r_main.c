@@ -1065,10 +1065,10 @@ R_EdgeDrawing
 */
 void R_EdgeDrawing (qboolean Translucent)
 {
-	edge_t	ledges[NUMSTACKEDGES +
-				((CACHE_SIZE - 1) / sizeof(edge_t)) + 1];
-	surf_t	lsurfs[NUMSTACKSURFACES +
-				((CACHE_SIZE - 1) / sizeof(surf_t)) + 1];
+	edge_t	*ledges = malloc(sizeof(edge_t) * (NUMSTACKEDGES +
+				((CACHE_SIZE - 1) / sizeof(edge_t)) + 1));
+	surf_t	*lsurfs = malloc(sizeof(surf_t) * (NUMSTACKSURFACES +
+				((CACHE_SIZE - 1) / sizeof(surf_t)) + 1));
 	int EdgesSize,SurfacesSize;
 
 	if (!Translucent) 
@@ -1159,6 +1159,9 @@ void R_EdgeDrawing (qboolean Translucent)
 	
 	if (!(r_drawpolys | r_drawculledpolys))
 		R_ScanEdges (Translucent);
+		
+	free(ledges);
+	free(lsurfs);
 }
 
 
@@ -1171,7 +1174,7 @@ r_refdef must be set before the first call
 */
 void R_RenderView_ (void)
 {
-	byte	warpbuffer[WARP_WIDTH * WARP_HEIGHT];
+	byte *warpbuffer = malloc(sizeof(byte)*(WARP_WIDTH * WARP_HEIGHT));
 
 	r_warpbuffer = warpbuffer;
 
@@ -1270,6 +1273,8 @@ SetVisibilityByPassages ();
 
 // back to high floating-point precision
 	Sys_HighFPPrecision ();
+	free(warpbuffer);
+	
 }
 
 void R_RenderView (void)

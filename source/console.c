@@ -142,55 +142,6 @@ If the line width has changed, reformat the buffer.
 */
 void Con_CheckResize (void)
 {
-	int		i, j, width, oldwidth, oldtotallines, numlines, numchars;
-	short	tbuf[CON_TEXTSIZE];
-
-	width = (vid.width >> 3) - 2;
-
-	if (width == con_linewidth)
-		return;
-
-	if (width < 1)			// video hasn't been initialized yet
-	{
-		width = 38;
-		con_linewidth = width;
-		con_totallines = CON_TEXTSIZE / con_linewidth;
-		Con_Clear_f();
-	}
-	else
-	{
-		oldwidth = con_linewidth;
-		con_linewidth = width;
-		oldtotallines = con_totallines;
-		con_totallines = CON_TEXTSIZE / con_linewidth;
-		numlines = oldtotallines;
-
-		if (con_totallines < numlines)
-			numlines = con_totallines;
-
-		numchars = oldwidth;
-	
-		if (con_linewidth < numchars)
-			numchars = con_linewidth;
-
-		memcpy (tbuf, con_text, CON_TEXTSIZE<<1);
-		Con_Clear_f();
-
-		for (i=0 ; i<numlines ; i++)
-		{
-			for (j=0 ; j<numchars ; j++)
-			{
-				con_text[(con_totallines - 1 - i) * con_linewidth + j] =
-						tbuf[((con_current - i + oldtotallines) %
-							  oldtotallines) * oldwidth + j];
-			}
-		}
-
-		Con_ClearNotify ();
-	}
-
-	con_backscroll = 0;
-	con_current = con_totallines - 1;
 }
 
 
@@ -215,12 +166,10 @@ void Con_Init (void)
 			unlink (temp);
 		}
 	}
-
 	con_text = Hunk_AllocName (CON_TEXTSIZE<<1, "context");
 	Con_Clear_f();
 	con_linewidth = -1;
 	Con_CheckResize ();
-	
 	Con_Printf ("Console initialized.\n");
 
 //
@@ -267,78 +216,7 @@ If no console is visible, the notify window will pop up.
 */
 void Con_Print (char *txt)
 {
-	int		y;
-	int		c, l;
-	static int	cr;
-	int		mask;
-	
-	con_backscroll = 0;
-
-	if (txt[0] == 1)
-	{
-		mask = 256;		// go to colored text
-		S_LocalSound ("misc/comm.wav");
-	// play talk wav
-		txt++;
-	}
-	else if (txt[0] == 2)
-	{
-		mask = 256;		// go to colored text
-		txt++;
-	}
-	else
-		mask = 0;
-
-
-	while ( (c = *txt) )
-	{
-	// count word length
-		for (l=0 ; l< con_linewidth ; l++)
-			if ( txt[l] <= ' ')
-				break;
-
-	// word wrap
-		if (l != con_linewidth && (con_x + l > con_linewidth) )
-			con_x = 0;
-
-		txt++;
-
-		if (cr)
-		{
-			con_current--;
-			cr = false;
-		}
-
-		
-		if (!con_x)
-		{
-			Con_Linefeed ();
-		// mark time for transparent overlay
-			if (con_current >= 0)
-				con_times[con_current % NUM_CON_TIMES] = realtime;
-		}
-
-		switch (c)
-		{
-		case '\n':
-			con_x = 0;
-			break;
-
-		case '\r':
-			con_x = 0;
-			cr = 1;
-			break;
-
-		default:	// display character and advance
-			y = con_current % con_totallines;
-			con_text[y*con_linewidth+con_x] = c | mask;
-			con_x++;
-			if (con_x >= con_linewidth)
-				con_x = 0;
-			break;
-		}
-		
-	}
+	Sys_Printf(txt);
 }
 
 
@@ -349,16 +227,6 @@ Con_DebugLog
 */
 void Con_DebugLog(char *file, char *fmt, ...)
 {
-    va_list argptr; 
-    static char data[1024];
-    int fd;
-    
-    va_start(argptr, fmt);
-    vsprintf(data, fmt, argptr);
-    va_end(argptr);
-    fd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0666);
-    write(fd, data, strlen(data));
-    close(fd);
 }
 
 
@@ -384,31 +252,6 @@ void Con_Printf (char *fmt, ...)
 // also echo to debugging console
 	Sys_Printf ("%s", msg);	// also echo to debugging console
 
-// log all messages to file
-	if (con_debuglog)
-		Con_DebugLog(va("%s/qconsole.log",com_gamedir), "%s", msg);
-
-	if (!con_initialized)
-		return;
-		
-	if (cls.state == ca_dedicated)
-		return;		// no graphics mode
-
-// write it to the scrollable buffer
-	Con_Print (msg);
-	
-// update the screen if the console is displayed
-	if (cls.signon != SIGNONS && !scr_disabled_for_loading )
-	{
-	// protect against infinite loop if something in SCR_UpdateScreen calls
-	// Con_Printd
-		if (!inupdate)
-		{
-			inupdate = true;
-			SCR_UpdateScreen ();
-			inupdate = false;
-		}
-	}
 }
 
 /*

@@ -705,14 +705,14 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 	if (!SV_RecursiveHullCheck (hull, node->children[side], p1f, midf, p1, mid, trace) )
 		return false;
 
-#ifdef PARANOID
+/*#ifdef PARANOID
 	if (SV_HullPointContents (sv_hullmodel, mid, node->children[side])
 	== CONTENTS_SOLID)
 	{
 		Con_Printf ("mid PointInHullSolid\n");
 		return false;
 	}
-#endif
+#endif*/
 	
 	contents = SV_HullPointContents (hull, node->children[side^1], mid);
 //	if (contents != CONTENTS_SOLID && 
@@ -803,7 +803,6 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 		if (ent->v.solid == SOLID_BSP && 
 		(fabsf(ent->v.angles[0]) > 1 || fabsf(ent->v.angles[1]) > 1 || fabsf(ent->v.angles[2]) > 1) )
 		{
-			vec3_t	a;
 			vec3_t	forward, right, up;
 			vec3_t	temp;
 

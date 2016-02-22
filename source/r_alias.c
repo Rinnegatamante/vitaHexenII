@@ -210,8 +210,7 @@ qboolean R_AliasCheckBBox (void)
 		allclip &= flags;
 	}
 
-	if (allclip)
-		return false;	// trivial reject off one side
+	if (allclip) return false;	// trivial reject off one side
 
 	currententity->trivial_accept = !anyclip & !zclipped;
 
@@ -740,7 +739,7 @@ void R_AliasSetupSkin (void)
 	float			*pskinintervals, fullskininterval;
 	float			skintargettime, skintime;
 	qpic_t			*stonepic;
-	char temp[40];
+	char 			temp[40];
 	int			a_skinwidth;
 
 	skinnum = currententity->skinnum;
@@ -904,9 +903,9 @@ void R_AliasDrawModel (alight_t *plighting)
 	int		i, j;
 	byte	*dest, *source, *sourceA;
 
-	finalvert_t		finalverts[MAXALIASVERTS +
-						((CACHE_SIZE - 1) / sizeof(finalvert_t)) + 1];
-	auxvert_t		auxverts[MAXALIASVERTS];
+	finalvert_t		*finalverts = malloc(sizeof(finalvert_t) * (MAXALIASVERTS +
+						((CACHE_SIZE - 1) / sizeof(finalvert_t)) + 1));
+	auxvert_t		*auxverts = malloc(sizeof(auxvert_t) * MAXALIASVERTS);
 
 	r_amodels_drawn++;
 
@@ -988,5 +987,9 @@ void R_AliasDrawModel (alight_t *plighting)
 		R_AliasPrepareUnclippedPoints ();
 	else
 		R_AliasPreparePoints ();
+		
+	free(finalverts);
+	free(auxverts);
+	
 }
 
