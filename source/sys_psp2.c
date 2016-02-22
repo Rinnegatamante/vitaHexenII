@@ -437,7 +437,8 @@ int main (int argc, char **argv)
 		Host_Frame(deltaSecond);
 		lastTick = tick;
 	}
-
-	sceKernelExitProcess(0);
+	
+	free(parms.membase);
+	//sceKernelExitProcess(0);
 	return 0;
 }
