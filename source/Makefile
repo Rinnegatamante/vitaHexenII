@@ -6,7 +6,7 @@ INCLUDES	:=	include
 LIBS = -lvita2d -lSceAudio_stub -lSceKernel_stub \
 	-lSceCommonDialog_stub -lc -lSceDisplay_stub -lSceGxm_stub \
 	-lSceSysmodule_stub -lSceCtrl_stub -lSceTouch_stub -lm \
-	-lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub \
+	-lSceRtc_stub -lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub \
 
 COMMON_OBJS =	chase.o \
 	cl_demo.o \

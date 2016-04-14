@@ -7,11 +7,11 @@
 #include <sys/stat.h>
 //#include <dirent.h>
 #include <unistd.h>
-
+#include <psp2/rtc.h>
 extern  cvar_t	pausable;
 extern	cvar_t	sv_flypitch;
 extern	cvar_t	sv_walkpitch;
-
+extern qboolean isDSP;
 int current_skill;
 static double old_time;
 
@@ -463,6 +463,7 @@ Host_SavegameComment
 Writes a SAVEGAME_COMMENT_LENGTH character comment describing the current 
 ===============
 */
+
 void Host_SavegameComment (char *text)
 {
 	int		i;
@@ -474,8 +475,11 @@ void Host_SavegameComment (char *text)
 		text[i] = ' ';
 	memcpy (text, cl.levelname, strlen(cl.levelname));
 //	sprintf (kills,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
-
-	TempTime = time(NULL);
+	
+	const SceRtcTime date;
+	time_t time;
+	sceRtcGetTime_t(&date, &time);
+	TempTime = time;
 	tblock = localtime(&TempTime);
 	strftime(kills,sizeof(kills),ShortTime,tblock);
 
@@ -486,9 +490,7 @@ void Host_SavegameComment (char *text)
 			text[i] = '_';
 	text[SAVEGAME_COMMENT_LENGTH] = '\0';
 }
-void DeleteFile(char* path) {
-	unlink (path);
-}
+
 /*
 ===============
 Host_Savegame_f
@@ -503,7 +505,7 @@ void Host_Savegame_f (void)
 	qboolean error_state = false;
 	int attempts = 0;
 	char *message;
-
+	
 	if (cmd_source != src_command)
 		return;
 
@@ -563,14 +565,12 @@ void Host_Savegame_f (void)
 	sprintf(tempdir,"%s/",com_savedir);
 
 	sprintf (name, "%sclients.gip",tempdir);
-	DeleteFile(name);
 
-	sprintf (name, "%s*.gip", tempdir);
-	sprintf (dest, "%s/%s",com_savedir, Cmd_Argv(1));
-	strcat  (dest, "/");
+	sprintf (name, "*.gip");
+	sprintf (dest, "%s/%s/",com_savedir, Cmd_Argv(1));
 	Con_Printf ("Saving game to %s...\n", dest);
 	
-	error_state = CL_CopyFiles(tempdir, "*.gip", dest);
+	error_state = CL_CopyFiles(com_savedir, name, dest);
 
 	sprintf(dest,"%s/%s/info.dat",com_savedir, Cmd_Argv(1));
 	f = fopen (dest, "w");
@@ -615,6 +615,7 @@ void Host_Savegame_f (void)
 			goto retry;
 		}
 	}
+	
 }
 
 
@@ -625,11 +626,14 @@ Host_Loadgame_f
 */
 void Host_Loadgame_f (void)
 {
+	
 	FILE	*f;
-	char	*mapname = malloc(sizeof(char)*MAX_OSPATH);
+	char	*mapname = malloc(sizeof(char)*MAX_QPATH);
 	float	time, tfloat;
 	char	*str = malloc(sizeof(char)*32768);
-	int	i;
+	char	*start;
+	int		i, r;
+	int		entnum;
 	edict_t	*ent;
 	int	version;
 	float	tempf;
@@ -641,18 +645,18 @@ void Host_Loadgame_f (void)
 	char *message;
 
 	if (cmd_source != src_command){
+		free(spawn_parms);
 		free(mapname);
 		free(str);
-		free(spawn_parms);
 		return;
 	}
 	
 	if (Cmd_Argc() != 2)
 	{
 		Con_Printf ("load <savename> : load a game\n");
+		free(spawn_parms);
 		free(mapname);
 		free(str);
-		free(spawn_parms);
 		return;
 	}
 
@@ -673,21 +677,21 @@ void Host_Loadgame_f (void)
 	if (!f)
 	{
 		Con_Printf ("ERROR: couldn't open %s\n",dest);
+		free(spawn_parms);
 		free(mapname);
 		free(str);
-		free(spawn_parms);
 		return;
 	}
-
+	
 	fscanf (f, "%i\n", &version);
 
 	if (version != SAVEGAME_VERSION)
 	{
 		fclose (f);
 		Con_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
+		free(spawn_parms);
 		free(mapname);
 		free(str);
-		free(spawn_parms);
 		return;
 	}
 	fscanf (f, "%s\n", str);
@@ -742,17 +746,14 @@ void Host_Loadgame_f (void)
 	fscanf (f, "%d\n",&info_mask2);
 
 	fclose (f);
-
 	CL_RemoveGIPFiles(tempdir);
 
 	retry:
 	attempts++;
 
-	sprintf (name, "%s/%s/*.gip", com_savedir, Cmd_Argv(1));
+	sprintf (name, "*.gip");
 	sprintf (dest, "%s/%s",com_savedir, Cmd_Argv(1));
-	strcat  (dest, "/");
-	
-	error_state = CL_CopyFiles(dest, "*.gip", tempdir);
+	error_state = CL_CopyFiles(dest, name, tempdir);
 
 	if (error_state)
 	{
@@ -767,19 +768,17 @@ void Host_Loadgame_f (void)
 			goto retry;
 		}
 		else{
+			free(spawn_parms);
 			free(mapname);
 			free(str);
-			free(spawn_parms);
 			return;
 		}
 	}
-	
 	LoadGamestate (mapname, NULL, 2);
-
+	
 	SV_SaveSpawnparms ();
-
+	sv.max_edicts = MAX_EDICTS;
 	ent = EDICT_NUM(1);
-
 	Cvar_SetValue ("_cl_playerclass", ent->v.playerclass);//this better be the same as above...
 
 	// this may be rudundant with the setting in PR_LoadProgs, but not sure so its here too
@@ -795,20 +794,21 @@ void Host_Loadgame_f (void)
 		CL_EstablishConnection ("local");
 		Host_Reconnect_f ();
 	}
-	
-	free(mapname);
 	free(spawn_parms);
+	free(mapname);
 	free(str);
+	
 }
 
 #ifdef QUAKE2RJ
 void SaveGamestate(qboolean ClientsOnly)
 {
-	char	*name=malloc(sizeof(char)*MAX_OSPATH);
-	char	*tempdir=malloc(sizeof(char)*MAX_OSPATH);
+	
+	char	name[MAX_OSPATH];
+	char	tempdir[MAX_OSPATH];
 	FILE	*f;
 	int		i;
-	char	*comment = malloc(sizeof(char)*(SAVEGAME_COMMENT_LENGTH+1));
+	char	comment[SAVEGAME_COMMENT_LENGTH+1];
 	edict_t	*ent;
 	int start,end;
 	qboolean error_state = false;
@@ -842,9 +842,6 @@ retry:
 	if (!f)
 	{
 		Con_Printf ("ERROR: couldn't open %s\n",name);
-		free(comment);
-		free(tempdir);
-		free(name);
 		return;
 	}
 	
@@ -919,10 +916,6 @@ retry:
 		}
 	}
 	
-	free(comment);
-	free(tempdir);
-	free(name);
-	
 }
 
 void RestoreClients(void)
@@ -962,17 +955,19 @@ void RestoreClients(void)
 
 int LoadGamestate(char *level, char *startspot, int ClientsMode)
 {
+	
 	char	*name = malloc(sizeof(char)*MAX_OSPATH);
 	char	*tempdir = malloc(sizeof(char)*MAX_OSPATH);
 	FILE	*f;
-	char	*mapname = malloc(sizeof(char)*MAX_QPATH);
+	char	*mapname = malloc(sizeof(char)*MAX_OSPATH);
 	float	time, sk;
-	char	*str = malloc(32768*sizeof(char)), *start;
+	char	*str = malloc(sizeof(char)*32768);
+	char	*start;
 	int		i, r;
 	edict_t	*ent;
 	int		entnum;
 	int		version;
-	float	*spawn_parms = malloc(sizeof(float)*NUM_SPAWN_PARMS);
+	float	spawn_parms[NUM_SPAWN_PARMS];
 	qboolean auto_correct = false;
 
 	sprintf(tempdir,"%s/",com_savedir);
@@ -995,11 +990,10 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 		if (ClientsMode == 2)
 			Con_Printf ("ERROR: couldn't open %s\n",name);
 		
-		free(spawn_parms);
-		free(mapname);
 		free(name);
 		free(tempdir);
 		free(str);
+		free(mapname);
 		return -1;
 	}
 
@@ -1009,11 +1003,10 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 	{
 		fclose (f);
 		Con_Printf ("Savegame is version %i, not %i\n", version, SAVEGAME_VERSION);
-		free(spawn_parms);
+		free(str);
 		free(mapname);
 		free(name);
 		free(tempdir);
-		free(str);
 		return -1;
 	}
 
@@ -1031,11 +1024,8 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 		if (!sv.active)
 		{
 			Con_Printf ("Couldn't load map\n");
-			free(spawn_parms);
-			free(mapname);
-			free(name);
-			free(tempdir);
 			free(str);
+			free(mapname);
 			return -1;
 		}
 
@@ -1053,7 +1043,7 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 	while (!feof(f))
 	{
 		fscanf (f, "%i\n",&entnum);
-		for (i=0 ; i<sizeof(str)-1 ; i++)
+		for (i=0 ; i<32768-1 ; i++)
 		{
 			r = fgetc (f);
 			if (r == EOF || !r)
@@ -1065,8 +1055,8 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 				break;
 			}
 		}
-		if (i == sizeof(str)-1)
-			Sys_Error ("Loadgame buffer overflow");
+		if (i == 32768 - 1)
+			Sys_Error ("Loadgamestate buffer overflow");
 		str[i] = 0;
 		start = str;
 		start = COM_Parse(str);
@@ -1138,12 +1128,11 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 	{
 		Con_DPrintf("*** Auto-corrected model indexes!\n");
 	}
-
-	free(spawn_parms);
+	
+	free(str);
 	free(mapname);
 	free(name);
 	free(tempdir);
-	free(str);
 	
 	return 0;
 }
@@ -1151,22 +1140,18 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 // changing levels within a unit
 void Host_Changelevel2_f (void)
 {
-	char	*level = malloc(MAX_QPATH*sizeof(char));;
-	char	*_startspot = malloc(MAX_QPATH*sizeof(char));
+	char	level[MAX_QPATH];
+	char	_startspot[MAX_QPATH];
 	char	*startspot;
 
 	if (Cmd_Argc() < 2)
 	{
 		Con_Printf ("changelevel2 <levelname> : continue game on a new level in the unit\n");
-		free(_startspot);
-		free(level);
 		return;
 	}
 	if (!sv.active || cls.demoplayback)
 	{
 		Con_Printf ("Only the server may changelevel\n");
-		free(_startspot);
-		free(level);
 		return;
 	}
 
@@ -1191,9 +1176,6 @@ void Host_Changelevel2_f (void)
 		SV_SpawnServer (level, startspot);
 		RestoreClients();
 	}
-	
-	free(_startspot);
-	free(level);
 	
 }
 #endif

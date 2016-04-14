@@ -1342,15 +1342,15 @@ void COM_CopyFile (char *netpath, char *cachepath)
 {
 	int             in, out;
 	int             remaining, count;
-	char    	*buf=malloc(sizeof(char)*4096);
+	char    	buf[4096];
 	
-	// Con_Printf ("CP %s -> %s\n",netpath,cachepath);
+	Sys_Printf ("CP %s -> %s\n",netpath,cachepath);
 		
 	remaining = Sys_FileOpenRead (netpath, &in);            
 	COM_CreatePath (cachepath);     // create directories up to the cache file
 	out = Sys_FileOpenWrite (cachepath);
 	
-	// Con_Printf ("in:%d out:%d bytes:%d\n",in,out,remaining);
+	Sys_Printf ("in:%d out:%d bytes:%d\n",in,out,remaining);
 	
 	while (remaining)
 	{
@@ -1362,11 +1362,10 @@ void COM_CopyFile (char *netpath, char *cachepath)
 		Sys_FileWrite (out, buf, count);
 		remaining -= count;
 	}
-	// Con_Printf ("in:%d out:%d bytes:%d\n",in,out,remaining);
+	Sys_Printf ("in:%d out:%d bytes:%d\n",in,out,remaining);
 	
 	Sys_FileClose (in);
 	Sys_FileClose (out);    
-	free(buf);
 }
 
 /*
@@ -1762,7 +1761,7 @@ COM_InitFilesystem
 void COM_InitFilesystem (void)
 {
 	int             i, j;
-	char    *basedir=malloc(sizeof(char)*MAX_OSPATH);
+	char 			basedir[MAX_OSPATH];
 	searchpath_t    *search;
 
 //
@@ -1862,7 +1861,6 @@ void COM_InitFilesystem (void)
 	{
 		strcpy(com_savedir,com_gamedir);
 	}
-	free(basedir);
 }
 
 

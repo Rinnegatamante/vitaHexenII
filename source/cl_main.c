@@ -107,7 +107,7 @@ void CL_RemoveGIPFiles (char *path)
 		
 	while (name)
 	{
-		Con_DPrintf ("Removing %s %s\n",tempdir,name);
+		Sys_Printf ("Removing %s %s\n",tempdir,name);
 		
 		unlink (va("%s/%s", tempdir, name));
 
@@ -121,18 +121,18 @@ qboolean CL_CopyFiles(char *source, char *pat, char *dest)
 {
 	char	*name, tempdir[MAX_OSPATH], tempdir2[MAX_OSPATH];
 	qboolean error;
-
-	Con_DPrintf("Copy %s files from %s to %s\n",pat,source,dest);
+	
+	Sys_Printf("Copy %s files from %s to %s\n",pat,source,dest);
 	
 	name = Sys_FindFirstFile(source, pat);
 	error = false;
 	
 	while (name)
 	{
-		if ( snprintf(tempdir, sizeof(tempdir),"%s%s", source, name) >= sizeof(tempdir) ||
+		if ( snprintf(tempdir, sizeof(tempdir),"%s/%s", source, name) >= sizeof(tempdir) ||
 		     snprintf(tempdir2, sizeof(tempdir2),"%s%s", dest, name) >= sizeof(tempdir2) )
 		{
-			Con_Printf ("%s: string buffer overflow!\n", __FUNCTION__);
+			Sys_Printf ("%s: string buffer overflow!\n", __FUNCTION__);
 			error = true;
 			goto error_out;
 		}

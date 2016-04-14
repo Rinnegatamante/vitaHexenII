@@ -296,7 +296,10 @@ void Host_WriteConfiguration (char *fname)
 		Key_WriteBindings (f);
 		Cvar_WriteVariables (f);
 		
-		if (in_mlook.state & 1)		//if mlook was down, keep it that way
+		// 3rd person setting
+		fprintf (f, "chase_active \"%i\"",chase_active.value);
+		
+		//if (in_mlook.state & 1)		//if mlook was down, keep it that way
 			fprintf (f, "+mlook\n");
 
 		fclose (f);
@@ -960,22 +963,37 @@ void Host_Init (quakeparms_t *parms)
 
 	com_argc = parms->argc;
 	com_argv = parms->argv;
-
+	Sys_Printf("Memory Init...");
 	Memory_Init (parms->membase, parms->memsize);
+	Sys_Printf("Done!\nCbuf Init...");
 	Cbuf_Init ();
+	Sys_Printf("Done!\nCmd Init...");
 	Cmd_Init ();	
+	Sys_Printf("Done!\nVideo Init...");
 	V_Init ();
+	Sys_Printf("Done!\nChase Init...");
 	Chase_Init ();
+	Sys_Printf("Done!\nHostVCR Init...");
 	Host_InitVCR (parms);
+	Sys_Printf("Done!\nCOM Init...");
 	COM_Init (parms->basedir);
+	Sys_Printf("Done!\nHostLocal Init...");
 	Host_InitLocal ();
+	Sys_Printf("Done!\nLoad gfx.wad...");
 	W_LoadWadFile ("gfx.wad");
+	Sys_Printf("Done!\nKey Init...");
 	Key_Init ();
+	Sys_Printf("Done!\nCon Init...");
 	Con_Init ();	
+	Sys_Printf("Done!\nM Init...");
 	M_Init ();	
+	Sys_Printf("Done!\nPR Init...");
 	PR_Init ();
+	Sys_Printf("Done!\nMod Init...");
 	Mod_Init ();
+	Sys_Printf("Done!\nNET Init...");
 	NET_Init ();
+	Sys_Printf("Done!\nSV Init...");
 	SV_Init ();
 
 	Con_Printf ("Exe: "__TIME__" "__DATE__"\n");
