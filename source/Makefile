@@ -1,4 +1,5 @@
 TARGET		:= vitaHexenII
+TITLE		:= HXEN00001
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
@@ -16,9 +17,6 @@ COMMON_OBJS =	chase.o \
 	cl_tent.o \
 	cl_effect.o \
 	cmd.o \
-	console_psp2.o \
-	draw_psp2.o \
-	font_data.o \
 	common.o \
 	console.o \
 	crc.o \
@@ -97,11 +95,20 @@ CFLAGS  = -Wl,-q -Wall -O3 -Did386="0" -DQUAKE2RJ -DRJNET -fno-short-enums -ffas
 CXXFLAGS  = $(CFLAGS) -fno-rtti -Wcast-qual
 ASFLAGS = $(CFLAGS)
 
-all: $(TARGET).velf
+all: $(TARGET).vpk
+
+$(TARGET).vpk: $(TARGET).velf
+	vita-make-fself $< ..\build\eboot.bin
+	vita-mksfoex -s TITLE_ID=$(TITLE) "$(TARGET)" param.sfo
+	cp -f param.sfo ../build/sce_sys/param.sfo
+	
+	#------------ Comment this if you don't have 7zip ------------------
+	7z a -tzip ../$(TARGET).vpk -r ..\build\sce_sys\* ..\build\eboot.bin 
+	#-------------------------------------------------------------------
 
 %.velf: %.elf
 	$(PREFIX)-strip -g $<
-	vita-elf-create $< $@ $(VITASDK)/bin/db.json
+	vita-elf-create $< $@
 
 $(TARGET).elf: $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@

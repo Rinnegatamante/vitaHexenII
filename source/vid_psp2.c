@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vita2d.h>
 #include "quakedef.h"
 #include "d_local.h"
-#include "draw_psp2.h"
 #define u16 uint16_t
 #define u8 uint8_t
 
@@ -38,8 +37,6 @@ vita2d_texture* tex_buffer;
 u16	d_8to16table[256];
 byte globalcolormap[VID_GRADES*256], lastglobalcolor = 0;
 byte *lastsourcecolormap = NULL;
-
-byte	vid_buffer[BASEWIDTH*BASEHEIGHT];
 uint32_t palette_tbl[256];
 
 void	VID_SetPalette (unsigned char *palette)
@@ -65,10 +62,6 @@ void	VID_ShiftPalette (unsigned char *palette)
 
 void	VID_Init (unsigned char *palette)
 {
-
-	// Term debug console used to handle engine startup errors
-	console_fini();
-	end_video();
 	
 	// Init GPU
 	vita2d_init();
@@ -81,11 +74,11 @@ void	VID_Init (unsigned char *palette)
 	// Set Quake Engine parameters
 	vid.maxwarpwidth = vid.width = vid.conwidth = BASEWIDTH;
 	vid.maxwarpheight = vid.height = vid.conheight = BASEHEIGHT;
-	vid.aspect = 1.0;
-	vid.numpages = 1;
+	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+	vid.numpages = 2;
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
-	vid.buffer = vid.conbuffer = vita2d_texture_get_datap(tex_buffer);
+	vid.buffer = vid.conbuffer = vid.direct = vita2d_texture_get_datap(tex_buffer);
 	vid.rowbytes = vid.conrowbytes = BASEWIDTH;
 	
 	// Set correct palette for the texture

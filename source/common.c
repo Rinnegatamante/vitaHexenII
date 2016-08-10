@@ -1804,10 +1804,10 @@ void COM_InitFilesystem (void)
 // start up default 3DS folders
 //
 	Sys_Printf("\nAdding data1 directory...");
-	COM_AddGameDirectory ("cache0:/data1");
+	COM_AddGameDirectory ("ux0:/data/Hexen II/data1");
 #ifndef NO_PRAVEUS
 	Sys_Printf("\nAdding portals directory...");
-	COM_AddGameDirectory ("cache0:/portals");
+	COM_AddGameDirectory ("ux0:/data/Hexen II/portals");
 #endif
 
 //
