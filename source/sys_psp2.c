@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/stat.h>
 #include <psp2/io/dirent.h>
 #include "errno.h"
-#include <psp2/ctrl.h>
+#include "danzeff.h"
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
 #include <psp2/rtc.h>
@@ -34,6 +34,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "fnmatch_mod.h"
 
+extern int old_char;
+extern int isDanzeff;
+extern uint64_t rumble_tick;
+extern cvar_t res_val;
 qboolean		isDedicated;
 
 uint64_t initialTime = 0;
@@ -289,6 +293,12 @@ void Sys_SendKeyEvents (void)
 	if(kUp != kDown)
 		SCE_KeyUp(kDown, kUp);
 		
+	// Touchscreen support for game status showing
+	SceTouchData touch;
+	sceTouchPeek(SCE_TOUCH_PORT_FRONT, &touch, 1);
+	if (touch.reportNum > 0) Key_Event(K_TOUCH, true);
+	else Key_Event(K_TOUCH, false);
+		
 	oldpad = pad;
 }
 
@@ -415,20 +425,78 @@ int main (int argc, char **argv)
 	Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
 	Cbuf_AddText ("bind LEFTARROW invleft\n"); // Left
 	Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
+	Cbuf_AddText ("bind TOUCH +showscores\n"); // Touchscreen
 	Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
+	
+	// Loading default config file
+	Cbuf_AddText ("exec config.cfg\n");
+	
+	// Just to be sure to use the correct resolution in config.cfg
+	VID_ChangeRes(res_val.value);
 	
 	u64 lastTick;
 	sceRtcGetCurrentTick(&lastTick);
 	
 	while (1)
 	{
+		// Prevent screen power-off
 		sceKernelPowerTick(0);
+		
+		// Rumble effect managing (PSTV only)
+		if (rumble_tick != 0){
+			if (sceKernelGetProcessTimeWide() - rumble_tick > 500000) IN_StopRumble(); // 0.5 sec
+		}
+		
+		// Danzeff keyboard manage for Console / Input
+		if (key_dest == key_console){
+			if (old_char != 0) Key_Event(old_char, false);
+			SceCtrlData danzeff_pad, oldpad;
+			sceCtrlPeekBufferPositive(0, &danzeff_pad, 1);
+			if (isDanzeff){
+				int new_char = danzeff_readInput(danzeff_pad);
+				if (new_char != 0){
+					if (new_char == DANZEFF_START){
+						Key_Console(K_END);
+					}else if (new_char == DANZEFF_LEFT){
+						Key_Event(K_UPARROW, true);
+						old_char = K_UPARROW;
+					}else if (new_char == '\n'){
+						Key_Event(K_DOWNARROW, true);
+						old_char = K_DOWNARROW;
+					}else if (new_char == 8){
+						Key_Event(K_BACKSPACE, true);
+						old_char = K_BACKSPACE;
+					}else if (new_char == DANZEFF_RIGHT){
+						Key_Event(K_TAB, true);
+						old_char = K_TAB;
+					}else if (new_char == DANZEFF_SELECT && (!(oldpad.buttons & SCE_CTRL_SELECT))){
+						if (key_dest != key_console) danzeff_free();
+						isDanzeff = false;
+					}else{
+						Key_Event(new_char, true);
+						old_char = new_char;
+					}
+				}
+			}else if ((danzeff_pad.buttons & SCE_CTRL_START) && (!(oldpad.buttons & SCE_CTRL_START))){
+				if (key_dest == key_console){
+					danzeff_free();
+					Con_ToggleConsole_f ();
+				}
+			}else if ((danzeff_pad.buttons & SCE_CTRL_SELECT) && (!(oldpad.buttons & SCE_CTRL_SELECT))){
+				if (key_dest != key_console) danzeff_load();
+				isDanzeff = true;
+			}
+			oldpad = danzeff_pad;
+		}
+		
+		// Get current frame
 		u64 tick;
 		sceRtcGetCurrentTick(&tick);
 		const unsigned int deltaTick  = tick - lastTick;
 		const float   deltaSecond = deltaTick * tickRate;
 		Host_Frame(deltaSecond);
 		lastTick = tick;
+		
 	}
 	
 	free(parms.membase);

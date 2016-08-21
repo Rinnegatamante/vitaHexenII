@@ -14,8 +14,8 @@
 #define	K_DOWNARROW		129
 #define	K_LEFTARROW		130
 #define	K_RIGHTARROW	131
+#define	K_TOUCH			132
 
-#define	K_ALT			132
 #define	K_CTRL			133
 #define	K_SHIFT			134
 #define	K_F1			135

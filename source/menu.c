@@ -12,8 +12,16 @@
 
 //extern cvar_t	accesspoint;
 
+extern char res_string[256];
 extern	float introTime;
-extern	cvar_t	crosshair;
+extern cvar_t	d_mipscale;
+extern cvar_t	crosshair;
+extern void VID_ChangeRes(float);
+extern cvar_t	inverted;
+extern cvar_t	pstv_rumble;
+extern cvar_t	res_val;
+extern cvar_t	retrotouch;
+extern cvar_t	always_run;
 cvar_t m_oldmission = {"m_oldmission","1",true};
 
 void (*vid_menudrawfn)(void);
@@ -1911,26 +1919,6 @@ again:
 
 #define	SLIDER_RANGE	10
 
-enum 
-{
-	OPT_CUSTOMIZE = 0,
-	OPT_CONSOLE,
-	OPT_DEFAULTS,
-	OPT_SCRSIZE,	//3
-	OPT_GAMMA,		//4
-	OPT_MOUSESPEED,	//5
-	OPT_SNDVOL,		//6
-	OPT_ALWAYRUN,	//7
-	OPT_INVMOUSE,	//8
-	OPT_LOOKSPRING,	//9
-	OPT_LOOKSTRAFE,	//10
-	OPT_CROSSHAIR,	//11
-	OPT_ALWAYSMLOOK,//12
-	OPT_USEMOUSE,	//13
-	
-	OPTIONS_ITEMS
-};
-
 int		options_cursor;
 
 void M_Menu_Options_f (void)
@@ -1939,7 +1927,7 @@ void M_Menu_Options_f (void)
 	m_state = m_options;
 	m_entersound = true;
 
-	if ((options_cursor == OPT_USEMOUSE))
+	//if ((options_cursor == OPT_USEMOUSE))
 		options_cursor = 0;
 }
 
@@ -1950,7 +1938,7 @@ void M_AdjustSliders (int dir)
 
 	switch (options_cursor)
 	{
-	case OPT_SCRSIZE:	// screen size
+	case 3:	// screen size
 		scr_viewsize.value += dir * 10;
 		if (scr_viewsize.value < 30)
 			scr_viewsize.value = 30;
@@ -1961,7 +1949,7 @@ void M_AdjustSliders (int dir)
 		vid.recalc_refdef = 1;
 		break;
 #ifndef GLQUAKE
-	case OPT_GAMMA:	// gamma
+	case 4:	// gamma
 		v_gamma.value -= dir * 0.05;
 		if (v_gamma.value < 0.5)
 			v_gamma.value = 0.5;
@@ -1970,7 +1958,7 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("gamma", v_gamma.value);
 		break;
 #endif
-	case OPT_MOUSESPEED:	// mouse speed
+	case 5:	// mouse speed
 		sensitivity.value += dir * 0.5;
 		if (sensitivity.value < 1)
 			sensitivity.value = 1;
@@ -1979,8 +1967,16 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("sensitivity", sensitivity.value);
 		break;
 	
+	case 6:	// music volume
+		bgmvolume.value += dir * 0.1;
+		if (bgmvolume.value < 0)
+			bgmvolume.value = 0;
+		if (bgmvolume.value > 1)
+			bgmvolume.value = 1;
+		Cvar_SetValue ("bgmvolume", bgmvolume.value);
+		break;
 	
-	case OPT_SNDVOL:	// sfx volume
+	case 7:	// sfx volume
 		volume.value += dir * 0.1;
 		if (volume.value < 0)
 			volume.value = 0;
@@ -1989,42 +1985,41 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("volume", volume.value);
 		break;
 		
-	case OPT_ALWAYRUN:	// allways run
-		if (cl_forwardspeed.value > 200)
-		{
-			Cvar_SetValue ("cl_forwardspeed", 200);
-			Cvar_SetValue ("cl_backspeed", 200);
-		}
-		else
-		{
-			Cvar_SetValue ("cl_forwardspeed", 400);
-			Cvar_SetValue ("cl_backspeed", 400);
-		}
+	case 8:	// always run
+		Cvar_SetValue ("always_run", !always_run.value);
 		break;
 	
-	case OPT_INVMOUSE:	// invert mouse
-		Cvar_SetValue ("m_pitch", -m_pitch.value);
+	case 9:	// invert camera
+		Cvar_SetValue ("invert_camera", !inverted.value);
 		break;
 	
-	case OPT_LOOKSPRING:	// lookspring
-		Cvar_SetValue ("lookspring", !lookspring.value);
-		break;
+	case 10:	// depth of field
+		d_mipscale.value -= dir;
+		if (d_mipscale.value > 40) d_mipscale.value = 40;
+		else if (d_mipscale.value < 0) d_mipscale.value = 0;
+		Cvar_SetValue ("d_mipscale", d_mipscale.value);
+ 		break;
 	
-	case OPT_LOOKSTRAFE:	// lookstrafe
-		Cvar_SetValue ("lookstrafe", !lookstrafe.value);
+	case 11:	// retrotouch
+		Cvar_SetValue ("retrotouch", !retrotouch.value);
 		break;
 
-	case OPT_CROSSHAIR:	
+	case 12:	// crosshair
 		Cvar_SetValue ("crosshair", !crosshair.value);
 		break;
 
-	case OPT_ALWAYSMLOOK:	
-		if (in_mlook.state & 1)
-			//IN_MLookUp();
-			Cbuf_AddText("-mlook");
-		else
-			//IN_MLookDown();
-			Cbuf_AddText("+mlook");
+	case 13:	// rumble effect
+		Cvar_SetValue ("pstv_rumble", !pstv_rumble.value);
+		break;
+		
+	case 14:	// rescaler
+		res_val.value += dir * 0.333;
+		if (res_val.value < 0)
+			res_val.value = 0;
+		if (res_val.value > 1)
+			res_val.value = 1;
+		Cvar_SetValue ("render_res",res_val.value);
+		VID_ChangeRes(res_val.value);
 		break;
 	}
 }
@@ -2067,40 +2062,41 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 60+(4*8), r);
 #endif
 
-#ifdef PSP
-	M_Print (16, 60+(5*8), "      Analog Nub Speed");
-#else
-	M_Print (16, 60+(5*8), "           Mouse Speed");
-#endif
+	M_Print (16, 60+(5*8),       "    Camera Sensitivity");
 	r = (sensitivity.value - 1)/10;
 	M_DrawSlider (220, 60+(5*8), r);
-
-
-	M_Print (16, 60+(6*8), "          Sound Volume");
-	r = volume.value;
+	
+	M_Print (16, 60+(6*8), "          Music Volume");
+	r = bgmvolume.value;
 	M_DrawSlider (220, 60+(6*8), r);
 
-	M_Print (16, 60+(7*8),	"            Always Run");
-	M_DrawCheckbox (220, 60+(7*8), cl_forwardspeed.value > 200);
+	M_Print (16, 60+(7*8), "          Sound Volume");
+	r = volume.value;
+	M_DrawSlider (220, 60+(7*8), r);
 
-#ifdef PSP
-	M_Print (16, 60+(OPT_INVMOUSE*8), "     Invert Analog Nub");
-#else
-	M_Print (16, 60+(OPT_INVMOUSE*8),	"          Invert Mouse");
-#endif
-	M_DrawCheckbox (220, 60+(OPT_INVMOUSE*8), m_pitch.value < 0);
+	M_Print (16, 60+(8*8),	"            Always Run");
+	M_DrawCheckbox (220, 60+(8*8), always_run.value);
 
-	M_Print (16, 60+(OPT_LOOKSPRING*8),	"            Lookspring");
-	M_DrawCheckbox (220, 60+(OPT_LOOKSPRING*8), lookspring.value);
+	M_Print (16, 60+(9*8),  "         Invert Camera");
+	M_DrawCheckbox (220, 60+(9*8), inverted.value);
 
-	M_Print (16, 60+(OPT_LOOKSTRAFE*8),	"            Lookstrafe");
-	M_DrawCheckbox (220, 60+(OPT_LOOKSTRAFE*8), lookstrafe.value);
+	M_Print (16, 60+(10*8),  "       Depth of Field");
+	r = (40 - d_mipscale.value) / 40;
+	M_DrawSlider (220, 60+(10*8), r);
 
-	M_Print (16, 60+(OPT_CROSSHAIR*8),	"        Show Crosshair");
-	M_DrawCheckbox (220, 60+(OPT_CROSSHAIR*8), crosshair.value);
+	M_Print (16, 60+(11*8), "        Use Retrotouch");
+	M_DrawCheckbox (220, 60+(11*8), retrotouch.value);
 
-	M_Print (16,60+(OPT_ALWAYSMLOOK*8),	"            Mouse Look");
-	M_DrawCheckbox (220, 60+(OPT_ALWAYSMLOOK*8), in_mlook.state & 1);
+	M_Print (16, 60+(12*8),	"        Show Crosshair");
+	M_DrawCheckbox (220, 60+(12*8), crosshair.value);
+
+	M_Print (16, 60+(13*8),"         Rumble Effect");
+	M_DrawCheckbox (220, 60+(13*8), pstv_rumble.value);
+	
+	M_Print (16, 60+(14*8), "       Game Resolution");
+	M_DrawSlider (220, 60+(14*8), res_val.value);
+	
+	M_Print (50, 74+(14*8), res_string);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -2120,23 +2116,23 @@ void M_Options_Key (int k)
 		m_entersound = true;
 		switch (options_cursor)
 		{
-		case OPT_CUSTOMIZE:
+		case 0:
 			M_Menu_Keys_f ();
 			break;
-		case OPT_CONSOLE:
+		case 1:
 			m_state = m_none;
 			Con_ToggleConsole_f ();
 			break;
-		case OPT_DEFAULTS:
+		case 2:
 			Cbuf_AddText ("exec default.cfg\n");
 			
 			// Set default PSVITA controls
 			Cbuf_AddText ("unbindall\n");
 			Cbuf_AddText ("bind CROSS +jump\n"); // Cross
 			Cbuf_AddText ("bind SQUARE +attack\n"); // Square
-			Cbuf_AddText ("bind CIRCLE +jump\n"); // Circle
+			Cbuf_AddText ("bind CIRCLE +crouch\n"); // Circle
 			Cbuf_AddText ("bind TRIANGLE \"impulse 10\"\n"); // Triangle
-			Cbuf_AddText ("bind LTRIGGER +crouch\n"); // Left Trigger
+			Cbuf_AddText ("bind LTRIGGER +speed\n"); // Left Trigger
 			Cbuf_AddText ("bind RTRIGGER +attack\n"); // Right Trigger
 			Cbuf_AddText ("bind UPARROW +showinfo\n"); // Up
 			Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
@@ -2155,7 +2151,7 @@ void M_Options_Key (int k)
 		S_LocalSound ("raven/menu1.wav");
 		options_cursor--;
 		if (options_cursor < 0)
-			options_cursor = OPTIONS_ITEMS-1;
+			options_cursor = 14;
 
 #ifdef GLQUAKE	
 		if ((options_cursor == OPT_GAMMA)) options_cursor--;
@@ -2166,7 +2162,7 @@ void M_Options_Key (int k)
 	case K_DOWNARROW:
 		S_LocalSound ("raven/menu1.wav");
 		options_cursor++;
-		if (options_cursor >= OPTIONS_ITEMS)
+		if (options_cursor >= 15)
 			options_cursor = 0;
 
 #ifdef GLQUAKE	
@@ -2184,13 +2180,13 @@ void M_Options_Key (int k)
 		break;
 	}
 
-	if (options_cursor == OPT_USEMOUSE)
+	/*if (options_cursor == OPT_USEMOUSE)
 	{
 		if (k == K_UPARROW)
 			options_cursor = OPT_ALWAYSMLOOK;
 		else
 			options_cursor = 0;
-	}
+	}*/
 }
 
 //=============================================================================

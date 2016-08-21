@@ -49,8 +49,8 @@ keyname_t keynames[] =
 	{"DOWNARROW", K_DOWNARROW},
 	{"LEFTARROW", K_LEFTARROW},
 	{"RIGHTARROW", K_RIGHTARROW},
-
-	{"ALT", K_ALT},
+	{"TOUCH", K_TOUCH},
+	
 	{"CTRL", K_CTRL},
 	{"SHIFT", K_SHIFT},
 	

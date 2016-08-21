@@ -22,16 +22,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vita2d.h>
 #include "quakedef.h"
 #include "d_local.h"
+#include "danzeff.h"
 #define u16 uint16_t
 #define u8 uint8_t
 
+cvar_t res_val = {"render_res","1.0"};
 viddef_t	vid;				// global video state
+int isDanzeff = false;
+int old_char = 0;
+float fixpalette = 0;
+float rend_scale = 1.0;
+char res_string[256];
+const int widths[4] = {480, 640, 720, 960};
+const int heights[4] = {272, 362, 408, 544};
+const float scales[4] = {2.0, 1.5, 1.3333, 1.0};
+extern cvar_t res_val;
 
-#define	BASEWIDTH	960
-#define	BASEHEIGHT	544
-#define SURFCACHE_SIZE 8388608
+#define SURFCACHE_SIZE 10485760
 
-short	zbuffer[BASEWIDTH*BASEHEIGHT];
+short	zbuffer[960*544];
 byte*	surfcache;
 vita2d_texture* tex_buffer;
 u16	d_8to16table[256];
@@ -69,17 +78,17 @@ void	VID_Init (unsigned char *palette)
 	vita2d_set_vblank_wait(0);
 	
 	// Init GPU texture
-	tex_buffer = vita2d_create_empty_texture_format(BASEWIDTH, BASEHEIGHT, SCE_GXM_TEXTURE_BASE_FORMAT_P8);
+	tex_buffer = vita2d_create_empty_texture_format(widths[3], heights[3], SCE_GXM_TEXTURE_BASE_FORMAT_P8);
 	
 	// Set Quake Engine parameters
-	vid.maxwarpwidth = vid.width = vid.conwidth = BASEWIDTH;
-	vid.maxwarpheight = vid.height = vid.conheight = BASEHEIGHT;
+	vid.maxwarpwidth = vid.width = vid.conwidth = widths[3];
+	vid.maxwarpheight = vid.height = vid.conheight = heights[3];
 	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
 	vid.numpages = 2;
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 	vid.buffer = vid.conbuffer = vid.direct = vita2d_texture_get_datap(tex_buffer);
-	vid.rowbytes = vid.conrowbytes = BASEWIDTH;
+	vid.rowbytes = vid.conrowbytes = widths[3];
 	
 	// Set correct palette for the texture
 	VID_SetPalette(palette);
@@ -88,6 +97,34 @@ void	VID_Init (unsigned char *palette)
 	d_pzbuffer = zbuffer;
 	surfcache = malloc(SURFCACHE_SIZE);
 	D_InitCaches (surfcache, SURFCACHE_SIZE);
+	
+	sprintf(res_string,"Current Resolution: %ld x %ld", widths[3], heights[3]);
+	Cvar_RegisterVariable (&res_val);
+}
+
+void VID_ChangeRes(float scale){
+
+	// Freeing texture
+	vita2d_free_texture(tex_buffer);
+	
+	int idx = (scale / 0.333);
+	
+	// Changing renderer resolution
+	int width = widths[idx];
+	int height = heights[idx];
+	tex_buffer = vita2d_create_empty_texture_format(width, height, SCE_GXM_TEXTURE_BASE_FORMAT_P8);
+	vid.maxwarpwidth = vid.width = vid.conwidth = width;
+	vid.maxwarpheight = vid.height = vid.conheight = height;
+	vid.rowbytes = vid.conrowbytes = width;	
+	vid.buffer = vid.conbuffer = vid.direct = vita2d_texture_get_datap(tex_buffer);
+	sprintf(res_string,"Current Resolution: %ld x %ld", widths[idx], heights[idx]);
+	
+	// Forcing a palette restoration
+	fixpalette = v_gamma.value;
+	Cvar_SetValue ("gamma", 0.1);
+	
+	// Changing scale value
+	rend_scale = scales[idx];
 	
 }
 
@@ -100,9 +137,14 @@ void	VID_Shutdown (void)
 
 void	VID_Update (vrect_t *rects)
 {
+
+	if (fixpalette > 0){
+		Cvar_SetValue ("gamma", fixpalette);
+		fixpalette = 0;
+	}
 	vita2d_start_drawing();
-	vita2d_draw_texture(tex_buffer, 0, 0);
-	//if (isDanzeff) danzeff_render();
+	vita2d_draw_texture_scale(tex_buffer, 0, 0, rend_scale, rend_scale);
+	if (isDanzeff) danzeff_render();
 	vita2d_end_drawing();
 	vita2d_swap_buffers();
 	sceDisplayWaitVblankStart();
