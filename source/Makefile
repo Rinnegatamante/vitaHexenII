@@ -4,10 +4,11 @@ SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
 
-LIBS = -lvita2d -lSceAudio_stub -lSceKernel_stub \
-	-lSceCommonDialog_stub -lc -lSceDisplay_stub -lSceGxm_stub \
+LIBS = -lvorbisfile -logg -lvorbis -lspeexdsp -lmpg123 \
+	-lc -lpng -lz -lvita2d -lSceAudio_stub -lSceKernel_stub \
+	-lSceCommonDialog_stub -lSceDisplay_stub -lSceGxm_stub \
 	-lSceSysmodule_stub -lSceCtrl_stub -lSceTouch_stub -lm \
-	-lSceRtc_stub -lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub \
+	-lSceRtc_stub -lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub
 
 COMMON_OBJS =	chase.o \
 	cl_demo.o \
@@ -26,6 +27,7 @@ COMMON_OBJS =	chase.o \
 	keys.o \
 	mathlib.o \
 	menu.o \
+	danzeff.o \
 	net_dgrm.o \
 	net_loop.o \
 	net_main.o \
@@ -80,20 +82,21 @@ COMMON_OBJS =	chase.o \
 	snd_psp2.o \
 	vid_psp2.o \
 	net_none.o \
-	in_psp2.o \
-	cd_null.o	
-	
+	in_psp2.o
+
+CPPSOURCES	:= audiodec	
+
 CFILES		:=	$(COMMON_OBJS)
-CPPFILES   := $(foreach dir,$(SOURCES), $(wildcard $(dir)/*.cpp))
+CPPFILES   := $(foreach dir,$(CPPSOURCES), $(wildcard $(dir)/*.cpp))
 BINFILES := $(foreach dir,$(DATA), $(wildcard $(dir)/*.bin))
 OBJS     := $(addsuffix .o,$(BINFILES)) $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) 
 
 PREFIX  = arm-vita-eabi
 CC      = $(PREFIX)-gcc
 CXX      = $(PREFIX)-g++
-CFLAGS  = -Wl,-q -Wall -O3 -Did386="0" -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
-CXXFLAGS  = $(CFLAGS) -fno-rtti -Wcast-qual
-ASFLAGS = $(CFLAGS)
+CFLAGS  = -Wl,-q -Wall -O3 -g -Did386="0" -DHAVE_OGGVORBIS -DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
+CXXFLAGS  = $(CFLAGS) -fno-exceptions -std=gnu++11
+ASFLAGS = $(CFLAGS) -mfloat-abi=softfp
 
 all: $(TARGET).vpk
 
@@ -107,7 +110,7 @@ $(TARGET).vpk: $(TARGET).velf
 	#-------------------------------------------------------------------
 
 %.velf: %.elf
-	$(PREFIX)-strip -g $<
+	cp -f $< $@.unstripped.elf
 	vita-elf-create $< $@
 
 $(TARGET).elf: $(OBJS)
