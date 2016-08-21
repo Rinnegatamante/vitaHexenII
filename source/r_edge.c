@@ -947,7 +947,7 @@ Each surface has a linked list of its visible spans
 void R_ScanEdges (qboolean Translucent)
 {
 	int	iv, bottom;
-	byte	basespans[MAXSPANS*sizeof(espan_t)+CACHE_SIZE];
+	byte	*basespans=malloc(sizeof(byte)*(MAXSPANS*sizeof(espan_t)+CACHE_SIZE));
 	espan_t	*basespan_p;
 	surf_t	*s;
 
@@ -1082,6 +1082,9 @@ void R_ScanEdges (qboolean Translucent)
 	{
 		D_DrawSurfaces (Translucent);
 	}
+	
+	free(basespans);
+	
 }
 
 
