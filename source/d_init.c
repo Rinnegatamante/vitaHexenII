@@ -9,14 +9,14 @@ cvar_t	d_subdiv16 = {"d_subdiv16", "1"};
 cvar_t	d_mipcap = {"d_mipcap", "0"};
 cvar_t	d_mipscale = {"d_mipscale", "1"};
 
-surfcache_t		*d_initial_rover;
-qboolean		d_roverwrapped;
-int				d_minmip;
-float			d_scalemip[NUM_MIPS-1];
+surfcache_t	*d_initial_rover;
+qboolean	d_roverwrapped;
+int		d_minmip;
+float		d_scalemip[NUM_MIPS-1];
 
 static float	basemip[NUM_MIPS-1] = {1.0, 0.5*0.8, 0.25*0.8};
 
-extern int			d_aflatcolor;
+extern int	d_aflatcolor;
 
 void (*d_drawspans) (espan_t *pspan);
 

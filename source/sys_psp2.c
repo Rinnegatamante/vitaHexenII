@@ -34,8 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "fnmatch_mod.h"
 
-extern uint8_t* decodeJpg(unsigned char* in,u64 size);
-
 qboolean		isDedicated;
 
 uint64_t initialTime = 0;
@@ -222,6 +220,9 @@ void Sys_Sleep (void)
 
 double Sys_FloatTime (void)
 {
+	u64 ticks;
+	sceRtcGetCurrentTick(&ticks);
+	return ticks * 0.000001;
 }
 
 void SCE_KeyDown(int keys){
@@ -375,6 +376,7 @@ void Sys_FindClose (void)
 }
 
 //=============================================================================
+int _newlib_heap_size_user = 192 * 1024 * 1024;
 
 int main (int argc, char **argv)
 {
@@ -405,9 +407,9 @@ int main (int argc, char **argv)
 	Cbuf_AddText ("unbindall\n");
 	Cbuf_AddText ("bind CROSS +jump\n"); // Cross
 	Cbuf_AddText ("bind SQUARE +attack\n"); // Square
-	Cbuf_AddText ("bind CIRCLE +jump\n"); // Circle
+	Cbuf_AddText ("bind CIRCLE +crouch\n"); // Circle
 	Cbuf_AddText ("bind TRIANGLE \"impulse 10\"\n"); // Triangle
-	Cbuf_AddText ("bind LTRIGGER +crouch\n"); // Left Trigger
+	Cbuf_AddText ("bind LTRIGGER +speed\n"); // Left Trigger
 	Cbuf_AddText ("bind RTRIGGER +attack\n"); // Right Trigger
 	Cbuf_AddText ("bind UPARROW +showinfo\n"); // Up
 	Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
