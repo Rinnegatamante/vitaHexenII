@@ -875,6 +875,7 @@ V_CalcViewRoll
 Roll is induced by movement and damage
 ==============
 */
+int old_health = 100;
 void V_CalcViewRoll (void)
 {
 	float		side;
@@ -888,7 +889,11 @@ void V_CalcViewRoll (void)
 		r_refdef.viewangles[PITCH] += v_dmg_time/v_kicktime.value*v_dmg_pitch;
 		v_dmg_time -= host_frametime;
 	}
-
+	
+	// Hacky trick for rumble support on PSVITA TV	
+	if (old_health > cl.v.health) IN_StartRumble();
+	old_health = cl.v.health;
+	
 	if (cl.v.health <= 0)
 	{
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
