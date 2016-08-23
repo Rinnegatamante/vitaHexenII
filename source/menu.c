@@ -2569,10 +2569,10 @@ static qboolean SoundPlayed;
 #define MAX_LINES 146
 char *CreditText[MAX_LINES] =
 {
-   "PSP Hexen II version 1.0",
-   "   PSP port by Juraj Styk based on",
-   "   PSP Quake by Peter Mackay and",
-   "   original Hexen II source code",
+   "vitaHexen II version 1.0",
+   "  PSVITA port by Rinnegatamante ",
+   "      based on vitaQuake and    ",
+   "  original Hexen II source code ",
    "",
    "",
    "",
@@ -2897,7 +2897,7 @@ void M_Quit_Key (int key)
 {
 	switch (key)
 	{
-	case K_ENTER:
+	case K_ESCAPE:
 	case 'n':
 	case 'N':
 		if (wasInMenus)
@@ -2912,8 +2912,8 @@ void M_Quit_Key (int key)
 		}
 		break;
 
-	case 'Y':
-	case 'y':
+	case K_AUX1:
+	case K_AUX4:
 #ifdef PSP
 	case K_AUX1:
 	case K_AUX4:
@@ -2997,7 +2997,7 @@ void M_Quit_Draw (void)
 	M_PrintWhite (16, y+5,  "       or CIRCLE to continue.       ");
 #else
 
-	M_PrintWhite (16, y,    "          Press y to exit           ");
+	M_PrintWhite (16, y,    "          Press X to exit           ");
 #endif
 }
 
