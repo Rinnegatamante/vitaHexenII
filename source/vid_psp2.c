@@ -77,7 +77,7 @@ void	VID_Init (unsigned char *palette)
 	vita2d_set_vblank_wait(0);
 	
 	// Init GPU texture
-	tex_buffer = vita2d_create_empty_texture_format(widths[3], heights[3], SCE_GXM_TEXTURE_BASE_FORMAT_P8);
+	tex_buffer = vita2d_create_empty_texture_format_advanced(widths[3], heights[3], SCE_GXM_TEXTURE_BASE_FORMAT_P8, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
 	
 	// Set Quake Engine parameters
 	vid.maxwarpwidth = vid.width = vid.conwidth = widths[3];
@@ -104,6 +104,7 @@ void	VID_Init (unsigned char *palette)
 void VID_ChangeRes(float scale){
 
 	// Freeing texture
+	vita2d_wait_rendering_done();
 	vita2d_free_texture(tex_buffer);
 	
 	int idx = (scale / 0.333);
@@ -111,7 +112,7 @@ void VID_ChangeRes(float scale){
 	// Changing renderer resolution
 	int width = widths[idx];
 	int height = heights[idx];
-	tex_buffer = vita2d_create_empty_texture_format(width, height, SCE_GXM_TEXTURE_BASE_FORMAT_P8);
+	tex_buffer = vita2d_create_empty_texture_format_advanced(width, height, SCE_GXM_TEXTURE_BASE_FORMAT_P8, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
 	vid.maxwarpwidth = vid.width = vid.conwidth = width;
 	vid.maxwarpheight = vid.height = vid.conheight = height;
 	vid.rowbytes = vid.conrowbytes = width;	
@@ -129,6 +130,7 @@ void VID_ChangeRes(float scale){
 
 void	VID_Shutdown (void)
 {
+	vita2d_wait_rendering_done();
 	vita2d_free_texture(tex_buffer);
 	vita2d_fini();
 	free(surfcache);
