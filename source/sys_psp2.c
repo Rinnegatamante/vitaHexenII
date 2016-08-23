@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/stat.h>
 #include <psp2/io/dirent.h>
 #include "errno.h"
-#include "danzeff.h"
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
 #include <psp2/rtc.h>
@@ -445,48 +444,6 @@ int main (int argc, char **argv)
 		// Rumble effect managing (PSTV only)
 		if (rumble_tick != 0){
 			if (sceKernelGetProcessTimeWide() - rumble_tick > 500000) IN_StopRumble(); // 0.5 sec
-		}
-		
-		// Danzeff keyboard manage for Console / Input
-		if (key_dest == key_console){
-			if (old_char != 0) Key_Event(old_char, false);
-			SceCtrlData danzeff_pad, oldpad;
-			sceCtrlPeekBufferPositive(0, &danzeff_pad, 1);
-			if (isDanzeff){
-				int new_char = danzeff_readInput(danzeff_pad);
-				if (new_char != 0){
-					if (new_char == DANZEFF_START){
-						Key_Console(K_END);
-					}else if (new_char == DANZEFF_LEFT){
-						Key_Event(K_UPARROW, true);
-						old_char = K_UPARROW;
-					}else if (new_char == '\n'){
-						Key_Event(K_DOWNARROW, true);
-						old_char = K_DOWNARROW;
-					}else if (new_char == 8){
-						Key_Event(K_BACKSPACE, true);
-						old_char = K_BACKSPACE;
-					}else if (new_char == DANZEFF_RIGHT){
-						Key_Event(K_TAB, true);
-						old_char = K_TAB;
-					}else if (new_char == DANZEFF_SELECT && (!(oldpad.buttons & SCE_CTRL_SELECT))){
-						if (key_dest != key_console) danzeff_free();
-						isDanzeff = false;
-					}else{
-						Key_Event(new_char, true);
-						old_char = new_char;
-					}
-				}
-			}else if ((danzeff_pad.buttons & SCE_CTRL_START) && (!(oldpad.buttons & SCE_CTRL_START))){
-				if (key_dest == key_console){
-					danzeff_free();
-					Con_ToggleConsole_f ();
-				}
-			}else if ((danzeff_pad.buttons & SCE_CTRL_SELECT) && (!(oldpad.buttons & SCE_CTRL_SELECT))){
-				if (key_dest != key_console) danzeff_load();
-				isDanzeff = true;
-			}
-			oldpad = danzeff_pad;
 		}
 		
 		// Get current frame

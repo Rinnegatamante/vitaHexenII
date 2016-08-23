@@ -2049,7 +2049,7 @@ void M_Options_Draw (void)
 	ScrollTitle("gfx/menu/title3.lmp");
 	
 	M_Print (16, 60+(0*8), "    Customize controls");
-	M_Print (16, 60+(1*8), "         Go to console");
+	//M_Print (16, 60+(1*8), "         Go to console");
 	M_Print (16, 60+(2*8), "     Reset to defaults");
 
 	M_Print (16, 60+(3*8), "           Screen size");
@@ -2152,6 +2152,8 @@ void M_Options_Key (int k)
 		options_cursor--;
 		if (options_cursor < 0)
 			options_cursor = 14;
+		else if (options_cursor == 2)
+			options_cursor = 0;
 
 #ifdef GLQUAKE	
 		if ((options_cursor == OPT_GAMMA)) options_cursor--;
@@ -2164,6 +2166,8 @@ void M_Options_Key (int k)
 		options_cursor++;
 		if (options_cursor >= 15)
 			options_cursor = 0;
+		else if (options_cursor == 0)
+			options_cursor = 2;
 
 #ifdef GLQUAKE	
 		if ((options_cursor == OPT_GAMMA)) options_cursor++;

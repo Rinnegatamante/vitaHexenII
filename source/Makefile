@@ -27,7 +27,6 @@ COMMON_OBJS =	chase.o \
 	keys.o \
 	mathlib.o \
 	menu.o \
-	danzeff.o \
 	net_dgrm.o \
 	net_loop.o \
 	net_main.o \
