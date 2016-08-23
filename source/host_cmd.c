@@ -476,7 +476,7 @@ void Host_SavegameComment (char *text)
 	memcpy (text, cl.levelname, strlen(cl.levelname));
 //	sprintf (kills,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	
-	const SceRtcTime date;
+	const SceRtcTick date;
 	time_t time;
 	sceRtcGetTime_t(&date, &time);
 	TempTime = time;
