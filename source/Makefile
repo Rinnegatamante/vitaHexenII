@@ -95,12 +95,12 @@ CC      = $(PREFIX)-gcc
 CXX      = $(PREFIX)-g++
 CFLAGS  = -Wl,-q -Wall -O3 -g -Did386="0" -DHAVE_OGGVORBIS -DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
 CXXFLAGS  = $(CFLAGS) -fno-exceptions -std=gnu++11
-ASFLAGS = $(CFLAGS) -mfloat-abi=softfp
+ASFLAGS = $(CFLAGS)
 
 all: $(TARGET).vpk
 
 $(TARGET).vpk: $(TARGET).velf
-	vita-make-fself $< ..\build\eboot.bin
+	vita-make-fself -s $< ..\build\eboot.bin
 	vita-mksfoex -s TITLE_ID=$(TITLE) "$(TARGET)" param.sfo
 	cp -f param.sfo ../build/sce_sys/param.sfo
 	
