@@ -26,8 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define u8 uint8_t
 
 cvar_t res_val = {"render_res","1.0"};
+cvar_t vsync = {"vsync", "0.0"};
 viddef_t	vid;				// global video state
-int isDanzeff = false;
 int old_char = 0;
 float fixpalette = 0;
 float rend_scale = 1.0;
@@ -75,9 +75,10 @@ void	VID_Init (unsigned char *palette)
 	vita2d_init();
 	vita2d_set_clear_color(RGBA8(0x00, 0x00, 0x00, 0xFF));
 	vita2d_set_vblank_wait(0);
+	vita2d_texture_set_alloc_memblock_type(SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
 	
 	// Init GPU texture
-	tex_buffer = vita2d_create_empty_texture_format_advanced(widths[3], heights[3], SCE_GXM_TEXTURE_BASE_FORMAT_P8, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
+	tex_buffer = vita2d_create_empty_texture_format(widths[3], heights[3], SCE_GXM_TEXTURE_BASE_FORMAT_P8);
 	
 	// Set Quake Engine parameters
 	vid.maxwarpwidth = vid.width = vid.conwidth = widths[3];
@@ -99,6 +100,7 @@ void	VID_Init (unsigned char *palette)
 	
 	sprintf(res_string,"Current Resolution: %ld x %ld", widths[3], heights[3]);
 	Cvar_RegisterVariable (&res_val);
+	Cvar_RegisterVariable (&vsync);
 }
 
 void VID_ChangeRes(float scale){
@@ -112,7 +114,7 @@ void VID_ChangeRes(float scale){
 	// Changing renderer resolution
 	int width = widths[idx];
 	int height = heights[idx];
-	tex_buffer = vita2d_create_empty_texture_format_advanced(width, height, SCE_GXM_TEXTURE_BASE_FORMAT_P8, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
+	tex_buffer = vita2d_create_empty_texture_format(width, height, SCE_GXM_TEXTURE_BASE_FORMAT_P8);
 	vid.maxwarpwidth = vid.width = vid.conwidth = width;
 	vid.maxwarpheight = vid.height = vid.conheight = height;
 	vid.rowbytes = vid.conrowbytes = width;	
@@ -148,7 +150,7 @@ void	VID_Update (vrect_t *rects)
 	vita2d_end_drawing();
 	vita2d_wait_rendering_done();
 	vita2d_swap_buffers();
-	sceDisplayWaitVblankStart();
+	if (vsync.value) sceDisplayWaitVblankStart();
 }
 
 /*

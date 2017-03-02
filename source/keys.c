@@ -41,8 +41,6 @@ typedef struct
 keyname_t keynames[] =
 {
 	{"TAB", K_TAB},
-	{"START", K_ENTER}, // Start Button
-	{"SELECT", K_ESCAPE}, // Select Button
 	{"SPACE", K_SPACE},
 	{"BACKSPACE", K_BACKSPACE},
 	{"UPARROW", K_UPARROW},
@@ -91,15 +89,15 @@ keyname_t keynames[] =
 #endif
 
 	// PSVITA Buttons
-	{"CROSS", K_AUX1},
-	{"SQUARE", K_AUX2},
-	{"TRIANGLE", K_AUX3},
-	{"CIRCLE", K_AUX4},
-	{"LTRIGGER", K_AUX5},
-	{"RTRIGGER", K_AUX6},
+	{"CROSS", K_CROSS},
+	{"SQUARE", K_SQUARE},
+	{"TRIANGLE", K_TRIANGLE},
+	{"CIRCLE", K_CIRCLE},
+	{"LTRIGGER", K_LEFTTRIGGER},
+	{"RTRIGGER", K_RIGHTTRIGGER},
+	{"START", K_START}, // Start Button
+	{"SELECT", K_SELECT}, // Select Button
 	
-	{"AUX7", K_AUX7},
-	{"AUX8", K_AUX8},
 	{"AUX9", K_AUX9},
 	{"AUX10", K_AUX10},
 	{"AUX11", K_AUX11},
@@ -302,7 +300,7 @@ void Key_Message (int key)
 {
 	static int chat_bufferlen = 0;
 
-	if (key == K_ENTER)
+	if (key == K_CROSS)
 	{
 		if (team_message)
 			Cbuf_AddText ("say_team \"");
@@ -317,7 +315,7 @@ void Key_Message (int key)
 		return;
 	}
 
-	if (key == K_ESCAPE)
+	if (key == K_START)
 	{
 		key_dest = key_game;
 		chat_bufferlen = 0;
@@ -328,7 +326,7 @@ void Key_Message (int key)
 	if (key < 32 || key > 127)
 		return;	// non printable
 
-	if (key == K_BACKSPACE)
+	if (key == K_LEFTARROW)
 	{
 		if (chat_bufferlen)
 		{
@@ -552,7 +550,7 @@ void Key_Init (void)
 //
 	for (i=32 ; i<128 ; i++)
 		consolekeys[i] = true;
-	consolekeys[K_ENTER] = true;
+	//consolekeys[K_ENTER] = true;
 	consolekeys[K_TAB] = true;
 	consolekeys[K_LEFTARROW] = true;
 	consolekeys[K_RIGHTARROW] = true;
@@ -564,6 +562,16 @@ void Key_Init (void)
 	consolekeys[K_SHIFT] = true;
 	consolekeys['`'] = false;
 	consolekeys['~'] = false;
+	
+	// Add PSVita buttons to stop interfering in MP
+	consolekeys[K_START] = true;
+	consolekeys[K_SELECT] = true;
+	consolekeys[K_LEFTTRIGGER] = true;
+	consolekeys[K_RIGHTTRIGGER] = true;
+	consolekeys[K_CROSS] = true;
+	consolekeys[K_TRIANGLE] = true;
+	consolekeys[K_SQUARE] = true;
+	consolekeys[K_CIRCLE] = true;
 
 #ifdef PSP
 	consolekeys[K_INS] = true;
@@ -687,7 +695,7 @@ void Key_Event (int key, qboolean down)
 //
 // handle escape specialy, so the user can never unbind it
 //
-	if (key == K_ESCAPE)
+	if (key == K_START || key == K_ENTER)
 	{
 		if (!down)
 			return;

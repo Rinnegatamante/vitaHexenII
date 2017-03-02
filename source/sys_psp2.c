@@ -230,9 +230,9 @@ double Sys_FloatTime (void)
 
 void SCE_KeyDown(int keys){
 	if( keys & SCE_CTRL_SELECT)
-		Key_Event(K_ESCAPE, true);
+		Key_Event(K_SELECT, true);
 	if( keys & SCE_CTRL_START)
-		Key_Event(K_ENTER, true);
+		Key_Event(K_START, true);
 	if( keys & SCE_CTRL_UP)
 		Key_Event(K_UPARROW, true);
 	if( keys & SCE_CTRL_DOWN)
@@ -242,24 +242,24 @@ void SCE_KeyDown(int keys){
 	if( keys & SCE_CTRL_RIGHT)
 		Key_Event(K_RIGHTARROW, true);
 	if( keys & SCE_CTRL_SQUARE)
-		Key_Event(K_AUX2, true);
+		Key_Event(K_SQUARE, true);
 	if( keys & SCE_CTRL_TRIANGLE)
-		Key_Event(K_AUX3, true);
+		Key_Event(K_TRIANGLE, true);
 	if( keys & SCE_CTRL_CROSS)
-		Key_Event(K_AUX1, true);
+		Key_Event(K_CROSS, true);
 	if( keys & SCE_CTRL_CIRCLE)
-		Key_Event(K_AUX4, true);
+		Key_Event(K_CIRCLE, true);
 	if( keys & SCE_CTRL_LTRIGGER)
-		Key_Event(K_AUX5, true);
+		Key_Event(K_LEFTTRIGGER, true);
 	if( keys & SCE_CTRL_RTRIGGER)
-		Key_Event(K_AUX6, true);
+		Key_Event(K_RIGHTTRIGGER, true);
 }
 
 void SCE_KeyUp(int keys, int oldkeys){
 	if ((!(keys & SCE_CTRL_SELECT)) && (oldkeys & SCE_CTRL_SELECT))
-		Key_Event(K_ESCAPE, false);
+		Key_Event(K_SELECT, false);
 	if ((!(keys & SCE_CTRL_START)) && (oldkeys & SCE_CTRL_START))
-		Key_Event(K_ENTER, false);
+		Key_Event(K_START, false);
 	if ((!(keys & SCE_CTRL_UP)) && (oldkeys & SCE_CTRL_UP))
 		Key_Event(K_UPARROW, false);
 	if ((!(keys & SCE_CTRL_DOWN)) && (oldkeys & SCE_CTRL_DOWN))
@@ -269,17 +269,17 @@ void SCE_KeyUp(int keys, int oldkeys){
 	if ((!(keys & SCE_CTRL_RIGHT)) && (oldkeys & SCE_CTRL_RIGHT))
 		Key_Event(K_RIGHTARROW, false);
 	if ((!(keys & SCE_CTRL_SQUARE)) && (oldkeys & SCE_CTRL_SQUARE))
-		Key_Event(K_AUX2, false);
+		Key_Event(K_SQUARE, false);
 	if ((!(keys & SCE_CTRL_TRIANGLE)) && (oldkeys & SCE_CTRL_TRIANGLE))
-		Key_Event(K_AUX3, false);
+		Key_Event(K_TRIANGLE, false);
 	if ((!(keys & SCE_CTRL_CROSS)) && (oldkeys & SCE_CTRL_CROSS))
-		Key_Event(K_AUX1, false);
+		Key_Event(K_CROSS, false);
 	if ((!(keys & SCE_CTRL_CIRCLE)) && (oldkeys & SCE_CTRL_CIRCLE))
-		Key_Event(K_AUX4, false);
+		Key_Event(K_CIRCLE, false);
 	if ((!(keys & SCE_CTRL_LTRIGGER)) && (oldkeys & SCE_CTRL_LTRIGGER))
-		Key_Event(K_AUX5, false);
+		Key_Event(K_LEFTTRIGGER, false);
 	if ((!(keys & SCE_CTRL_RTRIGGER)) && (oldkeys & SCE_CTRL_RTRIGGER))
-		Key_Event(K_AUX6, false);
+		Key_Event(K_RIGHTTRIGGER, false);
 }
 
 void Sys_SendKeyEvents (void)

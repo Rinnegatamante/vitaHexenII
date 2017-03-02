@@ -54,18 +54,20 @@
 #define	K_JOY3			205
 #define	K_JOY4			206
 
+// PSP / PSVita Buttons
+#define	K_CROSS			207
+#define	K_SQUARE		208
+#define	K_TRIANGLE		209
+#define	K_CIRCLE		210
+#define	K_LEFTTRIGGER	211
+#define	K_RIGHTTRIGGER	212
+#define	K_SELECT		213
+#define	K_START			214
+
 //
 // aux keys are for multi-buttoned joysticks to generate so they can use
 // the normal binding process
 //
-#define	K_AUX1			207
-#define	K_AUX2			208
-#define	K_AUX3			209
-#define	K_AUX4			210
-#define	K_AUX5			211
-#define	K_AUX6			212
-#define	K_AUX7			213
-#define	K_AUX8			214
 #define	K_AUX9			215
 #define	K_AUX10			216
 #define	K_AUX11			217
@@ -89,7 +91,7 @@
 #define	K_AUX29			235
 #define	K_AUX30			236
 #define	K_AUX31			237
-#define	K_AUX32			238
+#define	K_AUX32	238
 
 
 
