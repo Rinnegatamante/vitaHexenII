@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/audioout.h>
+#include <psp2/io/dirent.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -51,6 +52,7 @@ std::unique_ptr<AudioDecoder> audio_decoder;
 SceUID thread, Audio_Mutex, Talk_Mutex;
 volatile bool mustExit = false;
 float old_vol = 1.0;
+bool trackNotation = true;
 
 // Audio thread code
 static int bgmThread(unsigned int args, void* arg){
@@ -166,11 +168,68 @@ void CDAudio_Play(byte track, qboolean looping)
 {
 	CDAudio_Stop();
 	char fname[256];
-	sprintf(fname,"ux0:/data/Hexen II/cdtracks/track");
-	if (track < 10){
-		sprintf(fname, "%s0", fname);
+	sprintf(fname,"ux0:/data/Hexen II/cdtracks/");
+	if (trackNotation){
+		sprintf(fname, "%strack", fname);
+		if (track < 10){
+			sprintf(fname, "%s0", fname);
+		}
+		sprintf(fname,"%s%d",fname,track);
+	}else{
+		switch (track){
+			case 2:
+				sprintf(fname, "%sCasa1", fname);
+				break;
+			case 3:
+				sprintf(fname, "%sCasa2", fname);
+				break;
+			case 4:
+				sprintf(fname, "%sCasa3", fname);
+				break;
+			case 5:
+				sprintf(fname, "%sCasa4", fname);
+				break;
+			case 6:
+				sprintf(fname, "%sEgyp1", fname);
+				break;
+			case 7:
+				sprintf(fname, "%sEgyp2", fname);
+				break;
+			case 8:
+				sprintf(fname, "%sEgyp3", fname);
+				break;
+			case 9:
+				sprintf(fname, "%sMeso1", fname);
+				break;
+			case 10:
+				sprintf(fname, "%sMeso2", fname);
+				break;
+			case 11:
+				sprintf(fname, "%sMeso3", fname);
+				break;
+			case 12:
+				sprintf(fname, "%sRoma1", fname);
+				break;
+			case 13:
+				sprintf(fname, "%sRoma2", fname);
+				break;
+			case 14:
+				sprintf(fname, "%sRoma3", fname);
+				break;
+			case 15:
+				sprintf(fname, "%sCasb1", fname);
+				break;
+			case 16:
+				sprintf(fname, "%sCasb2", fname);
+				break;
+			case 17:
+				sprintf(fname, "%sCasb3", fname);
+				break;
+			default:
+				sprintf(fname,"%sUnkn1", fname);
+				break;
+		}
 	}
-	sprintf(fname,"%s%d",fname,track);
 	char tmp[256];
 	sprintf(tmp,"%s.mid",fname);
 	
@@ -226,7 +285,19 @@ void CDAudio_Update(void)
 
 int CDAudio_Init(void)
 {
-	int res;
+
+	// Checking what kind of filenames the system should use
+	SceIoDirent g_dir;
+	int fd = sceIoDopen("ux0:/data/Hexen II/cdtracks");
+	if (fd >= 0){
+		while (sceIoDread(fd, &g_dir) > 0) {
+			if (strncmp(g_dir.d_name, "Casa1", 5) == 0){
+				trackNotation = false;
+				break;
+			}
+		}
+		sceIoDclose(fd);
+	}
 	
 	// Creating audio mutex
 	Audio_Mutex = sceKernelCreateSema("Audio Mutex", 0, 0, 1, NULL);
