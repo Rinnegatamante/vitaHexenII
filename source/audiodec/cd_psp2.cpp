@@ -174,13 +174,6 @@ void CDAudio_Play(byte track, qboolean looping)
 	char tmp[256];
 	sprintf(tmp,"%s.mid",fname);
 	
-	// Debug log
-	FILE* logf = fopen("ux0:/data/Hexen II/log.txt","a+");
-	char log[256];
-	sprintf(log,"%s\n",tmp);
-	fwrite(log,1,strlen(log),logf);
-	fclose(logf);
-	
 	FILE* fd = fopen(tmp,"rb");
 	if (fd == NULL){
 		sprintf(tmp,"%s.mp3",fname);

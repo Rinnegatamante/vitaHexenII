@@ -1012,13 +1012,14 @@ void Host_Init (quakeparms_t *parms)
 
 		VID_Init (host_basepal);
 
-        	Draw_Init ();
+        Draw_Init ();
 		SCR_Init ();
 		R_Init ();
 		S_Init ();
-        	SB_Init();
-        	CL_Init();
-        	IN_Init();
+		CDAudio_Init();
+        SB_Init();
+        CL_Init();
+        IN_Init();
 	}
 
 	Cbuf_InsertText ("exec hexen.rc\n");
