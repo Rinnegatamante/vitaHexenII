@@ -58,8 +58,8 @@ void IN_StartRumble (void)
 {
 	if (!pstv_rumble.value) return;
 	SceCtrlActuator handle;
-	handle.enable = 100;
-	handle.unk = 0;
+	handle.small = 100;
+	handle.large = 100;
 	sceCtrlSetActuator(1, &handle);
 	rumble_tick = sceKernelGetProcessTimeWide();
 }
@@ -67,8 +67,8 @@ void IN_StartRumble (void)
 void IN_StopRumble (void)
 {
 	SceCtrlActuator handle;
-	handle.enable = 0;
-	handle.unk = 0;
+	handle.small = 0;
+	handle.large = 0;
 	sceCtrlSetActuator(1, &handle);
 	rumble_tick = 0;
 }

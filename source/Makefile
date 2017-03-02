@@ -5,7 +5,7 @@ DATA		:=	data
 INCLUDES	:=	include
 
 LIBS = -lvorbisfile -logg -lvorbis -lspeexdsp -lmpg123 \
-	-lc -lpng -lz -lvita2d -lSceAudio_stub -lSceKernel_stub \
+	-lc -lpng -lz -lvita2d -lSceAudio_stub -lSceLibKernel_stub \
 	-lSceCommonDialog_stub -lSceDisplay_stub -lSceGxm_stub \
 	-lSceSysmodule_stub -lSceCtrl_stub -lSceTouch_stub -lm \
 	-lSceRtc_stub -lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub
