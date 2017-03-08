@@ -41,7 +41,7 @@ extern cvar_t res_val;
 
 short	zbuffer[960*544];
 byte*	surfcache;
-vita2d_texture* tex_buffer;
+vita2d_texture *tex_buffer,*gpu_buffer;
 u16	d_8to16table[256];
 byte globalcolormap[VID_GRADES*256], lastglobalcolor = 0;
 byte *lastsourcecolormap = NULL;
@@ -51,6 +51,7 @@ void	VID_SetPalette (unsigned char *palette)
 {
 	int i;
 	uint32_t* palette_tbl = vita2d_texture_get_palette(tex_buffer);
+	uint32_t* palette_tbl2 = vita2d_texture_get_palette(gpu_buffer);
 	u8* pal = palette;
 	unsigned r, g, b;
 	
@@ -59,6 +60,7 @@ void	VID_SetPalette (unsigned char *palette)
 		g = pal[1];
 		b = pal[2];
 		palette_tbl[i] = r | (g << 8) | (b << 16) | (0xFF << 24);
+		palette_tbl2[i] = r | (g << 8) | (b << 16) | (0xFF << 24);
 		pal += 3;
 	}
 }
@@ -75,6 +77,7 @@ void	VID_Init (unsigned char *palette)
 	vita2d_init();
 	vita2d_set_clear_color(RGBA8(0x00, 0x00, 0x00, 0xFF));
 	vita2d_set_vblank_wait(0);
+	gpu_buffer = vita2d_create_empty_texture_format(widths[3], heights[3], SCE_GXM_TEXTURE_BASE_FORMAT_P8);
 	vita2d_texture_set_alloc_memblock_type(SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
 	
 	// Init GPU texture
@@ -101,6 +104,7 @@ void	VID_Init (unsigned char *palette)
 	sprintf(res_string,"Current Resolution: %ld x %ld", widths[3], heights[3]);
 	Cvar_RegisterVariable (&res_val);
 	Cvar_RegisterVariable (&vsync);
+
 }
 
 void VID_ChangeRes(float scale){
@@ -108,12 +112,16 @@ void VID_ChangeRes(float scale){
 	// Freeing texture
 	vita2d_wait_rendering_done();
 	vita2d_free_texture(tex_buffer);
+	vita2d_free_texture(gpu_buffer);
 	
 	int idx = (scale / 0.333);
 	
 	// Changing renderer resolution
 	int width = widths[idx];
 	int height = heights[idx];
+	vita2d_texture_set_alloc_memblock_type(SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW);
+	gpu_buffer = vita2d_create_empty_texture_format(width, height, SCE_GXM_TEXTURE_BASE_FORMAT_P8);
+	vita2d_texture_set_alloc_memblock_type(SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
 	tex_buffer = vita2d_create_empty_texture_format(width, height, SCE_GXM_TEXTURE_BASE_FORMAT_P8);
 	vid.maxwarpwidth = vid.width = vid.conwidth = width;
 	vid.maxwarpheight = vid.height = vid.conheight = height;
@@ -140,17 +148,19 @@ void	VID_Shutdown (void)
 
 void	VID_Update (vrect_t *rects)
 {
-
+	
 	if (fixpalette > 0){
 		Cvar_SetValue ("gamma", fixpalette);
 		fixpalette = 0;
 	}
+	memcpy(vita2d_texture_get_datap(gpu_buffer),vita2d_texture_get_datap(tex_buffer),vita2d_texture_get_stride(gpu_buffer)*vita2d_texture_get_height(gpu_buffer));
 	vita2d_start_drawing();
-	vita2d_draw_texture_scale(tex_buffer, 0, 0, rend_scale, rend_scale);
+	vita2d_draw_texture_scale(gpu_buffer, 0, 0, rend_scale, rend_scale);
 	vita2d_end_drawing();
 	vita2d_wait_rendering_done();
 	vita2d_swap_buffers();
 	if (vsync.value) sceDisplayWaitVblankStart();
+	
 }
 
 /*
