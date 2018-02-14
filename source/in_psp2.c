@@ -54,6 +54,26 @@ void IN_Commands (void)
 {
 }
 
+void IN_RescaleAnalog(int *x, int *y, int dead) {
+	//radial and scaled deadzone
+	//http://www.third-helix.com/2013/04/12/doing-thumbstick-dead-zones-right.html
+
+	float analogX = (float) *x;
+	float analogY = (float) *y;
+	float deadZone = (float) dead;
+	float maximum = 128.0f;
+	float magnitude = sqrt(analogX * analogX + analogY * analogY);
+	if (magnitude >= deadZone)
+	{
+		float scalingFactor = maximum / magnitude * (magnitude - deadZone) / (maximum - deadZone);		
+		*x = (int) (analogX * scalingFactor);
+		*y = (int) (analogY * scalingFactor);
+	} else {
+		*x = 0;
+		*y = 0;
+	}
+}
+
 void IN_StartRumble (void)
 {
 	if (!pstv_rumble.value) return;
@@ -99,8 +119,9 @@ void IN_Move (usercmd_t *cmd)
 	cmd->sidemove += x_mov;
 	
 	// Right analog support for camera movement
-	int x_cam = abs(right_x) < 50 ? 0 : right_x * sensitivity.value * 0.008;
-	int y_cam = abs(right_y) < 50 ? 0 : right_y * sensitivity.value * 0.008;
+	IN_RescaleAnalog(&right_x, &right_y, 30);
+	float x_cam = (right_x * sensitivity.value) * 0.008;
+	float y_cam = (right_y * sensitivity.value) * 0.008;
 	cl.viewangles[YAW] -= x_cam;
 	V_StopPitchDrift();
 	if (inverted.value) cl.viewangles[PITCH] -= y_cam;
