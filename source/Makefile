@@ -17,6 +17,7 @@ COMMON_OBJS =	chase.o \
 	cl_parse.o \
 	cl_tent.o \
 	cl_effect.o \
+	chase.o \
 	cmd.o \
 	common.o \
 	console.o \
@@ -45,36 +46,17 @@ COMMON_OBJS =	chase.o \
 	world.o \
 	zone.o \
 	sys_psp2.o \
-	d_edge.o \
-	d_fill.o \
-	d_init.o \
-	d_modech.o \
-	d_part.o \
-	d_polyse.o \
-	d_scan.o \
-	d_sky.o \
-	d_sprite.o \
-	d_surf.o \
-	d_vars.o \
-	d_zpoint.o \
-	draw.o \
-	model.o \
+	gl_draw.o \
+	gl_mesh.o \
+	gl_model.o \
+	gl_refrag.o \
+	gl_rlight.o \
+	gl_rmain.o \
+	gl_rmisc.o \
+	gl_rsurf.o \
+	gl_screen.o \
+	gl_warp.p \
 	fnmatch.o \
-	nonintel.o \
-	r_aclip.o \
-	r_alias.o \
-	r_bsp.o \
-	r_draw.o \
-	r_edge.o \
-	r_efrag.o \
-	r_light.o \
-	r_main.o \
-	r_misc.o \
-	r_sky.o \
-	r_sprite.o \
-	r_surf.o \
-	r_vars.o \
-	screen.o \
 	snd_dma.o \
 	snd_mix.o \
 	snd_mem.o \
