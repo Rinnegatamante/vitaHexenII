@@ -19,8 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include <psp2/ctrl.h>
-#include <psp2/touch.h>
+#include <vitasdk.h>
 
 // mouse variables
 cvar_t	m_filter = {"m_filter","0"};
