@@ -967,7 +967,7 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 	if (scrap_dirty)
 		Scrap_Upload ();
 	gl = (glpic_t *)pic->data;
-	glColor4f (1,1,1,1);
+	GL_Color (1,1,1,1);
 	GL_Bind (gl->texnum);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
