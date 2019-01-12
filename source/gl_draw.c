@@ -368,9 +368,9 @@ typedef struct
 {
 	char *name;
 	int	minimize, maximize;
-} mode_t;
+} glmode_t;
 
-mode_t modes[] = {
+glmode_t modes[] = {
 	{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
 	{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
 	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
@@ -421,8 +421,8 @@ void Draw_TextureMode_f (void)
 		if (glt->mipmap)
 		{
 			GL_Bind (glt->texnum);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 		}
 	}
 }
@@ -468,8 +468,8 @@ void Draw_Init (void)
 			draw_chars[i] = 255;	// proper transparent color
 
 	char_texture = GL_LoadTexture ("charset", 256, 128, draw_chars, false, true, 0);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 
 	draw_smallchars = W_GetLumpName("tinyfont");
@@ -479,8 +479,8 @@ void Draw_Init (void)
 
 	// now turn them into textures
 	char_smalltexture = GL_LoadTexture ("smallcharset", 128, 32, draw_smallchars, false, true, 0);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	mf = (qpic_t *)COM_LoadTempFile("gfx/menu/bigfont2.lmp");
 	for (i=0 ; i<160*80 ; i++)
@@ -489,8 +489,8 @@ void Draw_Init (void)
 
 
 	char_menufonttexture = GL_LoadTexture ("menufont", 160, 80, mf->data, false, true, 0);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	cb = (qpic_t *)COM_LoadTempFile ("gfx/menu/conback.lmp");
 	if (!cb)
@@ -542,7 +542,25 @@ void Draw_Init (void)
 	draw_backtile = Draw_PicFromFile ("gfx/menu/backtile.lmp");
 }
 
+void DrawQuad_NoTex(float x, float y, float w, float h, float r, float g, float b, float a)
+{
+	float vertex[3*4] = {x,y,0.5f,x+w,y,0.5f, x+w, y+h,0.5f, x, y+h,0.5f};
+	float color[4] = {r,g,b,a};
+	GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 4, vertex);
+	glUniform4fv(monocolor, 1, color);
+	GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
+	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
+}
 
+void DrawQuad(float x, float y, float w, float h, float u, float v, float uw, float vh)
+{
+	float texcoord[2*4] = {u, v, u + uw, v, u + uw, v + vh, u, v + vh};
+	float vertex[3*4] = {x,y,0.5f,x+w,y,0.5f, x+w, y+h,0.5f, x, y+h,0.5f};
+	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 4, vertex);
+	vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 4, texcoord);
+	GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
+}
 
 /*
 ================
@@ -579,17 +597,9 @@ void Draw_Character (int x, int y, unsigned int num)
 	frow = row*ysize;
 
 	GL_Bind (char_texture);
-
-	glBegin (GL_QUADS);
-	glTexCoord2f (fcol, frow);
-	glVertex2f (x, y);
-	glTexCoord2f (fcol + xsize, frow);
-	glVertex2f (x+8, y);
-	glTexCoord2f (fcol + xsize, frow + ysize);
-	glVertex2f (x+8, y+8);
-	glTexCoord2f (fcol, frow + ysize);
-	glVertex2f (x, y+8);
-	glEnd ();
+	
+	DrawQuad(x, y, 8, 8, fcol, frow, xsize, ysize);
+	
 }
 
 /*
@@ -661,17 +671,9 @@ void Draw_SmallCharacter (int x, int y, int num)
 	frow = row*ysize;
 
 	GL_Bind (char_smalltexture);
+	
+	DrawQuad(x, y, 8, 8, fcol, frow, xsize, ysize);
 
-	glBegin (GL_QUADS);
-	glTexCoord2f (fcol, frow);
-	glVertex2f (x, y);
-	glTexCoord2f (fcol + xsize, frow);
-	glVertex2f (x+8, y);
-	glTexCoord2f (fcol + xsize, frow + ysize);
-	glVertex2f (x+8, y+8);
-	glTexCoord2f (fcol, frow + ysize);
-	glVertex2f (x, y+8);
-	glEnd ();
 }
 
 //==========================================================================
@@ -720,22 +722,13 @@ void Draw_Pic (int x, int y, qpic_t *pic)
 	glColor4f (1,1,1,1);
 	GL_Bind (gl->texnum);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glBegin (GL_QUADS);
-	glTexCoord2f (gl->sl, gl->tl);
-	glVertex2f (x, y);
-	glTexCoord2f (gl->sh, gl->tl);
-	glVertex2f (x+pic->width, y);
-	glTexCoord2f (gl->sh, gl->th);
-	glVertex2f (x+pic->width, y+pic->height);
-	glTexCoord2f (gl->sl, gl->th);
-	glVertex2f (x, y+pic->height);
-	glEnd ();
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	DrawQuad(x, y, pic->width, pic->height, gl->sl, gl->tl, gl->sh - gl->sl, gl->th - gl->tl);
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 void Draw_PicCropped(int x, int y, qpic_t *pic)
@@ -782,18 +775,10 @@ void Draw_PicCropped(int x, int y, qpic_t *pic)
 	}
 
 
-	glColor4f (1,1,1,1);
+	GL_Color (1,1,1,1);
 	GL_Bind (gl->texnum);
-	glBegin (GL_QUADS);
-	glTexCoord2f (gl->sl, tl);
-	glVertex2f (x, y);
-	glTexCoord2f (gl->sh, tl);
-	glVertex2f (x+pic->width, y);
-	glTexCoord2f (gl->sh, th);
-	glVertex2f (x+pic->width, y+height);
-	glTexCoord2f (gl->sl, th);
-	glVertex2f (x, y+height);
-	glEnd ();
+	DrawQuad(x, y, pic->width, height, gl->sl, tl, gl->sh - gl->sl, th - tl);
+
 }
 
 /*
@@ -855,17 +840,6 @@ void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
 		}
 	}
 
-#if 0
-	{
-		int i;
-		
-		for( i = 0; i < 64 * 64; i++ )
-		{
-			trans[i] = d_8to24table[translation[menuplyr_pixels[i]]];
-		}
-	}
-#endif
-
 	{
 		int x, y;
 		
@@ -880,20 +854,12 @@ void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
 		      0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	//	  glTexImage2D (GL_TEXTURE_2D, 0, 1, 64, 64, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, menuplyr_pixels);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glColor3f (1,1,1);
-	glBegin (GL_QUADS);
-	glTexCoord2f (0, 0);
-	glVertex2f (x, y);
-	glTexCoord2f (( float )PLAYER_PIC_WIDTH / PLAYER_DEST_WIDTH, 0);
-	glVertex2f (x+pic->width, y);
-	glTexCoord2f (( float )PLAYER_PIC_WIDTH / PLAYER_DEST_WIDTH, ( float )PLAYER_PIC_HEIGHT / PLAYER_DEST_HEIGHT);
-	glVertex2f (x+pic->width, y+pic->height);
-	glTexCoord2f (0, ( float )PLAYER_PIC_HEIGHT / PLAYER_DEST_HEIGHT);
-	glVertex2f (x, y+pic->height);
-	glEnd ();
+	GL_Color(1,1,1,1);
+	DrawQuad(x, y, pic->width, pic->height, 0, 0, (float)PLAYER_PIC_WIDTH / PLAYER_DEST_WIDTH, (float)PLAYER_PIC_HEIGHT / PLAYER_DEST_HEIGHT);
+
 }
 
 
@@ -928,16 +894,7 @@ int M_DrawBigCharacter (int x, int y, int num, int numNext)
 
 	GL_Bind (char_menufonttexture);
 
-	glBegin (GL_QUADS);
-	glTexCoord2f (fcol, frow);
-	glVertex2f (x, y);
-	glTexCoord2f (fcol + xsize, frow);
-	glVertex2f (x+20, y);
-	glTexCoord2f (fcol + xsize, frow + ysize);
-	glVertex2f (x+20, y+20);
-	glTexCoord2f (fcol, frow + ysize);
-	glVertex2f (x, y+20);
-	glEnd ();
+	DrawQuad(x, y, 20, 20, fcol, frow, xsize, ysize);
 
 	if (numNext < 0 || numNext >= 27) return 0;
 
@@ -970,18 +927,10 @@ refresh window.
 */
 void Draw_TileClear (int x, int y, int w, int h)
 {
-	glColor3f (1,1,1);
+	GL_Color(1,1,1,1);
 	GL_Bind (*(int *)draw_backtile->data);
-	glBegin (GL_QUADS);
-	glTexCoord2f (x/64.0, y/64.0);
-	glVertex2f (x, y);
-	glTexCoord2f ( (x+w)/64.0, y/64.0);
-	glVertex2f (x+w, y);
-	glTexCoord2f ( (x+w)/64.0, (y+h)/64.0);
-	glVertex2f (x+w, y+h);
-	glTexCoord2f ( x/64.0, (y+h)/64.0 );
-	glVertex2f (x, y+h);
-	glEnd ();
+	DrawQuad(x, y, w, h, x/64.0, y/64.0, w/64.0, h/64.0);
+	
 }
 
 
@@ -994,21 +943,8 @@ Fills a box of pixels with a single color
 */
 void Draw_Fill (int x, int y, int w, int h, int c)
 {
-	glDisable (GL_TEXTURE_2D);
-	glColor3f (host_basepal[c*3]/255.0,
-		host_basepal[c*3+1]/255.0,
-		host_basepal[c*3+2]/255.0);
-
-	glBegin (GL_QUADS);
-
-	glVertex2f (x,y);
-	glVertex2f (x+w, y);
-	glVertex2f (x+w, y+h);
-	glVertex2f (x, y+h);
-
-	glEnd ();
-	glColor3f (1,1,1);
-	glEnable (GL_TEXTURE_2D);
+	DrawQuad_NoTex(x, y, w, h, host_basepal[c*3]/255.0, host_basepal[c*3+1]/255.0, host_basepal[c*3+2]/255.0, 1);
+	GL_Color(1,1,1,1);
 }
 //=============================================================================
 
@@ -1025,18 +961,8 @@ void Draw_FadeScreen (void)
 	glAlphaFunc(GL_ALWAYS, 0);
 
 	glEnable (GL_BLEND);
-	glDisable (GL_TEXTURE_2D);
+	DrawQuad_NoTex(0, 0, vid.width, vid.height, 208.0/255.0, 180.0/255.0, 80.0/255.0, 0.2f);
 
-//	glColor4f (248.0/255.0, 220.0/255.0, 120.0/255.0, 0.2);
-	glColor4f (208.0/255.0, 180.0/255.0, 80.0/255.0, 0.2);
-	glBegin (GL_QUADS);
-	glVertex2f (0,0);
-	glVertex2f (vid.width, 0);
-	glVertex2f (vid.width, vid.height);
-	glVertex2f (0, vid.height);
-	glEnd ();
-
-	glColor4f (208.0/255.0, 180.0/255.0, 80.0/255.0, 0.035);
 	for(c=0;c<40;c++)
 	{
 		bx = rand() % vid.width-20;
@@ -1048,16 +974,10 @@ void Draw_FadeScreen (void)
 		if (ex > vid.width) ex = vid.width;
 		if (ey > vid.height) ey = vid.height;
 
-		glBegin (GL_QUADS);
-		glVertex2f (bx,by);
-		glVertex2f (ex, by);
-		glVertex2f (ex, ey);
-		glVertex2f (bx, ey);
-		glEnd ();
+		DrawQuad_NoTex(bx, by, ex - bx, ey - by, 208.0/255.0, 180.0/255.0, 80.0/255.0, 0.035f);
 	}
 
-	glColor4f (1,1,1,1);
-	glEnable (GL_TEXTURE_2D);
+	GL_Color(1,1,1,1);
 	glDisable (GL_BLEND);
 
 	glAlphaFunc(GL_GREATER, 0.666);
@@ -1080,7 +1000,7 @@ void Draw_BeginDisc (void)
 	static int index = 0;
 
 	if (!draw_disc[index] || loading_stage) return;
-
+/*
 	index++;
 	if (index >= MAX_DISC) index = 0;
 
@@ -1088,7 +1008,7 @@ void Draw_BeginDisc (void)
 
 	Draw_Pic (vid.width - 28, 0, draw_disc[index]);
 
-	glDrawBuffer  (GL_BACK);
+	glDrawBuffer  (GL_BACK);*/
 }
 
 /*
@@ -1125,10 +1045,10 @@ void GL_Set2D (void)
 	glDisable (GL_DEPTH_TEST);
 	glDisable (GL_CULL_FACE);
 	glDisable (GL_BLEND);
-	glEnable (GL_ALPHA_TEST);
+	GL_EnableState(GL_ALPHA_TEST);
 //	glDisable (GL_ALPHA_TEST);
 
-	glColor4f (1,1,1,1);
+	GL_Color(1,1,1,1);
 }
 
 //====================================================================
@@ -1227,41 +1147,6 @@ void GL_MipMap (byte *in, int width, int height)
 	}
 }
 
-// Acts the same as glTexImage2D, except that it maps color into the
-// current palette and uses paletteized textures.
-static void fxPalTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
-{
-	static unsigned char dest_image[256*256];
-	long i;
-	long mip_width, mip_height;
-
-	mip_width = width;
-	mip_height = height;
-
-	if( internalformat != 3 )
-		Sys_Error( "fxPalTexImage2D: internalformat != 3" );
-	for( i = 0; i < mip_width * mip_height; i++ )
-	{
-		int r, g, b, index;
-		r = ( ( unsigned char * )pixels )[i * 4];
-		g = ( ( unsigned char * )pixels )[i * 4+1];
-		b = ( ( unsigned char * )pixels )[i * 4+2];
-		r >>= 8 - INVERSE_PAL_R_BITS;
-		g >>= 8 - INVERSE_PAL_G_BITS;
-		b >>= 8 - INVERSE_PAL_B_BITS;
-		index = ( r << ( INVERSE_PAL_G_BITS + INVERSE_PAL_B_BITS ) ) |
-			( g << INVERSE_PAL_B_BITS ) |
-			b;
-		dest_image[i] = inverse_pal[index];
-//		dest_image[i] = ( ( unsigned char * )pixels )[i*4];
-	}
-//	glTexImage2D( target, level, 1, width, height, border, GL_LUMINANCE, GL_UNSIGNED_BYTE, dest_image );
-	glTexImage2D( target, level, 1, width, height, border, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, dest_image );
-/*	if( fxMarkPalTextureExtension )
-		fxMarkPalTextureExtension();*/
-}
-
-
 /*
 ===============
 GL_Upload32
@@ -1297,39 +1182,14 @@ void GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qbool
 	if (scaled_width * scaled_height > sizeof(scaled)/4)
 		Sys_Error ("GL_LoadTexture: too big");
 
-	// 3dfx has some aspect ratio constraints. . . can't go beyond 8 to 1 or below 1 to 8.
-	if( is_3dfx )
-	{
-		if( scaled_width * 8 < scaled_height )
-		{
-			scaled_width = scaled_height >> 3;
-		}
-		else if( scaled_height * 8 < scaled_width )
-		{
-			scaled_height = scaled_width >> 3;
-		}
-	}
-
 	samples = alpha ? gl_alpha_format : gl_solid_format;
-
-#if 0
-	if (mipmap)
-		gluBuild2DMipmaps (GL_TEXTURE_2D, samples, width, height, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-	else if (scaled_width == width && scaled_height == height)
-		glTexImage2D (GL_TEXTURE_2D, 0, samples, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-	else
-	{
-		gluScaleImage (GL_RGBA, width, height, GL_UNSIGNED_BYTE, trans,
-			scaled_width, scaled_height, GL_UNSIGNED_BYTE, scaled);
-		glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-	}
-#else
 
 	if (scaled_width == width && scaled_height == height)
 	{
 		if (!mipmap)
 		{
 			glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
 			goto done;
 		}
 		memcpy (scaled, data, width*height*4);
@@ -1339,59 +1199,20 @@ void GL_Upload32 (unsigned *data, int width, int height,  qboolean mipmap, qbool
 
 	texels += scaled_width * scaled_height;
 
-	// If you are on a 3Dfx card and your texture has no alpha, then download it
-	// as a palettized texture to save memory.
-	if( fxSetPaletteExtension && ( samples == 3 ) )
-	{
-		fxPalTexImage2D( GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled );
-	}
-	else
-	{
-		glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-	}
-
-	if (mipmap)
-	{
-		int		miplevel;
-
-		miplevel = 0;
-		while (scaled_width > 1 || scaled_height > 1)
-		{
-			GL_MipMap ((byte *)scaled, scaled_width, scaled_height);
-			scaled_width >>= 1;
-			scaled_height >>= 1;
-			if (scaled_width < 1)
-				scaled_width = 1;
-			if (scaled_height < 1)
-				scaled_height = 1;
-			miplevel++;
-			texels += scaled_width * scaled_height;
-
-			// If you are on a 3Dfx card and your texture has no alpha, then download it
-			// as a palettized texture to save memory.
-			if( fxSetPaletteExtension && ( samples == 3) )
-			{
-				fxPalTexImage2D (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-			}
-			else
-			{
-				glTexImage2D (GL_TEXTURE_2D, miplevel, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
-			}
-		}
-	}
+	glTexImage2D (GL_TEXTURE_2D, 0, samples, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled);
+	if (mipmap) glGenerateMipmap(GL_TEXTURE_2D);
+	
 done: ;
-#endif
-
 
 	  if (mipmap)
 	  {
-		  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-		  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
+		  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	  }
 	  else
 	  {
-		  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
-		  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max);
+		  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	  }
 }
 
@@ -1551,7 +1372,7 @@ void GL_Upload8 (byte *data, int width, int height,  qboolean mipmap, qboolean a
 GL_LoadTexture
 ================
 */
-int GL_LoadTexture (char *identifier, int width, int height, byte *data, qboolean mipmap, qboolean alpha, int mode)
+int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mipmap, int alpha, int mode)
 {
 	qboolean	noalpha;
 	int			i, p, s;
