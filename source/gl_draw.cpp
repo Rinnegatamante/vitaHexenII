@@ -67,7 +67,7 @@ typedef struct
 	qboolean	mipmap;
 } gltexture_t;
 
-#define MAX_GLTEXTURES	2048
+#define MAX_GLTEXTURES	1024
 gltexture_t	gltextures[MAX_GLTEXTURES];
 int			numgltextures;
 
@@ -318,7 +318,8 @@ void GL_Bind (int texnum)
 		return;
 	currenttexture = texnum;
 	
-	textureStore::get()->bind(texnum);
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	//->textureStore::get()->bind(texnum);
 }
 
 void GL_Texels_f (void)
@@ -1205,7 +1206,7 @@ void Draw_FadeScreen (void)
 {
 	int bx,by,ex,ey;
 	int c;
-	glAlphaFunc(GL_ALWAYS, 0);
+	//glAlphaFunc(GL_ALWAYS, 0);
 
 	glEnable (GL_BLEND);
 	DrawQuad_NoTex(0, 0, vid.width, vid.height, 208.0/255.0, 180.0/255.0, 80.0/255.0, 0.2f);
@@ -1227,7 +1228,7 @@ void Draw_FadeScreen (void)
 	GL_Color(1,1,1,1);
 	glDisable (GL_BLEND);
 
-	glAlphaFunc(GL_GREATER, 0.666);
+	//glAlphaFunc(GL_GREATER, 0.666);
 
 	SB_Changed();
 }
@@ -1658,8 +1659,9 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mip
 
 	GL_Bind(texture_extension_number );
 
-	textureStore::get()->create(width, height, data, mipmap, alpha);
-
+	//->textureStore::get()->create(width, height, data, mipmap, alpha);
+	GL_Upload8 (data, width, height, mipmap, alpha, 0);
+	
 	texture_extension_number++;
 
 	return texture_extension_number-1;
