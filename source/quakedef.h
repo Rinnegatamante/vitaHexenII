@@ -427,6 +427,9 @@ void GL_DrawPolygon(GLenum prim, int num);
 void GL_Color(float r, float g, float b, float a);
 void GL_ResetShaders();
 
+int M_DrawBigCharacter (int x, int y, int num, int numNext);
+void GL_Set2D (void);
+
 extern float sintablef[17];
 extern float costablef[17];
 

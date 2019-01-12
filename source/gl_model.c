@@ -805,8 +805,8 @@ void Mod_LoadFaces (lump_t *l)
 			}
 			GL_SubdivideSurface (out);	// cut up polygon for warps
 
-			if ((!_strnicmp(out->texinfo->texture->name,"*rtex078",8)) ||
-				(!_strnicmp(out->texinfo->texture->name,"*lowlight",9)))
+			if ((!strncasecmp(out->texinfo->texture->name,"*rtex078",8)) ||
+				(!strncasecmp(out->texinfo->texture->name,"*lowlight",9)))
 				out->flags |= SURF_TRANSLUCENT;
 
 			continue;

@@ -14,15 +14,12 @@
 
 extern char res_string[256];
 extern	float introTime;
-extern cvar_t	d_mipscale;
 extern cvar_t	crosshair;
 extern void VID_ChangeRes(float);
 extern cvar_t	inverted;
 extern cvar_t	pstv_rumble;
-extern cvar_t	res_val;
 extern cvar_t	retrotouch;
 extern cvar_t	always_run;
-extern cvar_t	vsync;
 cvar_t m_oldmission = {"m_oldmission","1",true};
 
 void (*vid_menudrawfn)(void);
@@ -674,7 +671,6 @@ int M_DrawBigCharacter (int x, int y, int num, int numNext)
 
 	return BigCharWidth[num][numNext] + add;
 }
-
 #endif
 
 void M_DrawBigString(int x, int y, char *string)
@@ -2016,38 +2012,18 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("invert_camera", !inverted.value);
 		break;
 	
-	case 10:	// depth of field
-		d_mipscale.value -= dir;
-		if (d_mipscale.value > 40) d_mipscale.value = 40;
-		else if (d_mipscale.value < 0) d_mipscale.value = 0;
-		Cvar_SetValue ("d_mipscale", d_mipscale.value);
- 		break;
-	
-	case 11:	// retrotouch
+	case 10:	// retrotouch
 		Cvar_SetValue ("retrotouch", !retrotouch.value);
 		break;
 
-	case 12:	// crosshair
+	case 11:	// crosshair
 		Cvar_SetValue ("crosshair", !crosshair.value);
 		break;
 
-	case 13:	// rumble effect
+	case 12:	// rumble effect
 		Cvar_SetValue ("pstv_rumble", !pstv_rumble.value);
 		break;
 		
-	case 14:	// vsync
-		Cvar_SetValue ("vsync", !vsync.value);
-		break;
-		
-	case 15:	// rescaler
-		res_val.value += dir * 0.333;
-		if (res_val.value < 0)
-			res_val.value = 0;
-		if (res_val.value > 1)
-			res_val.value = 1;
-		Cvar_SetValue ("render_res",res_val.value);
-		VID_ChangeRes(res_val.value);
-		break;
 	}
 }
 
@@ -2107,26 +2083,14 @@ void M_Options_Draw (void)
 	M_Print (16, 60+(9*8),  "         Invert Camera");
 	M_DrawCheckbox (220, 60+(9*8), inverted.value);
 
-	M_Print (16, 60+(10*8),  "       Depth of Field");
-	r = (40 - d_mipscale.value) / 40;
-	M_DrawSlider (220, 60+(10*8), r);
+	M_Print (16, 60+(10*8), "        Use Retrotouch");
+	M_DrawCheckbox (220, 60+(10*8), retrotouch.value);
 
-	M_Print (16, 60+(11*8), "        Use Retrotouch");
-	M_DrawCheckbox (220, 60+(11*8), retrotouch.value);
+	M_Print (16, 60+(11*8),	"        Show Crosshair");
+	M_DrawCheckbox (220, 60+(11*8), crosshair.value);
 
-	M_Print (16, 60+(12*8),	"        Show Crosshair");
-	M_DrawCheckbox (220, 60+(12*8), crosshair.value);
-
-	M_Print (16, 60+(13*8),"         Rumble Effect");
-	M_DrawCheckbox (220, 60+(13*8), pstv_rumble.value);
-	
-	M_Print (16, 60+(14*8),"                 VSync");
-	M_DrawCheckbox (220, 60+(14*8), vsync.value);
-	
-	M_Print (16, 60+(15*8), "       Game Resolution");
-	M_DrawSlider (220, 60+(15*8), res_val.value);
-	
-	M_Print (50, 74+(15*8), res_string);
+	M_Print (16, 60+(12*8),"         Rumble Effect");
+	M_DrawCheckbox (220, 60+(12*8), pstv_rumble.value);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -2183,12 +2147,12 @@ void M_Options_Key (int k)
 		S_LocalSound ("raven/menu1.wav");
 		options_cursor--;
 		if (options_cursor < 0)
-			options_cursor = 15;
+			options_cursor = 12;
 		else if (options_cursor == 2)
 			options_cursor = 0;
 
 #ifdef GLQUAKE	
-		if ((options_cursor == OPT_GAMMA)) options_cursor--;
+		if ((options_cursor == 4)) options_cursor--;
 #endif
 
 		break;
@@ -2196,13 +2160,13 @@ void M_Options_Key (int k)
 	case K_DOWNARROW:
 		S_LocalSound ("raven/menu1.wav");
 		options_cursor++;
-		if (options_cursor >= 16)
+		if (options_cursor >= 13)
 			options_cursor = 0;
 		else if (options_cursor == 0)
 			options_cursor = 2;
 
 #ifdef GLQUAKE	
-		if ((options_cursor == OPT_GAMMA)) options_cursor++;
+		if ((options_cursor == 4)) options_cursor++;
 #endif
 
 		break;	
