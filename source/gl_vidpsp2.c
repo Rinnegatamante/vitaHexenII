@@ -137,6 +137,24 @@ cvar_t		_windowed_mouse = {"_windowed_mouse","0", true};
 int			window_center_x, window_center_y, window_x, window_y, window_width, window_height;
 RECT		window_rect;
 
+float sintablef[17] = {
+	 0.000000f, 0.382683f, 0.707107f,
+	 0.923879f, 1.000000f, 0.923879f,
+	 0.707107f, 0.382683f, 0.000000f,
+	-0.382683f,-0.707107f,-0.923879f,
+	-1.000000f,-0.923879f,-0.707107f,
+	-0.382683f, 0.000000f
+};
+	
+float costablef[17] = {
+	 1.000000f, 0.923879f, 0.707107f,
+	 0.382683f, 0.000000f,-0.382683f,
+	-0.707107f,-0.923879f,-1.000000f,
+	-0.923879f,-0.707107f,-0.382683f,
+	 0.000000f, 0.382683f, 0.707107f,
+	 0.923879f, 1.000000f
+};
+
 // direct draw software compatability stuff
 
 void VID_HandlePause (qboolean pause)

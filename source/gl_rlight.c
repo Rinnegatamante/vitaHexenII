@@ -84,21 +84,33 @@ void R_RenderDlight (dlight_t *light)
 		return;
 	}
 
-	glBegin (GL_TRIANGLE_FAN);
-	glColor3f (0.2,0.1,0.0);
+	GL_EnableState(GL_COLOR_ARRAY);
+	GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+	float* pPos = gVertexBuffer;
+	float* pColor = gColorBuffer;
+	*pColor++ = 0.2f;
+	*pColor++ = 0.1f;
+	*pColor++ = 0.0f;
+	*pColor++ = 1.0f;
 	for (i=0 ; i<3 ; i++)
-		v[i] = light->origin[i] - vpn[i]*rad;
-	glVertex3fv (v);
-	glColor3f (0,0,0);
+		*pPos++ = light->origin[i] - vpn[i]*rad;
 	for (i=16 ; i>=0 ; i--)
 	{
-		a = i/16.0 * M_PI*2;
+		*pColor++ = 0.0f;
+		*pColor++ = 0.0f;
+		*pColor++ = 0.0f;
+		*pColor++ = 1.0f;
 		for (j=0 ; j<3 ; j++)
-			v[j] = light->origin[j] + vright[j]*cos(a)*rad
-				+ vup[j]*sin(a)*rad;
-		glVertex3fv (v);
+			*pPos++ = light->origin[j] + vright[j]*costablef[i]*rad
+				+ vup[j]*sintablef[i]*rad;
 	}
-	glEnd ();
+	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 18, gVertexBuffer);
+	vglVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 18, gColorBuffer);
+	GL_DrawPolygon(GL_TRIANGLE_FAN, 18);
+	GL_DisableState(GL_COLOR_ARRAY);
+	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
+	GL_Color(0,0,0,1); // Ensure the color ends up being zero just like the non-OpenGLES code
+
 }
 
 /*
@@ -117,8 +129,8 @@ void R_RenderDlights (void)
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't
 											//  advanced yet for this frame
 	glDepthMask (0);
-	glDisable (GL_TEXTURE_2D);
-	glShadeModel (GL_SMOOTH);
+	GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+	//->glShadeModel (GL_SMOOTH);
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_ONE, GL_ONE);
 
@@ -130,9 +142,9 @@ void R_RenderDlights (void)
 		R_RenderDlight (l);
 	}
 
-	glColor3f (1,1,1);
+	GL_Color(1,1,1,1);
 	glDisable (GL_BLEND);
-	glEnable (GL_TEXTURE_2D);
+	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask (1);
 }
