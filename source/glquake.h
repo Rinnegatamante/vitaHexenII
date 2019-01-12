@@ -7,6 +7,8 @@
 //#pragma warning(disable : 4244)     // MIPS
 //#pragma warning(disable : 4136)     // X86
 //#pragma warning(disable : 4051)     // ALPHA
+#ifndef _GLQUAKE_H_
+#define _GLQUAKE_H_
 
 #ifdef _WIN32
 #include <windows.h>
@@ -298,7 +300,7 @@ void GL_Bind (int texnum);
 #define APIENTRY /* */
 #endif
 
-byte *playerTranslation;
+extern byte *playerTranslation;
 
 /*
  * $Log: /H2 Mission Pack/glquake.h $
@@ -365,3 +367,4 @@ byte *playerTranslation;
  * 2     2/20/97 12:13p Rjohnson
  * Code fixes for id update
  */
+ #endif
