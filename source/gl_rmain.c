@@ -278,21 +278,21 @@ void R_DrawSpriteModel (entity_t *e)
 		// rjr
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable( GL_BLEND );
-		glColor4f (1,1,1,r_wateralpha.value);
+		GL_Color(1,1,1,r_wateralpha.value);
 	}
 	else if (currententity->model->flags & EF_TRANSPARENT)
 	{
 		// rjr
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable( GL_BLEND );
-		glColor3f(1,1,1);
+		GL_Color(1,1,1,1);
 	}
 	else
 	{
 		// rjr
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable( GL_BLEND );
-		glColor3f(1,1,1);
+		GL_Color(1,1,1,1);
 	}
 
 	if (psprite->type == SPR_FACING_UPRIGHT)
@@ -394,37 +394,42 @@ void R_DrawSpriteModel (entity_t *e)
 //	R_RotateSprite (psprite->beamlength);
 
     GL_Bind(frame->gl_texturenum);
-
+	
+	float* pPoint = gVertexBuffer;
+	float texCoords[] = {
+		0, 1,
+		0, 0,
+		1, 0,
+		1, 1
+	};
+	
 	glBegin (GL_QUADS);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glTexCoord2f (0, 1);
 	VectorMA (e->origin, frame->down, r_spritedesc.vup, point);
-	VectorMA (point, frame->left, r_spritedesc.vright, point);
-	glVertex3fv (point);
-
-	glTexCoord2f (0, 0);
+	VectorMA (point, frame->left, r_spritedesc.vright, pPoint);
+	pPoint += 3;
+	
 	VectorMA (e->origin, frame->up, r_spritedesc.vup, point);
-	VectorMA (point, frame->left, r_spritedesc.vright, point);
-	glVertex3fv (point);
+	VectorMA (point, frame->left, r_spritedesc.vright, pPoint);
+	pPoint += 3;
 
-	glTexCoord2f (1, 0);
 	VectorMA (e->origin, frame->up, r_spritedesc.vup, point);
-	VectorMA (point, frame->right, r_spritedesc.vright, point);
-	glVertex3fv (point);
+	VectorMA (point, frame->right, r_spritedesc.vright, pPoint);
+	pPoint += 3;
 
-	glTexCoord2f (1, 1);
 	VectorMA (e->origin, frame->down, r_spritedesc.vup, point);
-	VectorMA (point, frame->right, r_spritedesc.vright, point);
-	glVertex3fv (point);
+	VectorMA (point, frame->right, r_spritedesc.vright, pPoint);
 
-	glEnd ();
+	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 4, gVertexBuffer);
+	vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 4, texCoords);
+	GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
 
 	//restore tex parms
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	glDisable( GL_BLEND );
 }
@@ -477,8 +482,10 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 	float	*normal;
 	int		count;
 	float	r,g,b,p;
+	
+	GL_EnableState(GL_COLOR_ARRAY);
 
-lastposenum = posenum;
+	lastposenum = posenum;
 
 	verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
 	verts += posenum * paliashdr->poseverts;
@@ -499,30 +506,49 @@ lastposenum = posenum;
 		count = *order++;
 		if (!count)
 			break;		// done
+		
+		int primType;
+		float* pColor;
+		float* pTexCoord;
+		float* pPos;
 		if (count < 0)
 		{
 			count = -count;
-			glBegin (GL_TRIANGLE_FAN);
+			primType = GL_TRIANGLE_FAN;
 		}
 		else
-			glBegin (GL_TRIANGLE_STRIP);
-
-		do
+			primType = GL_TRIANGLE_STRIP;
+		
+		pColor = gColorBuffer;
+		pPos = gVertexBuffer;
+		pTexCoord = gTexCoordBuffer;
+		int c;
+		for (c = 0; c < count; ++c)
 		{
 			// texture coordinates come from the draw list
-			glTexCoord2f (((float *)order)[0], ((float *)order)[1]);
+			*pTexCoord++ = ((float *)order)[0];
+			*pTexCoord++ = ((float *)order)[1];
 			order += 2;
 
 			// normals and vertexes come from the frame list
 			l = shadedots[verts->lightnormalindex] * shadelight;
-			glColor4f (r*l, g*l, b*l, model_constant_alpha);
-
-			glVertex3f (verts->v[0], verts->v[1], verts->v[2]);
+			*pColor++ = l * r;
+			*pColor++ = l * g;
+			*pColor++ = l * b;
+			*pColor++ = model_constant_alpha;
+			*pPos++ = verts->v[0];
+			*pPos++ = verts->v[1];
+			*pPos++ = verts->v[2];
 			verts++;
-		} while (--count);
+		}
 
-		glEnd ();
+		vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, count, gVertexBuffer);
+		vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, count, gTexCoordBuffer);
+		vglVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, count, gColorBuffer);
+		GL_DrawPolygon(primType, count);
 	}
+	
+	GL_DisableState(GL_COLOR_ARRAY);
 }
 
 
@@ -561,35 +587,45 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 		count = *order++;
 		if (!count)
 			break;		// done
+		
+		int primType;
+		int c;
+		float* pVertex;
 		if (count < 0)
 		{
 			count = -count;
-			glBegin (GL_TRIANGLE_FAN);
+			primType = GL_TRIANGLE_FAN;
 		}
 		else
-			glBegin (GL_TRIANGLE_STRIP);
-
-		do
+			primType = GL_TRIANGLE_STRIP;
+		
+		pVertex = gVertexBuffer;
+		for(c = 0; c < count; c++)
 		{
 			// texture coordinates come from the draw list
 			// (skipped for shadows) glTexCoord2fv ((float *)order);
 			order += 2;
 
 			// normals and vertexes come from the frame list
-			point[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
-			point[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
-			point[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
+			pVertex[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
+			pVertex[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
+			pVertex[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
 
-			point[0] -= shadevector[0]*(point[2]+lheight);
-			point[1] -= shadevector[1]*(point[2]+lheight);
-			point[2] = height;
+			pVertex[0] -= shadevector[0]*(pVertex[2]+lheight);
+			pVertex[1] -= shadevector[1]*(pVertex[2]+lheight);
+			pVertex[2] = height;
 //			height -= 0.001;
-			glVertex3fv (point);
+			pVertex += 3;
 
 			verts++;
-		} while (--count);
+		}
 
-		glEnd ();
+		GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+		const float color[] = {0,0,0,0.5f};
+		glUniform4fv(monocolor, 1, color);
+		vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, count, gVertexBuffer);
+		GL_DrawPolygon(primType, count);
+		GL_EnableState(GL_TEXTURE_COORD_ARRAY);
 	}	
 }
 
@@ -843,7 +879,7 @@ void R_DrawAliasModel (entity_t *e)
 	else
 	{
 		// rjr
-		glColor3f( 1,1,1);
+		GL_Color(1,1,1, 1);
 		model_constant_alpha = 1.0f;
 	}
 
@@ -886,12 +922,12 @@ void R_DrawAliasModel (entity_t *e)
 		}
 	}
 
-	if (gl_smoothmodels.value)
-		glShadeModel (GL_SMOOTH);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	//->if (gl_smoothmodels.value)
+	//->	glShadeModel (GL_SMOOTH);
+	GL_EnableState(GL_MODULATE);
 
-	if (gl_affinemodels.value)
-		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	//->if (gl_affinemodels.value)
+	//->	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
 	R_SetupAliasFrame (currententity->frame, paliashdr);
 	if ((currententity->drawflags & DRF_TRANSLUCENT) ||
@@ -910,11 +946,11 @@ void R_DrawAliasModel (entity_t *e)
 		glEnable( GL_CULL_FACE );
 	}
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	GL_EnableState(GL_REPLACE);
 
-	glShadeModel (GL_FLAT);
-	if (gl_affinemodels.value)
-		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	//->glShadeModel (GL_FLAT);
+	//->if (gl_affinemodels.value)
+	//->	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	glPopMatrix ();
 
@@ -922,13 +958,12 @@ void R_DrawAliasModel (entity_t *e)
 	{
 		glPushMatrix ();
 		R_RotateForEntity2(e);
-		glDisable (GL_TEXTURE_2D);
+		GL_DisableState(GL_TEXTURE_COORD_ARRAY);
 		glEnable (GL_BLEND);
-		glColor4f (0,0,0,0.5);
 		GL_DrawAliasShadow (paliashdr, lastposenum);
-		glEnable (GL_TEXTURE_2D);
+		GL_EnableState(GL_TEXTURE_COORD_ARRAY);
 		glDisable (GL_BLEND);
-		glColor4f (1,1,1,1);
+		GL_Color(1,1,1,1);
 		glPopMatrix ();
 	}
 
@@ -1146,11 +1181,11 @@ void R_DrawViewModel (void)
 	diffuse[0] = diffuse[1] = diffuse[2] = diffuse[3] = (float)shadelight / 128;
 
 	// hack the depth range to prevent view model from poking into walls
-	glDepthRange (gldepthmin, gldepthmin + 0.3*(gldepthmax-gldepthmin));
+	glDepthRangef (gldepthmin, gldepthmin + 0.3*(gldepthmax-gldepthmin));
 	AlwaysDrawModel = true;
 	R_DrawAliasModel (currententity);
 	AlwaysDrawModel = false;
-	glDepthRange (gldepthmin, gldepthmax);
+	glDepthRangef (gldepthmin, gldepthmax);
 }
 
 
@@ -1166,29 +1201,32 @@ void R_PolyBlend (void)
 	if (!v_blend[3])
 		return;
 
-	glDisable (GL_ALPHA_TEST);
+	GL_DisableState(GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
 	glDisable (GL_DEPTH_TEST);
-	glDisable (GL_TEXTURE_2D);
+	GL_DisableState(GL_TEXTURE_COORD_ARRAY);
 
     glLoadIdentity ();
 
     glRotatef (-90,  1, 0, 0);	    // put Z going up
     glRotatef (90,  0, 0, 1);	    // put Z going up
 
-	glColor4fv (v_blend);
+	GL_Color(v_blend[0],v_blend[1],v_blend[2],v_blend[3]);
 
-	glBegin (GL_QUADS);
-
-	glVertex3f (10, 10, 10);
-	glVertex3f (10, -10, 10);
-	glVertex3f (10, -10, -10);
-	glVertex3f (10, 10, -10);
-	glEnd ();
+	float vertex[3*4] = {
+			10, 10, 10,
+			10, -10, 10,
+			10, -10, -10,
+			10, 10, -10
+	};
+	
+	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 4, vertex);
+	glUniform4fv(monocolor, 1, v_blend);
+	GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
 
 	glDisable (GL_BLEND);
-	glEnable (GL_TEXTURE_2D);
-	glEnable (GL_ALPHA_TEST);
+	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
+	GL_EnableState(GL_ALPHA_TEST);
 }
 
 
@@ -1363,7 +1401,7 @@ void R_SetupGL (void)
 		glDisable(GL_CULL_FACE);
 
 	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	GL_DisableState(GL_ALPHA_TEST);
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -1395,13 +1433,6 @@ void R_RenderScene ()
 	}*/
 
 	R_RenderDlights ();
-
-#if 0
-	if (!Translucent)
-	{
-		Test_Draw ();
-	}
-#endif
 
 //	glDepthMask( 1 );
 }
@@ -1456,7 +1487,7 @@ void R_Clear (void)
 		glDepthFunc (GL_LEQUAL);
 	}
 
-	glDepthRange (gldepthmin, gldepthmax);
+	glDepthRangef (gldepthmin, gldepthmax);
 }
 
 /*
@@ -1511,7 +1542,7 @@ void R_Mirror (void)
 
 	gldepthmin = 0;
 	gldepthmax = 0.5;
-	glDepthRange (gldepthmin, gldepthmax);
+	glDepthRangef (gldepthmin, gldepthmax);
 	glDepthFunc (GL_LEQUAL);
 
 	// blend on top
@@ -1526,13 +1557,13 @@ void R_Mirror (void)
 
 	glLoadMatrixf (r_base_world_matrix);
 
-	glColor4f (1,1,1,r_mirroralpha.value);
+	GL_Color(1,1,1,r_mirroralpha.value);
 	s = cl.worldmodel->textures[mirrortexturenum]->texturechain;
 	for ( ; s ; s=s->texturechain)
 		R_RenderBrushPoly (s, true);
 	cl.worldmodel->textures[mirrortexturenum]->texturechain = NULL;
 	glDisable (GL_BLEND);
-	glColor4f (1,1,1,1);
+	GL_Color(1,1,1,1);
 }
 
 /*
@@ -1573,7 +1604,7 @@ void R_RenderView (void)
 
 	if (r_speeds.value)
 	{
-		glFinish ();
+		//->glFinish ();
 		if (r_wholeframe.value)
 		   r_time1 = r_lasttime1;
 	   else
