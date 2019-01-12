@@ -1407,18 +1407,37 @@ void R_DrawParticles (void)
 				scale = 1;
 			else
 				scale = 1 + scale * 0.004;
-			if (p->color <= 255)
-				glColor3ubv ((byte *)&d_8to24table[(int)p->color]);
-			else
-				glColor4ubv ((byte *)&d_8to24TranslucentTable[(int)p->color-256]);
+			if (p->color <= 255){
+				byte *c = (byte *)&d_8to24table[(int)p->color];
+				*pColor++ = ((float)(c[0])) / 255.0f;
+				*pColor++ = ((float)(c[1])) / 255.0f;
+				*pColor++ = ((float)(c[2])) / 255.0f;
+				*pColor++ = 1.0f;
+			}else{
+				byte *c = (byte *)&d_8to24TranslucentTable[(int)p->color-256];
+				*pColor++ = ((float)(c[0])) / 255.0f;
+				*pColor++ = ((float)(c[1])) / 255.0f;
+				*pColor++ = ((float)(c[2])) / 255.0f;
+				*pColor++ = ((float)(c[3])) / 255.0f;
+			}
 			
 			//fixme: need rain texture
-			glTexCoord2f (1,0);
-			glVertex3fv (p->org);
-			glTexCoord2f (1,0.5);
-			glVertex3f (p->org[0] + r_pup[0]*scale, p->org[1] + r_pup[1]*scale, p->org[2] + r_pup[2]*scale);
-			glTexCoord2f (0.5,0);
-			glVertex3f (p->org[0] + r_pright[0]*scale, p->org[1] + r_pright[1]*scale, p->org[2] + r_pright[2]*scale);
+			*pUV++ = 1.0f;
+			*pUV++ = 0.0f;
+			*pUV++ = 1.0f;
+			*pUV++ = 0.5f;
+			*pUV++ = 0.5f;
+			*pUV++ = 0.0f;
+			*pPos++ = p->org[0];
+			*pPos++ = p->org[1];
+			*pPos++ = p->org[2];
+			*pPos++ = p->org[0] + r_pup[0]*scale;
+			*pPos++ = p->org[1] + r_pup[1]*scale;
+			*pPos++ = p->org[2] + r_pup[2]*scale;
+			*pPos++ = p->org[0] + r_pright[0]*scale;
+			*pPos++ = p->org[1] + r_pright[1]*scale;
+			*pPos++ = p->org[2] + r_pright[2]*scale;
+			
 		}
 		else if (p->type==pt_snow)
 		{
@@ -1516,7 +1535,7 @@ void R_DrawParticles (void)
 			*pUV++ = 0.5f;
 			*pUV++ = 0.5f;
 			*pUV++ = 0.0f;
-				
+
 			*pPos++ = p->org[0];
 			*pPos++ = p->org[1];
 			*pPos++ = p->org[2];
