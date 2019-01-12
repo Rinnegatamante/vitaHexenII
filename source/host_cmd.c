@@ -476,7 +476,7 @@ void Host_SavegameComment (char *text)
 	memcpy (text, cl.levelname, strlen(cl.levelname));
 //	sprintf (kills,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	
-	const SceRtcTick date;
+	const SceDateTime date;
 	time_t time;
 	sceRtcGetTime_t(&date, &time);
 	TempTime = time;
@@ -631,9 +631,7 @@ void Host_Loadgame_f (void)
 	char	*mapname = malloc(sizeof(char)*MAX_QPATH);
 	float	time, tfloat;
 	char	*str = malloc(sizeof(char)*32768);
-	char	*start;
-	int		i, r;
-	int		entnum;
+	int		i;
 	edict_t	*ent;
 	int	version;
 	float	tempf;
@@ -1409,7 +1407,7 @@ void Host_Say(qboolean teamonly)
 	client_t *save;
 	int		j;
 	char	*p;
-	unsigned char	text[64];
+	char	text[64];
 	qboolean	fromServer = false;
 
 	if (cmd_source == src_command)

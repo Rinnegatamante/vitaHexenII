@@ -297,7 +297,7 @@ void Host_WriteConfiguration (char *fname)
 		Cvar_WriteVariables (f);
 		
 		// 3rd person setting
-		fprintf (f, "chase_active \"%i\"",chase_active.value);
+		fprintf (f, "chase_active \"%f\"",chase_active.value);
 		
 		//if (in_mlook.state & 1)		//if mlook was down, keep it that way
 			fprintf (f, "+mlook\n");

@@ -118,7 +118,7 @@ GLuint fs[9];
 GLuint vs[4];
 GLuint programs[9];
 
-void* GL_LoadShader(const char* filename, GLuint idx, GLboolean fragment){
+void GL_LoadShader(const char* filename, GLuint idx, GLboolean fragment){
 	FILE* f = fopen(filename, "rb");
 	fseek(f, 0, SEEK_END);
 	long int size = ftell(f);
@@ -425,8 +425,6 @@ GL_BeginRendering
 */
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
-	extern cvar_t gl_clear;
-
 	*x = *y = 0;
 	*width = scr_width;
 	*height = scr_height;
@@ -451,40 +449,6 @@ unsigned ColorPercent[16] =
 {
 	25, 51, 76, 102, 114, 127, 140, 153, 165, 178, 191, 204, 216, 229, 237, 247
 };
-
-static int ConvertTrueColorToPal( unsigned char *true_color, unsigned char *palette )
-{
-	int i;
-	long min_dist;
-	int min_index;
-	long r, g, b;
-
-	min_dist = 256 * 256 + 256 * 256 + 256 * 256;
-	min_index = -1;
-	r = ( long )true_color[0];
-	g = ( long )true_color[1];
-	b = ( long )true_color[2];
-
-	for( i = 0; i < 256; i++ )
-	{
-		long palr, palg, palb, dist;
-		long dr, dg, db;
-
-		palr = palette[3*i];
-		palg = palette[3*i+1];
-		palb = palette[3*i+2];
-		dr = palr - r;
-		dg = palg - g;
-		db = palb - b;
-		dist = dr * dr + dg * dg + db * db;
-		if( dist < min_dist )
-		{
-			min_dist = dist;
-			min_index = i;
-		}
-	}
-	return min_index;
-}
 
 void VID_SetPalette (unsigned char *palette)
 {
@@ -539,9 +503,7 @@ void VID_SetPalette (unsigned char *palette)
 }
 
 void	VID_ShiftPalette (unsigned char *palette)
-{
-	extern	byte ramps[3][256];
-	
+{	
 //	VID_SetPalette (palette);
 
 //	gammaworks = SetDeviceGammaRamp (maindc, ramps);
@@ -554,9 +516,7 @@ VID_Init
 */
 void	VID_Init (unsigned char *palette)
 {
-	int		i, existingmode;
-	int		basenummodes, width, height, bpp, findbpp, done;
-	byte	*ptmp;
+	int		width, height;
 	char	gldir[MAX_OSPATH];
 	
 	width = scr_width, height = scr_height;

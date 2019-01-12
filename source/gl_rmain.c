@@ -402,8 +402,6 @@ void R_DrawSpriteModel (entity_t *e)
 		1, 0,
 		1, 1
 	};
-	
-	glBegin (GL_QUADS);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

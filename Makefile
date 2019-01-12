@@ -75,7 +75,10 @@ OBJS     := $(addsuffix .o,$(BINFILES)) $(CFILES:.c=.o) $(CPPFILES:.cpp=.o)
 PREFIX  = arm-vita-eabi
 CC      = $(PREFIX)-gcc
 CXX      = $(PREFIX)-g++
-CFLAGS  = -w -Wl,-q -Wall -O3 -g -Did386="0" -DGLQUAKE -DHAVE_OGGVORBIS -DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
+CFLAGS  = -w -Wl,-q -O3 -g -Did386="0" -DGLQUAKE -DHAVE_OGGVORBIS \
+	-DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 \
+	-DQUAKE2RJ -DRJNET -fsigned-char -ffast-math -mtune=cortex-a9 -mfpu=neon \
+	-fno-short-enums
 CXXFLAGS  = $(CFLAGS) -fpermissive -fno-exceptions -std=gnu++11
 ASFLAGS = $(CFLAGS)
 

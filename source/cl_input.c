@@ -426,24 +426,16 @@ void CL_SendMove (usercmd_t *cmd)
 
 void IN_CrouchDown (void)
 {
-	int state;
-
 	if (key_dest == key_game)
 	{
-		state = in_crouch.state;
 		KeyDown(&in_crouch);
-
 	}
 }
 
 void IN_CrouchUp (void)
 {
-	int state;
-
 	if (key_dest == key_game)
 	{
-		state = in_crouch.state;
-
 		KeyUp(&in_crouch);
 	}
 }
