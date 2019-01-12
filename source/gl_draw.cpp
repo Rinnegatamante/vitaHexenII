@@ -48,7 +48,7 @@ int		gl_lightmap_format = 4;
 int		gl_solid_format = 3;
 int		gl_alpha_format = 4;
 
-int		gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
+int		gl_filter_min = GL_LINEAR/*_MIPMAP_NEAREST*/;
 int		gl_filter_max = GL_LINEAR;
 
 
@@ -67,7 +67,7 @@ typedef struct
 	qboolean	mipmap;
 } gltexture_t;
 
-#define MAX_GLTEXTURES	1024
+#define MAX_GLTEXTURES	2048
 gltexture_t	gltextures[MAX_GLTEXTURES];
 int			numgltextures;
 
