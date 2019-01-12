@@ -75,8 +75,8 @@ OBJS     := $(addsuffix .o,$(BINFILES)) $(CFILES:.c=.o) $(CPPFILES:.cpp=.o)
 PREFIX  = arm-vita-eabi
 CC      = $(PREFIX)-gcc
 CXX      = $(PREFIX)-g++
-CFLAGS  = -w -fno-lto -Wl,-q -Wall -O3 -g -Did386="0" -DGLQUAKE -DHAVE_OGGVORBIS -DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
-CXXFLAGS  = $(CFLAGS) -fno-exceptions -std=gnu++11
+CFLAGS  = -w -Wl,-q -Wall -O3 -g -Did386="0" -DGLQUAKE -DHAVE_OGGVORBIS -DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
+CXXFLAGS  = $(CFLAGS) -fpermissive -fno-exceptions -std=gnu++11
 ASFLAGS = $(CFLAGS)
 
 all: $(TARGET).vpk
@@ -87,7 +87,7 @@ $(TARGET).vpk: $(TARGET).velf
 	cp -f param.sfo build/sce_sys/param.sfo
 	
 	#------------ Comment this if you don't have 7zip ------------------
-	7z a -tzip ../$(TARGET).vpk -r build\sce_sys\* build\eboot.bin 
+	7z a -tzip $(TARGET).vpk -r ./build/sce_sys ./build/eboot.bin ./build/shaders
 	#-------------------------------------------------------------------
 
 %.velf: %.elf
@@ -98,7 +98,7 @@ $(TARGET).elf: $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
 
 clean:
-	@rm -rf $(TARGET).velf $(TARGET).elf $(OBJS)
+	@rm -rf $(TARGET).velf $(TARGET).elf $(OBJS) $(TARGET).elf.unstripped.elf $(TARGET).vpk build/eboot.bin build/sce_sys/param.sfo ./param.sfo
 
 run: $(TARGET).velf
 	@sh run_homebrew_unity.sh $(TARGET).velf
