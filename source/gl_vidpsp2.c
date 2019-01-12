@@ -389,6 +389,8 @@ void GL_Init (void)
 
 	glClearColor (1,0,0,0);
 	glCullFace(GL_FRONT);
+	
+	GL_ResetShaders();
 
 	GL_EnableState(GL_ALPHA_TEST);
 	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
