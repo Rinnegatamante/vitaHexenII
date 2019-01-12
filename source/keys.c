@@ -151,20 +151,6 @@ Interactive line editing and console scrollback
 void Key_Console (int key)
 {
 	char	*cmd;
-	
-	if (Con_isSetOSKActive()) {
-		if (key == K_JOY1)
-			Con_OSK_Key (K_DEL); 
-		else if (key == K_JOY2)
-			Con_OSK_Key (K_ESCAPE); 
-		else if (key == K_JOY3)
-			Con_OSK_Key (K_ENTER); 
-		else if (key == K_JOY4)
-			Con_OSK_Key (K_INS); 
-		else 
-			Con_OSK_Key (key);		
-		return;
-	}
 		
 #ifdef PSP
 	if ( key == K_JOY4 || key == K_INS)
@@ -635,32 +621,6 @@ void Key_Event (int key, qboolean down)
 	char	cmd[1024];
 
 	keydown[key] = down;
-	
-	if (Con_isSetOSKActive() && down) {
-		if (key == K_JOY1)
-			Con_OSK_Key (K_DEL); 
-		else if (key == K_JOY2)
-			Con_OSK_Key (K_ESCAPE); 
-		else if (key == K_JOY3)
-			Con_OSK_Key (K_ENTER); 
-		else if (key == K_JOY4)
-			Con_OSK_Key (K_INS); 
-		else 
-			Con_OSK_Key (key);
-			
-		if (!Con_isSetOSKActive()) {
-			consoleOskDone = true;
-			strcpy(key_lines[edit_line]+1, consoleInput);
-			key_linepos = Q_strlen(key_lines[edit_line]);
-			consoleOskDone = false;
-			consoleInput[0] = 0;
-			return;
-
-		}
-		else 	{		
-			return;
-		}
-	}
 	
 	if (!down)
 		key_repeats[key] = 0;
