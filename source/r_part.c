@@ -1250,21 +1250,12 @@ void R_SnowEffect (vec3_t org1,vec3_t org2,int flags,vec3_t alldir,int count)
 		
 		p->flags = flags;
 
-#ifdef GLQUAKE
 		if(rand()&0x7f<=1)//have a console variable 'happy_snow' that makes all snowflakes happy snow!
 			p->count = 69;	//happy snow!
 		else if(flags & SFL_FLUFFY || (flags&SFL_MIXED && (rand()&3)))
 			p->count = (rand()&31)+10;//From 10 to 41 scale, will be divided
 		else
 			p->count = 10;
-#else
-		if(flags & SFL_FLUFFY || (flags&SFL_MIXED && (rand()&3)))
-			p->count = (rand()&3)+2;//From 2 to 5 extra
-		else
-			p->count = 1;	//Only one particle
-
-#endif
-
 
 		if(flags&SFL_HALF_BRIGHT)//Start darker
 			p->color = 26 + (rand()%5);
@@ -1361,23 +1352,20 @@ void R_DrawParticles (void)
 	float			vel0, vel1, vel2;
 	vec3_t			save_org;
 
-#ifdef GLQUAKE
 	float			scale;
+	
+	float*			pPos = gVertexBuffer;
+	float*			pColor = gColorBuffer;
+	float*			pUV = gTexCoordBuffer;
 
 	GL_Bind(particletexture);
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glBegin (GL_TRIANGLES);
+	GL_EnableState(GL_MODULATE);
+	GL_EnableState(GL_COLOR_ARRAY);
 
 	VectorScale (vup, 1.5, r_pup);
 	VectorScale (vright, 1.5, r_pright);
-#else
-
-	VectorScale (vright, xscaleshrink, r_pright);
-	VectorScale (vup, yscaleshrink, r_pup);
-	VectorCopy (vpn, r_ppn);
-#endif
 
 	for ( ;; ) 
 	{
@@ -1392,6 +1380,7 @@ void R_DrawParticles (void)
 		break;
 	}
 
+	int num_vertices = 0;
 	for (p=active_particles ; p ; p=p->next)
 	{
 		for ( ;; )
@@ -1407,9 +1396,10 @@ void R_DrawParticles (void)
 			break;
 		}
 		
+		num_vertices += 3;
+		
 		if (p->type==pt_rain)
 		{
-#ifdef GLQUAKE
 			// hack a scale up to keep particles from disapearing
 			scale = (p->org[0] - r_origin[0])*vpn[0] + (p->org[1] - r_origin[1])*vpn[1]
 				+ (p->org[2] - r_origin[2])*vpn[2];
@@ -1429,28 +1419,9 @@ void R_DrawParticles (void)
 			glVertex3f (p->org[0] + r_pup[0]*scale, p->org[1] + r_pup[1]*scale, p->org[2] + r_pup[2]*scale);
 			glTexCoord2f (0.5,0);
 			glVertex3f (p->org[0] + r_pright[0]*scale, p->org[1] + r_pright[1]*scale, p->org[2] + r_pright[2]*scale);
-#else
-			VectorCopy(p->org,save_org);
-
-			vel0 = p->vel[0]*.001;
-			vel1 = p->vel[1]*.001;
-			vel2 = p->vel[2]*.001;
-
-			for(i=0;i<4;i++)
-			{
-				D_DrawParticle(p);
-				p->org[0] += vel0;
-				p->org[1] += vel1;
-				p->org[2] += vel2;
- 			}
-			D_DrawParticle(p);
-
-			VectorCopy(save_org,p->org);//Restore origin
-#endif
 		}
 		else if (p->type==pt_snow)
 		{
-#ifdef GLQUAKE
 //IDEA: Put a snowflake texture on two-sided poly
 //texture comes from glrmisc.c: R_InitParticleTexture 
 			scale = (p->org[0] - r_origin[0])*vpn[0] + (p->org[1] - r_origin[1])*vpn[1]
@@ -1460,84 +1431,63 @@ void R_DrawParticles (void)
 			else
 				scale = p->count/10 + scale * 0.004;
 
-			if (p->color <= 255)
-				glColor3ubv ((byte *)&d_8to24table[(int)p->color]);
-			else
-				glColor4ubv ((byte *)&d_8to24TranslucentTable[(int)p->color-256]);
-	
-			if(p->count>=69)
-				glTexCoord2f (1,1);//happy snow!- bottom right
-			else if(p->count>=40)	
-				glTexCoord2f (0,0);	//normal snow - top left
-			else if(p->count>=30)
-				glTexCoord2f (0,1);	//bottom left
-			else
-				glTexCoord2f (1,0);	//top right
-
-			glVertex3fv (p->org);
-			if(p->count>=69)
-				glTexCoord2f (1,.18);//top right
-			else if(p->count>=40)	
-				glTexCoord2f (.815,0);//top right
-			else if(p->count>=30)
-				glTexCoord2f (0.5,1);//bottom middle
-			else
-				glTexCoord2f (1,0.5);//middle right
-
-			glVertex3f (p->org[0] + r_pup[0]*scale, p->org[1] + r_pup[1]*scale, p->org[2] + r_pup[2]*scale);
-
-			if(p->count>=69)
-				glTexCoord2f (.18,1);//bottom left
-			else if(p->count>=40)	
-				glTexCoord2f (0,.815);//bottom left
-			else if(p->count>=30)
-				glTexCoord2f (0,0.5);//left middle
-			else
-				glTexCoord2f (0.5,0);//middle top
-			
-			glVertex3f (p->org[0] + r_pright[0]*scale, p->org[1] + r_pright[1]*scale, p->org[2] + r_pright[2]*scale);
-#else
-			VectorCopy(p->org,save_org);
-			D_DrawParticle (p);
-
-			for(i=1;i<p->count;i++)
-			{
-				switch(i)
-				{//FIXME:  More translucency on outside particles?
-//				case 0:	//original
-//					break;
-				case 1:	//One to right
-					p->org[0] = save_org[0] + vright[0];
-					p->org[1] = save_org[1] + vright[1];
-					p->org[2] = save_org[2] + vright[2];
-					break;
-				case 2: //One above
-					p->org[0] = save_org[0] + vup[0];
-					p->org[1] = save_org[1] + vup[1];
-					p->org[2] = save_org[2] + vup[2];
-					break;
-				case 3:	//One to left
-					p->org[0] = save_org[0] - vright[0];
-					p->org[1] = save_org[1] - vright[1];
-					p->org[2] = save_org[2] - vright[2];
-					break;
-				case 4:	//One below
-					p->org[0] = save_org[0] - vup[0];
-					p->org[1] = save_org[1] - vup[1];					
-					p->org[2] = save_org[2] - vup[2];
-					break;
-				default:
-				   Con_Printf ("count too big!\n");
-					break;
-				}
-				D_DrawParticle (p);
+			if (p->color <= 255){
+				byte *c = (byte *)&d_8to24table[(int)p->color];
+				*pColor++ = ((float)(c[0])) / 255.0f;
+				*pColor++ = ((float)(c[1])) / 255.0f;
+				*pColor++ = ((float)(c[2])) / 255.0f;
+				*pColor++ = 1.0f;
+			}else{
+				byte *c = (byte *)&d_8to24TranslucentTable[(int)p->color-256];
+				*pColor++ = ((float)(c[0])) / 255.0f;
+				*pColor++ = ((float)(c[1])) / 255.0f;
+				*pColor++ = ((float)(c[2])) / 255.0f;
+				*pColor++ = ((float)(c[3])) / 255.0f;
 			}
-			VectorCopy(save_org,p->org);//Restore origin
-#endif
+			
+			if(p->count>=69) {
+				*pUV++ = 1.0f;
+				*pUV++ = 1.0f;
+				*pUV++ = 1.0f;
+				*pUV++ = 0.18f;
+				*pUV++ = 0.18f;
+				*pUV++ = 1.0f;
+			} else if(p->count>=40)	{
+				*pUV++ = 0.0f;
+				*pUV++ = 0.0f;
+				*pUV++ = 0.815f;
+				*pUV++ = 0.0f;
+				*pUV++ = 0.0f;
+				*pUV++ = 0.815f;
+			} else if(p->count>=30) {
+				*pUV++ = 0.0f;
+				*pUV++ = 1.0f;
+				*pUV++ = 0.5f;
+				*pUV++ = 1.0f;
+				*pUV++ = 0.0f;
+				*pUV++ = 0.5f;
+			} else {
+				*pUV++ = 1.0f;
+				*pUV++ = 0.0f;
+				*pUV++ = 1.0f;
+				*pUV++ = 0.5f;
+				*pUV++ = 0.5f;
+				*pUV++ = 0.0f;
+			}
+			
+			*pPos++ = p->org[0];
+			*pPos++ = p->org[1];
+			*pPos++ = p->org[2];
+			*pPos++ = p->org[0] + r_pup[0]*scale;
+			*pPos++ = p->org[1] + r_pup[1]*scale;
+			*pPos++ = p->org[2] + r_pup[2]*scale;
+			*pPos++ = p->org[0] + r_pright[0]*scale;
+			*pPos++ = p->org[1] + r_pright[1]*scale;
+			*pPos++ = p->org[2] + r_pright[2]*scale;
+
 		}
 		else
 		{
-#ifdef GLQUAKE
 			// hack a scale up to keep particles from disapearing
 			scale = (p->org[0] - r_origin[0])*vpn[0] + (p->org[1] - r_origin[1])*vpn[1]
 				+ (p->org[2] - r_origin[2])*vpn[2];
@@ -1545,27 +1495,47 @@ void R_DrawParticles (void)
 				scale = 1;
 			else
 				scale = 1 + scale * 0.004;
-			if (p->color <= 255)
-				glColor3ubv ((byte *)&d_8to24table[(int)p->color]);
-			else
-				glColor4ubv ((byte *)&d_8to24TranslucentTable[(int)p->color-256]);
-			glTexCoord2f (1,0);
-			glVertex3fv (p->org);
-			glTexCoord2f (1,0.5);
-			glVertex3f (p->org[0] + r_pup[0]*scale, p->org[1] + r_pup[1]*scale, p->org[2] + r_pup[2]*scale);
-			glTexCoord2f (0.5,0);
-			glVertex3f (p->org[0] + r_pright[0]*scale, p->org[1] + r_pright[1]*scale, p->org[2] + r_pright[2]*scale);
-#else
-			D_DrawParticle (p);
-#endif
+			
+			if (p->color <= 255){
+				byte *c = (byte *)&d_8to24table[(int)p->color];
+				*pColor++ = ((float)(c[0])) / 255.0f;
+				*pColor++ = ((float)(c[1])) / 255.0f;
+				*pColor++ = ((float)(c[2])) / 255.0f;
+				*pColor++ = 1.0f;
+			}else{
+				byte *c = (byte *)&d_8to24TranslucentTable[(int)p->color-256];
+				*pColor++ = ((float)(c[0])) / 255.0f;
+				*pColor++ = ((float)(c[1])) / 255.0f;
+				*pColor++ = ((float)(c[2])) / 255.0f;
+				*pColor++ = ((float)(c[3])) / 255.0f;
+			}
+			
+			*pUV++ = 1.0f;
+			*pUV++ = 0.0f;
+			*pUV++ = 1.0f;
+			*pUV++ = 0.5f;
+			*pUV++ = 0.5f;
+			*pUV++ = 0.0f;
+				
+			*pPos++ = p->org[0];
+			*pPos++ = p->org[1];
+			*pPos++ = p->org[2];
+			*pPos++ = p->org[0] + r_pup[0]*scale;
+			*pPos++ = p->org[1] + r_pup[1]*scale;
+			*pPos++ = p->org[2] + r_pup[2]*scale;
+			*pPos++ = p->org[0] + r_pright[0]*scale;
+			*pPos++ = p->org[1] + r_pright[1]*scale;
+			*pPos++ = p->org[2] + r_pright[2]*scale;
 		}
 	}
-
-#ifdef GLQUAKE
-	glEnd ();
+	
+	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, num_vertices, gVertexBuffer);
+	vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, num_vertices, gTexCoordBuffer);
+	vglVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, num_vertices, gColorBuffer);
+	GL_DrawPolygon(GL_TRIANGLES, num_vertices);
+	GL_DisableState(GL_COLOR_ARRAY);
 	glDisable (GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-#endif
+	GL_EnableState(GL_REPLACE);
 }
 
 
