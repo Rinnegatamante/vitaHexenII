@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern int old_char;
 extern int isDanzeff;
 extern uint64_t rumble_tick;
-extern cvar_t res_val;
 qboolean		isDedicated;
 
 uint64_t initialTime = 0;
@@ -177,24 +176,17 @@ void Sys_Quit (void)
 
 void Sys_Error (char *error, ...)
 {
+	
+	va_list         argptr;
 
-	/*va_list         argptr;
-	
-	INFO("Sys_Error: ");
-	
 	char buf[256];
-	va_start (argptr, error);
-	vsnprintf (buf, sizeof(buf), error,argptr);
-	va_end (argptr);
-	INFO("%s\n", buf);
-	INFO("Press START to exit");
-	while(1){
-		SceCtrlData pad;
-		sceCtrlPeekBufferPositive(0, &pad, 1);
-		int kDown = pad.buttons;
-		if (kDown & SCE_CTRL_START)
-			break;
-	}*/
+	va_start(argptr, error);
+	vsnprintf(buf, sizeof(buf), error, argptr);
+	va_end(argptr);
+	sprintf(buf, "%s\n", buf);
+	FILE* f = fopen("ux0:/data/Hexen II/log.txt", "a+");
+	fwrite(buf, 1, strlen(buf), f);
+	fclose(f);
 	Sys_Quit();
 }
 
@@ -390,8 +382,11 @@ int _newlib_heap_size_user = 192 * 1024 * 1024;
 int main (int argc, char **argv)
 {
 	scePowerSetArmClockFrequency(444);
-	
-	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG);
+	scePowerSetBusClockFrequency(222);
+	scePowerSetGpuClockFrequency(222);
+	scePowerSetGpuXbarClockFrequency(166);
+
+	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
 	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, 1);
 	sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, 1);
 	
@@ -406,7 +401,12 @@ int main (int argc, char **argv)
 	COM_InitArgv (argc, argv);
 
 	parms.argc = com_argc;
-	parms.argv = com_argv;	
+	parms.argv = com_argv;
+	
+	// Initializing vitaGL
+	vglInitExtended(0x1400000, 960, 544, 0x1000000);
+	vglUseVram(GL_TRUE);
+	vglMapHeapMem();
 	
 	Host_Init (&parms);
 	hostInitialized = 1;
@@ -429,9 +429,6 @@ int main (int argc, char **argv)
 	
 	// Loading default config file
 	Cbuf_AddText ("exec config.cfg\n");
-	
-	// Just to be sure to use the correct resolution in config.cfg
-	VID_ChangeRes(res_val.value);
 	
 	u64 lastTick;
 	sceRtcGetCurrentTick(&lastTick);
@@ -457,6 +454,5 @@ int main (int argc, char **argv)
 	}
 	
 	free(parms.membase);
-	sceKernelExitProcess(0);
 	return 0;
 }
