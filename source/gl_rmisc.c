@@ -95,10 +95,10 @@ void R_InitParticleTexture (void)
 	}
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, texsize, texsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_EnableState(GL_MODULATE);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 /*
@@ -110,7 +110,7 @@ Grab six views for environment mapping tests
 */
 void R_Envmap_f (void)
 {
-	byte	buffer[256*256*4];
+	/*byte	buffer[256*256*4];
 	char	name[1024];
 
 	glDrawBuffer  (GL_FRONT);
@@ -165,7 +165,7 @@ void R_Envmap_f (void)
 	envmap = false;
 	glDrawBuffer  (GL_BACK);
 	glReadBuffer  (GL_BACK);
-	GL_EndRendering ();
+	GL_EndRendering ();*/
 }
 
 /*
@@ -211,10 +211,6 @@ void R_Init (void)
 	R_InitParticles ();
 	R_InitParticleTexture ();
 
-#ifdef GLTEST
-	Test_Init ();
-#endif
-
 	playertextures = texture_extension_number;
 	texture_extension_number += 16;
 
@@ -240,13 +236,13 @@ void R_TranslatePlayerSkin (int playernum)
 	extern	byte		player_8bit_texels[NUM_CLASSES][620*245];
 
 	int		top, bottom;
-	byte	translate[256];
-	unsigned	translate32[256];
+	byte *translate = malloc(256*sizeof(byte));
+	unsigned	*translate32 = malloc(256*sizeof(unsigned));
 	int		i, j, s;
 	model_t	*model;
 	aliashdr_t *paliashdr;
 	byte	*original;
-	unsigned	pixels[512*256], *out;
+	unsigned	*pixels, *out;
 	unsigned	scaled_width, scaled_height;
 	int			inwidth, inheight;
 	byte		*inrow;
@@ -284,8 +280,11 @@ void R_TranslatePlayerSkin (int playernum)
 	//
 	currententity = &cl_entities[1+playernum];
 	model = currententity->model;
-	if (!model)
+	if (!model){
+		free(translate);
+		free(translate32);
 		return;		// player doesn't have a model yet
+	}
 	paliashdr = (aliashdr_t *)Mod_Extradata (model);
 	s = paliashdr->skinwidth * paliashdr->skinheight;
 
@@ -302,21 +301,6 @@ void R_TranslatePlayerSkin (int playernum)
 	// instead of sending it through gl_upload 8
     GL_Bind(playertextures + playernum);
 
-#if 0
-	byte	translated[320*200];
-
-	for (i=0 ; i<s ; i+=4)
-	{
-		translated[i] = translate[original[i]];
-		translated[i+1] = translate[original[i+1]];
-		translated[i+2] = translate[original[i+2]];
-		translated[i+3] = translate[original[i+3]];
-	}
-
-
-	// don't mipmap these, because it takes too long
-	GL_Upload8 (translated, paliashdr->skinwidth, paliashdr->skinheight, false, false, true);
-#else
 	for (i=0 ; i<256 ; i++)
 		translate32[i] = d_8to24table[translate[i]];
 	scaled_width = gl_max_size.value < 512 ? gl_max_size.value : 512;
@@ -325,7 +309,17 @@ void R_TranslatePlayerSkin (int playernum)
 	// allow users to crunch sizes down even more if they want
 	scaled_width >>= (int)gl_playermip.value;
 	scaled_height >>= (int)gl_playermip.value;
-
+	
+	#define PIXEL_COUNT (512*256)
+	#define PIXELS_SIZE (PIXEL_COUNT * sizeof(unsigned))
+	pixels = (unsigned*) malloc(PIXELS_SIZE);
+	if(!pixels)
+	{
+		free(translate);
+		free(translate32);
+		Sys_Error("Out of memory.");
+	}
+	
 	inwidth = paliashdr->skinwidth;
 	inheight = paliashdr->skinheight;
 	out = pixels;
@@ -348,11 +342,12 @@ void R_TranslatePlayerSkin (int playernum)
 	}
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#endif
-
+	GL_EnableState(GL_MODULATE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	free(pixels);
+	free(translate);
+	free(translate32);
 }
 
 
@@ -408,7 +403,7 @@ For program optimization
 */
 void R_TimeRefresh_f (void)
 {
-	int			i;
+	/*int			i;
 	float		start, stop, time;
 	int			startangle;
 	vrect_t		vr;
@@ -429,7 +424,7 @@ void R_TimeRefresh_f (void)
 	Con_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
 	glDrawBuffer  (GL_BACK);
-	GL_EndRendering ();
+	GL_EndRendering ();*/
 }
 
 void D_FlushCaches (void)

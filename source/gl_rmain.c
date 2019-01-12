@@ -405,8 +405,8 @@ void R_DrawSpriteModel (entity_t *e)
 	
 	glBegin (GL_QUADS);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	VectorMA (e->origin, frame->down, r_spritedesc.vup, point);
 	VectorMA (point, frame->left, r_spritedesc.vright, pPoint);
