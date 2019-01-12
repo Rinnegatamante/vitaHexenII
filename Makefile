@@ -34,6 +34,17 @@ COMMON_OBJS =	source/chase.o \
 	source/pr_cmds.o \
 	source/pr_edict.o \
 	source/pr_exec.o \
+	source/gl_draw.o \
+	source/gl_mesh.o \
+	source/gl_model.o \
+	source/gl_refrag.o \
+	source/gl_rlight.o \
+	source/gl_rmain.o \
+	source/gl_rmisc.o \
+	source/gl_rsurf.o \
+	source/gl_screen.o \
+	source/gl_test.o \
+	source/gl_warp.o \
 	source/r_part.o \
 	source/sbar.o \
 	source/sv_main.o \
@@ -45,43 +56,14 @@ COMMON_OBJS =	source/chase.o \
 	source/world.o \
 	source/zone.o \
 	source/sys_psp2.o \
-	source/d_edge.o \
-	source/d_fill.o \
-	source/d_init.o \
-	source/d_modech.o \
-	source/d_part.o \
-	source/d_polyse.o \
-	source/d_scan.o \
-	source/d_sky.o \
-	source/d_sprite.o \
-	source/d_surf.o \
-	source/d_vars.o \
-	source/d_zpoint.o \
-	source/draw.o \
-	source/model.o \
 	source/fnmatch.o \
-	source/nonintel.o \
-	source/r_aclip.o \
-	source/r_alias.o \
-	source/r_bsp.o \
-	source/r_draw.o \
-	source/r_edge.o \
-	source/r_efrag.o \
-	source/r_light.o \
-	source/r_main.o \
-	source/r_misc.o \
-	source/r_sky.o \
-	source/r_sprite.o \
-	source/r_surf.o \
-	source/r_vars.o \
-	source/screen.o \
 	source/snd_dma.o \
 	source/snd_mix.o \
 	source/snd_mem.o \
 	source/snd_psp2.o \
-	source/vid_psp2.o \
 	source/net_none.o \
-	source/in_psp2.o
+	source/in_psp2.o \
+	source/gl_vidpsp2.o
 
 CPPSOURCES	:= source/audiodec	
 
@@ -93,7 +75,7 @@ OBJS     := $(addsuffix .o,$(BINFILES)) $(CFILES:.c=.o) $(CPPFILES:.cpp=.o)
 PREFIX  = arm-vita-eabi
 CC      = $(PREFIX)-gcc
 CXX      = $(PREFIX)-g++
-CFLAGS  = -fno-lto -Wl,-q -Wall -O3 -g -Did386="0" -DHAVE_OGGVORBIS -DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
+CFLAGS  = -w -fno-lto -Wl,-q -Wall -O3 -g -Did386="0" -DGLQUAKE -DHAVE_OGGVORBIS -DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 -DQUAKE2RJ -DRJNET -fno-short-enums -ffast-math
 CXXFLAGS  = $(CFLAGS) -fno-exceptions -std=gnu++11
 ASFLAGS = $(CFLAGS)
 

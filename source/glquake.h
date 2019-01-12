@@ -4,19 +4,20 @@
 
 // disable data conversion warnings
 
-#pragma warning(disable : 4244)     // MIPS
-#pragma warning(disable : 4136)     // X86
-#pragma warning(disable : 4051)     // ALPHA
-  
-#include <windows.h>
+//#pragma warning(disable : 4244)     // MIPS
+//#pragma warning(disable : 4136)     // X86
+//#pragma warning(disable : 4051)     // ALPHA
 
-#include <gl\gl.h>
-#include <gl\glu.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#include <vitaGL.h>
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
 
-
+#ifdef _WIN32
 // Function prototypes for the Texture Object Extension routines
 typedef GLboolean (APIENTRY *ARETEXRESFUNCPTR)(GLsizei, const GLuint *,
                     const GLboolean *);
@@ -37,6 +38,7 @@ extern	TEXSUBIMAGEPTR TexSubImage2DFunc;
 extern  FX_DISPLAY_MODE_EXT fxDisplayModeExtension;
 extern  FX_SET_PALETTE_EXT fxSetPaletteExtension;
 extern  FX_MARK_PAL_TEXTURE_EXT fxMarkPalTextureExtension;
+#endif
 
 #define INVERSE_PAL_R_BITS 6
 #define INVERSE_PAL_G_BITS 6
@@ -77,11 +79,12 @@ typedef struct
 
 extern	int glx, gly, glwidth, glheight;
 
+#ifdef _WIN32
 extern	PROC glArrayElementEXT;
 extern	PROC glColorPointerEXT;
 extern	PROC glTexturePointerEXT;
 extern	PROC glVertexPointerEXT;
-
+#endif
 
 // r_local.h -- private refresh defs
 
@@ -290,6 +293,10 @@ extern	const char *gl_extensions;
 
 void R_TranslatePlayerSkin (int playernum);
 void GL_Bind (int texnum);
+
+#ifndef _WIN32
+#define APIENTRY /* */
+#endif
 
 byte *playerTranslation;
 
