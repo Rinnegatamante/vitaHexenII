@@ -38,7 +38,7 @@ float RTint[256],GTint[256],BTint[256];
 
 glvert_t glv;
 
-cvar_t	gl_ztrick = {"gl_ztrick","1",true};
+cvar_t	gl_ztrick = {"gl_ztrick","0"};
 
 viddef_t	vid;				// global video state
 
@@ -394,7 +394,7 @@ void GL_Init (void)
 
 	GL_EnableState(GL_ALPHA_TEST);
 	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
-	glAlphaFunc(GL_GREATER, 0.666);
+	//glAlphaFunc(GL_GREATER, 0.666);
 
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	//->glShadeModel (GL_FLAT);
