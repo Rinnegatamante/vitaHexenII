@@ -65,12 +65,16 @@ COMMON_OBJS =	source/chase.o \
 	source/in_psp2.o \
 	source/gl_vidpsp2.o
 
-CPPSOURCES	:= source/audiodec	
+CPPSOURCES	:= source/audiodec
 
-CFILES		:=	$(COMMON_OBJS)
-CPPFILES   := $(foreach dir,$(CPPSOURCES), $(wildcard $(dir)/*.cpp))
+CGSOURCES := shaders
+
+CFILES   :=	$(COMMON_OBJS)
+CPPFILES := $(foreach dir,$(CPPSOURCES), $(wildcard $(dir)/*.cpp))
+CGFILES  := $(foreach dir,$(CGSOURCES), $(wildcard $(dir)/*.cg))
 BINFILES := $(foreach dir,$(DATA), $(wildcard $(dir)/*.bin))
 OBJS     := $(addsuffix .o,$(BINFILES)) $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) 
+GXPFILES := $(CGFILES:.cg=.gxp) 
 
 PREFIX  = arm-vita-eabi
 CC      = $(PREFIX)-gcc
@@ -83,6 +87,14 @@ CXXFLAGS  = $(CFLAGS) -fpermissive -fno-exceptions -std=gnu++11
 ASFLAGS = $(CFLAGS)
 
 all: $(TARGET).vpk
+
+shaders: $(GXPFILES)
+
+%_f.gxp:
+	psp2cgc -profile sce_fp_psp2 $(@:_f.gxp=_f.cg) -Wperf -fastprecision -O3 -o $@
+	
+%_v.gxp:
+	psp2cgc -profile sce_vp_psp2 $(@:_v.gxp=_v.cg) -Wperf -fastprecision -O3 -o $@
 
 $(TARGET).vpk: $(TARGET).velf
 	vita-make-fself -s $< build\eboot.bin
