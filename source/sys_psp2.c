@@ -424,7 +424,6 @@ int main (int argc, char **argv)
 	Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
 	Cbuf_AddText ("bind LEFTARROW invleft\n"); // Left
 	Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
-	Cbuf_AddText ("bind TOUCH +showscores\n"); // Touchscreen
 	Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
 	
 	// Loading default config file
