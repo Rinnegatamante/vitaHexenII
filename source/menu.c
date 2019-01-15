@@ -792,6 +792,10 @@ void M_Main_Draw (void)
 
 	f = (int)(host_time * 10)%8;
 	M_DrawTransPic (43, 54 + m_main_cursor * 20,Draw_CachePic( va("gfx/menu/menudot%i.lmp", f+1 ) ) );
+	
+	M_Print (-40, 300, "Huge thanks for their awesome support on Patreon to:");
+	M_Print (-40, 308, "- RaveHeart");
+	M_Print (-40, 316, "- XandridFire");
 }
 
 
