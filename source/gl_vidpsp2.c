@@ -67,6 +67,7 @@ cvar_t		vid_config_x = {"vid_config_x","960", true};
 cvar_t		vid_config_y = {"vid_config_y","544", true};
 cvar_t		vid_stretch_by_2 = {"vid_stretch_by_2","1", true};
 cvar_t		_windowed_mouse = {"_windowed_mouse","0", true};
+cvar_t		show_fps = {"show_fps", "0", true};
 
 int			window_center_x, window_center_y, window_x, window_y, window_width, window_height;
 
@@ -405,6 +406,8 @@ void GL_Init (void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+	Cvar_RegisterVariable (&show_fps);
 
 //	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	GL_EnableState(GL_REPLACE);
@@ -436,6 +439,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 
 void GL_EndRendering (void)
 {
+	GL_DrawFPS();
 	vglStopRendering();
 }
 

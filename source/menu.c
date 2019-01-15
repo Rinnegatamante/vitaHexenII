@@ -20,6 +20,7 @@ extern cvar_t	inverted;
 extern cvar_t	pstv_rumble;
 extern cvar_t	retrotouch;
 extern cvar_t	always_run;
+extern cvar_t	show_fps;
 cvar_t m_oldmission = {"m_oldmission","1",true};
 
 void (*vid_menudrawfn)(void);
@@ -230,12 +231,6 @@ char *DiffNames[NUM_CLASSES][4] =
 /* Support Routines */
 void M_DrawCheckbox (int x, int y, int on)
 {
-#if 0
-	if (on)
-		M_DrawCharacter (x, y, 131);
-	else
-		M_DrawCharacter (x, y, 129);
-#endif
 	if (on)
 		M_Print (x, y, "on");
 	else
@@ -1937,6 +1932,7 @@ again:
 /* OPTIONS MENU */
 
 #define	SLIDER_RANGE	10
+#define OPTIONS_NUM 14
 
 int		options_cursor;
 
@@ -2024,6 +2020,10 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("pstv_rumble", !pstv_rumble.value);
 		break;
 		
+	case 13:
+		Cvar_SetValue ("show_fps", !show_fps.value);
+		break;
+		
 	}
 }
 
@@ -2091,6 +2091,9 @@ void M_Options_Draw (void)
 
 	M_Print (16, 60+(12*8),"         Rumble Effect");
 	M_DrawCheckbox (220, 60+(12*8), pstv_rumble.value);
+	
+	M_Print (16, 60+(13*8),"        Show Framerate");
+	M_DrawCheckbox (220, 60+(13*8), show_fps.value);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -2147,7 +2150,7 @@ void M_Options_Key (int k)
 		S_LocalSound ("raven/menu1.wav");
 		options_cursor--;
 		if (options_cursor < 0)
-			options_cursor = 12;
+			options_cursor = OPTIONS_NUM - 1;
 		else if (options_cursor == 2)
 			options_cursor = 0;
 
@@ -2160,7 +2163,7 @@ void M_Options_Key (int k)
 	case K_DOWNARROW:
 		S_LocalSound ("raven/menu1.wav");
 		options_cursor++;
-		if (options_cursor >= 13)
+		if (options_cursor >= OPTIONS_NUM)
 			options_cursor = 0;
 		else if (options_cursor == 0)
 			options_cursor = 2;

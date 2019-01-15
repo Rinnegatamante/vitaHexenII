@@ -1677,79 +1677,32 @@ int GL_LoadPicTexture (qpic_t *pic)
 	return GL_LoadTexture ("", pic->width, pic->height, pic->data, 0, 1, 0);
 }
 
-/*
-===============
-GL_Upload8
-===============
-*/
-/*
-void GL_UploadTrans8 (byte *data, int width, int height,  qboolean mipmap, byte Alpha)
-{
-	int			i, s;
-	int			p;
-	unsigned NewAlpha;
+void GL_DrawFPS(void){
+	extern cvar_t show_fps;
+	static double lastframetime;
+	double t;
+	extern int fps_count;
+	static int lastfps;
+	int x, y;
+	char st[80];
+	
+	if (!show_fps.value)
+		return;
 
-	NewAlpha = ((unsigned)Alpha)<<24;
+	t = Sys_FloatTime ();
 
-	s = width*height;
-	for (i=0 ; i<s ; i++)
-	{
-		p = data[i];
-		trans[i] = d_8to24table[p];
-		if (p != 255)
-		{
-			trans[i] &= 0x00ffffff;
-			trans[i] |= NewAlpha;
-		}
+	if ((t - lastframetime) >= 1.0) {
+		lastfps = fps_count;
+		fps_count = 0;
+		lastframetime = t;
+
 	}
+	sprintf(st, "%3d FPS", lastfps);
 
-	GL_Upload32 (trans, width, height, mipmap, 1);
+	x = vid.width - strlen(st) * 8 - 16;
+	y = 8 ; //vid.height - (sb_lines * (vid.height/240) )- 16;
+	Draw_String(x, y, st);
 }
-*/
-
-/*
-================
-GL_LoadTransTexture
-================
-*/
-/*int GL_LoadTransTexture (char *identifier, int width, int height, byte *data, qboolean mipmap, byte Alpha)
-{
-	qboolean	noalpha;
-	int			i, p, s;
-	gltexture_t	*glt;
-
-	// see if the texture is allready present
-	if (identifier[0])
-	{
-		for (i=0, glt=gltextures ; i<numgltextures ; i++, glt++)
-		{
-			if (!strcmp (identifier, glt->identifier))
-			{
-				if (width != glt->width || height != glt->height)
-					Sys_Error ("GL_LoadTexture: cache mismatch");
-				return gltextures[i].texnum;
-			}
-		}
-	}
-	else
-		glt = &gltextures[numgltextures];
-	numgltextures++;
-
-	strcpy (glt->identifier, identifier);
-	glt->texnum = texture_extension_number;
-	glt->width = width;
-	glt->height = height;
-	glt->mipmap = mipmap;
-
-	GL_Bind(texture_extension_number );
-
-	GL_UploadTrans8 (data, width, height, mipmap, Alpha);
-
-	texture_extension_number++;
-
-	return texture_extension_number-1;
-}
-*/
 
 /*
  * $Log: /H2 Mission Pack/gl_draw.c $

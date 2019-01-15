@@ -426,6 +426,7 @@ void GL_DisableState(GLenum state);
 void GL_DrawPolygon(GLenum prim, int num);
 void GL_Color(float r, float g, float b, float a);
 void GL_ResetShaders();
+void GL_DrawFPS(void);
 
 int M_DrawBigCharacter (int x, int y, int num, int numNext);
 void GL_Set2D (void);
