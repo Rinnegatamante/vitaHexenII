@@ -404,7 +404,7 @@ int main (int argc, char **argv)
 	parms.argv = com_argv;
 	
 	// Initializing vitaGL
-	vglInitExtended(0x1400000, 960, 544, 0x1000000);
+	vglInitExtended(0x1400000, 960, 544, 0x1000000, SCE_GXM_MULTISAMPLE_4X);
 	vglUseVram(GL_TRUE);
 	vglMapHeapMem();
 	
