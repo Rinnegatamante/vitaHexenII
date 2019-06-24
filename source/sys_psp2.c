@@ -41,6 +41,8 @@ qboolean		isDedicated;
 uint64_t initialTime = 0;
 int hostInitialized = 0;
 SceCtrlData pad, oldpad;
+uint8_t is_uma0 = 0;
+
 /*
 ===============================================================================
 
@@ -184,7 +186,9 @@ void Sys_Error (char *error, ...)
 	vsnprintf(buf, sizeof(buf), error, argptr);
 	va_end(argptr);
 	sprintf(buf, "%s\n", buf);
-	FILE* f = fopen("ux0:/data/Hexen II/log.txt", "a+");
+	FILE* f = NULL;
+	if (is_uma0) f = fopen("uma0:/data/Hexen II/log.txt", "a+");
+	else f = fopen("ux0:/data/Hexen II/log.txt", "a+");
 	fwrite(buf, 1, strlen(buf), f);
 	fclose(f);
 	Sys_Quit();
@@ -385,6 +389,13 @@ int main (int argc, char **argv)
 	scePowerSetBusClockFrequency(222);
 	scePowerSetGpuClockFrequency(222);
 	scePowerSetGpuXbarClockFrequency(166);
+
+	// Checking for uma0 support
+	FILE *f = fopen("uma0:/data/Hexen II/data1/pak0.pak", "rb");
+	if (f) {
+		fclose(f);
+		is_uma0 = 1;
+	}
 
 	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
 	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, 1);

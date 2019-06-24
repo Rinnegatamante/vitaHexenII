@@ -7,6 +7,8 @@
 
 #define NUM_SAFE_ARGVS  7
 
+extern uint8_t is_uma0;
+
 static char     *largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
 static char     *argvdummy = " ";
 
@@ -1801,13 +1803,15 @@ void COM_InitFilesystem (void)
 		com_cachedir[0] = 0;
 
 //
-// start up default 3DS folders
+// start up default PSVITA folders
 //
 	Sys_Printf("\nAdding data1 directory...");
-	COM_AddGameDirectory ("ux0:/data/Hexen II/data1");
+	if (is_uma0) COM_AddGameDirectory ("uma0:/data/Hexen II/data1");
+	else COM_AddGameDirectory ("ux0:/data/Hexen II/data1");
 #ifndef NO_PRAVEUS
 	Sys_Printf("\nAdding portals directory...");
-	COM_AddGameDirectory ("ux0:/data/Hexen II/portals");
+	if (is_uma0) COM_AddGameDirectory ("uma0:/data/Hexen II/portals");
+	else COM_AddGameDirectory ("ux0:/data/Hexen II/portals");
 #endif
 
 //

@@ -28,7 +28,7 @@ extern "C"{
 }
 #include "audio_decoder.h"
 
-extern char* mod_path;
+extern uint8_t is_uma0;
 
 #define BUFSIZE 8192 // Max dimension of audio buffer size
 #define NSAMPLES 2048 // Number of samples for output
@@ -167,80 +167,77 @@ static int bgmThread(unsigned int args, void* arg){
 void CDAudio_Play(byte track, qboolean looping)
 {
 	CDAudio_Stop();
+	char basename[256];
 	char fname[256];
-	sprintf(fname,"ux0:/data/Hexen II/cdtracks/");
-	if (trackNotation){
-		sprintf(fname, "%strack", fname);
-		if (track < 10){
-			sprintf(fname, "%s0", fname);
-		}
-		sprintf(fname,"%s%d",fname,track);
-	}else{
+	if (is_uma0) sprintf(basename,"uma0:/data/Hexen II/cdtracks/");
+	else sprintf(basename,"ux0:/data/Hexen II/cdtracks/");
+	if (trackNotation) sprintf(fname, "%strack%02d", basename, track);
+	else{
 		switch (track){
 			case 2:
-				sprintf(fname, "%sCasa1", fname);
+				sprintf(fname, "%sCasa1", basename);
 				break;
 			case 3:
-				sprintf(fname, "%sCasa2", fname);
+				sprintf(fname, "%sCasa2", basename);
 				break;
 			case 4:
-				sprintf(fname, "%sCasa3", fname);
+				sprintf(fname, "%sCasa3", basename);
 				break;
 			case 5:
-				sprintf(fname, "%sCasa4", fname);
+				sprintf(fname, "%sCasa4", basename);
 				break;
 			case 6:
-				sprintf(fname, "%sEgyp1", fname);
+				sprintf(fname, "%sEgyp1", basename);
 				break;
 			case 7:
-				sprintf(fname, "%sEgyp2", fname);
+				sprintf(fname, "%sEgyp2", basename);
 				break;
 			case 8:
-				sprintf(fname, "%sEgyp3", fname);
+				sprintf(fname, "%sEgyp3", basename);
 				break;
 			case 9:
-				sprintf(fname, "%sMeso1", fname);
+				sprintf(fname, "%sMeso1", basename);
 				break;
 			case 10:
-				sprintf(fname, "%sMeso2", fname);
+				sprintf(fname, "%sMeso2", basename);
 				break;
 			case 11:
-				sprintf(fname, "%sMeso3", fname);
+				sprintf(fname, "%sMeso3", basename);
 				break;
 			case 12:
-				sprintf(fname, "%sRoma1", fname);
+				sprintf(fname, "%sRoma1", basename);
 				break;
 			case 13:
-				sprintf(fname, "%sRoma2", fname);
+				sprintf(fname, "%sRoma2", basename);
 				break;
 			case 14:
-				sprintf(fname, "%sRoma3", fname);
+				sprintf(fname, "%sRoma3", basename);
 				break;
 			case 15:
-				sprintf(fname, "%sCasb1", fname);
+				sprintf(fname, "%sCasb1", basename);
 				break;
 			case 16:
-				sprintf(fname, "%sCasb2", fname);
+				sprintf(fname, "%sCasb2", basename);
 				break;
 			case 17:
-				sprintf(fname, "%sCasb3", fname);
+				sprintf(fname, "%sCasb3", basename);
 				break;
 			default:
-				sprintf(fname,"%sUnkn1", fname);
+				sprintf(fname, "%sUnkn1", basename);
 				break;
 		}
 	}
-	char tmp[256];
-	sprintf(tmp,"%s.mid",fname);
+	char fullname[256];
+	sprintf(fullname,"%s.mid", fname);
 	
-	FILE* fd = fopen(tmp,"rb");
+	FILE* fd = fopen(fullname, "rb");
 	if (fd == NULL){
-		sprintf(tmp,"%s.mp3",fname);
-		fd = fopen(tmp,"rb");
+		sprintf(fullname,"%s.mp3", fname);
+		fd = fopen(fullname, "rb");
 	}
 	if (fd == NULL){
-		sprintf(tmp,"%s.ogg",fname);
-		fd = fopen(tmp,"rb");
+		sprintf(fullname,"%s.ogg", fname);
+		fd = fopen(fullname, "rb");
 	}
 	if (fd == NULL) return;
 	DecodedMusic* memblock = (DecodedMusic*)malloc(sizeof(DecodedMusic));
@@ -288,7 +285,9 @@ int CDAudio_Init(void)
 
 	// Checking what kind of filenames the system should use
 	SceIoDirent g_dir;
-	int fd = sceIoDopen("ux0:/data/Hexen II/cdtracks");
+	SceUID fd;
+	if (is_uma0) fd = sceIoDopen("uma0:/data/Hexen II/cdtracks");
+	else fd = sceIoDopen("ux0:/data/Hexen II/cdtracks");
 	if (fd >= 0){
 		while (sceIoDread(fd, &g_dir) > 0) {
 			if (strncmp(g_dir.d_name, "Casa1", 5) == 0){
