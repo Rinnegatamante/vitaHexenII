@@ -87,6 +87,7 @@ cvar_t	gl_playermip = {"gl_playermip","0"};
 cvar_t	gl_nocolors = {"gl_nocolors","0"};
 cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","1",true};
 cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
+cvar_t	gl_waterripple = {"gl_waterripple","2"};
 
 extern	cvar_t	gl_ztrick;
 static qboolean AlwaysDrawModel;

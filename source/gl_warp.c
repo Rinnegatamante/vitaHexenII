@@ -197,8 +197,9 @@ void EmitWaterPolys (msurface_t *fa)
 			
 			*pUV++ = s;
 			*pUV++ = t;
-			memcpy(pPoint, &v[0], sizeof(vec3_t));
-			pPoint += 3;
+			*pPoint++ = v[0];
+			*pPoint++ = v[1];
+			*pPoint++ = v[2] + gl_waterripple.value*sin(v[0]*0.05+realtime)*sin(v[2]*0.05+realtime);
 		}
 		vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, p->numverts, gVertexBuffer);
 		vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, p->numverts, gTexCoordBuffer);

@@ -281,6 +281,7 @@ extern	int		gl_alpha_format;
 
 extern	cvar_t	gl_max_size;
 extern	cvar_t	gl_playermip;
+extern	cvar_t	gl_waterripple;
 
 extern	int			mirrortexturenum;	// quake texturenum, not gltexturenum
 extern	qboolean	mirror;
