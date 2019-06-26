@@ -21,7 +21,34 @@ extern cvar_t	pstv_rumble;
 extern cvar_t	retrotouch;
 extern cvar_t	always_run;
 extern cvar_t	show_fps;
+int cfg_width;
+int cfg_height;
+extern cvar_t gl_bilinear;
 cvar_t m_oldmission = {"m_oldmission","1",true};
+int msaa = 0;
+extern uint8_t is_uma0;
+
+void SetResolution(int w, int h){
+	char res_str[64];
+	FILE *f = NULL;
+	if (is_uma0) f = fopen("uma0:data/Hexen II/resolution.cfg", "wb");
+	else f = fopen("ux0:data/Hexen II/resolution.cfg", "wb");
+	sprintf(res_str, "%dx%d", w, h);
+	fwrite(res_str, 1, strlen(res_str), f);
+	fclose(f);
+	cfg_width = w;
+	cfg_height = h;
+}
+
+void SetAntiAliasing(int m){
+	char res_str[64];
+	FILE *f = NULL;
+	if (is_uma0) f = fopen("uma0:data/Hexen II/antialiasing.cfg", "wb");
+	else f = fopen("ux0:data/Hexen II/antialiasing.cfg", "wb");
+	sprintf(res_str, "%d", m);
+	fwrite(res_str, 1, strlen(res_str), f);
+	fclose(f);
+}
 
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
@@ -1936,7 +1963,7 @@ again:
 /* OPTIONS MENU */
 
 #define	SLIDER_RANGE	10
-#define OPTIONS_NUM 15
+#define OPTIONS_NUM 18
 
 int		options_cursor;
 
@@ -2031,6 +2058,34 @@ void M_AdjustSliders (int dir)
 	case 14:
 		Cvar_SetValue ("gl_xflip", !gl_xflip.value);
 		break;
+	
+	case 15:
+		Cvar_SetValue ("gl_bilinear", !gl_bilinear.value);
+		if (gl_bilinear.value) Cbuf_AddText("gl_texturemode GL_LINEAR\n");
+		else Cbuf_AddText("gl_texturemode GL_NEAREST\n");
+		break;
+		
+	case 16:
+		msaa = (msaa + 1) % 3;
+		SetAntiAliasing(msaa);
+		break;
+		
+	case 17:
+		switch (cfg_width){
+		case 480:
+			SetResolution(640, 368);
+			break;
+		case 640:
+			SetResolution(720, 408);
+			break;
+		case 720:
+			SetResolution(960, 544);
+			break;
+		case 960:
+			SetResolution(480, 272);
+			break;
+		}
+		break;
 		
 	}
 }
@@ -2105,6 +2160,19 @@ void M_Options_Draw (void)
 	
 	M_Print (16, 60+(14*8),"         Specular Mode");
 	M_DrawCheckbox (220, 60+(14*8), gl_xflip.value);
+	
+	M_Print (16, 60+(15*8), "    Bilinear Filtering");
+	M_DrawCheckbox (220, 60+(15*8), gl_bilinear.value);
+	
+	M_Print (16, 60+(16*8), "        Anti-Aliasing");
+	if (msaa == 0) M_Print (220, 60+(16*8), "Disabled");
+	else if (msaa == 1) M_Print (220, 60+(16*8), "MSAA 2x");
+	else M_Print (220, 60+(16*8), "MSAA 4x");
+	
+	char res_str[64];
+	sprintf(res_str, "%dx%d", cfg_width, cfg_height);
+	M_Print (16, 60+(17*8), "           Resolution");
+	M_Print (220, 60+(17*8), res_str);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -2150,8 +2218,13 @@ void M_Options_Key (int k)
 			Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
 			Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
 			
-			gl_xflip.value = 0;
+			Cbuf_AddText ("gl_texturemode GL_LINEAR\n");
 			
+			gl_xflip.value = 0;
+			SetResolution(960, 544);
+			msaa = 0;
+			SetAntiAliasing(msaa);
+
 			break;
 		default:
 			M_AdjustSliders (1);

@@ -26,6 +26,7 @@ cvar_t		gl_nobind = {"gl_nobind", "0"};
 cvar_t		gl_max_size = {"gl_max_size", "1024"};
 cvar_t		gl_round_down = {"gl_round_down", "0"};
 cvar_t		gl_picmip = {"gl_picmip", "0"};
+cvar_t		gl_bilinear = {"gl_bilinear", "1", 1};
 
 byte		*draw_chars;				// 8*8 graphic characters
 byte		*draw_smallchars;			// Small characters for status bar
@@ -694,7 +695,8 @@ void Draw_Init (void)
 	Cvar_RegisterVariable (&gl_max_size);
 	Cvar_RegisterVariable (&gl_round_down);
 	Cvar_RegisterVariable (&gl_picmip);
-
+	Cvar_RegisterVariable (&gl_bilinear);
+	
 	// 3dfx can only handle 256 wide textures
 	if (is_3dfx || is_PowerVR)
 	{

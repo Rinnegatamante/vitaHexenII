@@ -42,6 +42,11 @@ uint64_t initialTime = 0;
 int hostInitialized = 0;
 SceCtrlData pad, oldpad;
 uint8_t is_uma0 = 0;
+extern int msaa;
+extern int scr_width;
+extern int scr_height;
+extern int cfg_width;
+extern int cfg_height;
 
 /*
 ===============================================================================
@@ -409,15 +414,45 @@ int main (int argc, char **argv)
 	parms.membase = malloc (parms.memsize);
 	parms.basedir = ".";
 
+	// Loading resolution and MSAA mode from config files, those are not handled via Host cause Host_Init requires vitaGL to be working
+	char res_str[64];
+	if (is_uma0) f = fopen("uma0:data/Hexen II/resolution.cfg", "rb");
+	else f = fopen("ux0:data/Hexen II/resolution.cfg", "rb");
+	if (f != NULL){
+		fread(res_str, 1, 64, f);
+		fclose(f);
+		sscanf(res_str, "%dx%d", &scr_width, &scr_height);
+	}
+	if (is_uma0) f = fopen("uma0:data/Hexen II/antialiasing.cfg", "rb");
+	else f = fopen("ux0:data/Hexen II/antialiasing.cfg", "rb");
+	if (f != NULL){
+		fread(res_str, 1, 64, f);
+		fclose(f);
+		sscanf(res_str, "%d", &msaa);
+	}
+	cfg_width = scr_width;
+	cfg_height = scr_height;
+
+	// Initializing vitaGL
+	// Initializing vitaGL
+	switch (msaa) {
+	case 1:
+		vglInitExtended(0x1400000, scr_width, scr_height, 0x1000000, SCE_GXM_MULTISAMPLE_2X);
+		break;
+	case 2:
+		vglInitExtended(0x1400000, scr_width, scr_height, 0x1000000, SCE_GXM_MULTISAMPLE_4X);
+		break;
+	default:
+		vglInitExtended(0x1400000, scr_width, scr_height, 0x1000000, SCE_GXM_MULTISAMPLE_NONE);
+		break;
+	}
+	vglUseVram(GL_TRUE);
+	vglMapHeapMem();
+
 	COM_InitArgv (argc, argv);
 
 	parms.argc = com_argc;
 	parms.argv = com_argv;
-	
-	// Initializing vitaGL
-	vglInitExtended(0x1400000, 960, 544, 0x1000000, SCE_GXM_MULTISAMPLE_4X);
-	vglUseVram(GL_TRUE);
-	vglMapHeapMem();
 	
 	Host_Init (&parms);
 	hostInitialized = 1;
