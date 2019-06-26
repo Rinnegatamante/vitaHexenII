@@ -208,6 +208,7 @@ void R_Init (void)
 	Cvar_RegisterVariable (&gl_keeptjunctions);
 	Cvar_RegisterVariable (&gl_reporttjunctions);
 	Cvar_RegisterVariable (&gl_waterripple);
+	Cvar_RegisterVariable (&gl_xflip);
 	
 	R_InitParticles ();
 	R_InitParticleTexture ();

@@ -1936,7 +1936,7 @@ again:
 /* OPTIONS MENU */
 
 #define	SLIDER_RANGE	10
-#define OPTIONS_NUM 14
+#define OPTIONS_NUM 15
 
 int		options_cursor;
 
@@ -2028,6 +2028,10 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("show_fps", !show_fps.value);
 		break;
 		
+	case 14:
+		Cvar_SetValue ("gl_xflip", !gl_xflip.value);
+		break;
+		
 	}
 }
 
@@ -2056,7 +2060,7 @@ void M_Options_Draw (void)
 	ScrollTitle("gfx/menu/title3.lmp");
 	
 	M_Print (16, 60+(0*8), "    Customize controls");
-	//M_Print (16, 60+(1*8), "         Go to console");
+	M_Print (16, 60+(1*8), "         Go to console");
 	M_Print (16, 60+(2*8), "     Reset to defaults");
 
 	M_Print (16, 60+(3*8), "           Screen size");
@@ -2098,6 +2102,9 @@ void M_Options_Draw (void)
 	
 	M_Print (16, 60+(13*8),"        Show Framerate");
 	M_DrawCheckbox (220, 60+(13*8), show_fps.value);
+	
+	M_Print (16, 60+(14*8),"         Specular Mode");
+	M_DrawCheckbox (220, 60+(14*8), gl_xflip.value);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -2142,6 +2149,8 @@ void M_Options_Key (int k)
 			Cbuf_AddText ("bind LEFTARROW invleft\n"); // Left
 			Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
 			Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
+			
+			gl_xflip.value = 0;
 			
 			break;
 		default:

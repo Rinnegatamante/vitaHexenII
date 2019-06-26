@@ -76,6 +76,7 @@ cvar_t	r_dynamic = {"r_dynamic","1"};
 cvar_t	r_novis = {"r_novis","0"};
 cvar_t	r_wholeframe = {"r_wholeframe", "1", true};
 
+cvar_t	gl_xflip = {"gl_xflip", "0", true};
 cvar_t	gl_clear = {"gl_clear","0"};
 cvar_t	gl_cull = {"gl_cull","1"};
 cvar_t	gl_texsort = {"gl_texsort","1"};
@@ -1384,6 +1385,10 @@ void R_SetupGL (void)
 
     glRotatef (-90,  1, 0, 0);	    // put Z going up
     glRotatef (90,  0, 0, 1);	    // put Z going up
+    if (gl_xflip.value){
+        glScalef (1, -1, 1);
+        glCullFace(GL_BACK);
+    }
     glRotatef (-r_refdef.viewangles[2],  1, 0, 0);
     glRotatef (-r_refdef.viewangles[0],  0, 1, 0);
     glRotatef (-r_refdef.viewangles[1],  0, 0, 1);

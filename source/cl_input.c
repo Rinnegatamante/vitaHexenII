@@ -213,6 +213,8 @@ cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5"};
 
 cvar_t	cl_prettylights = {"cl_prettylights","1"};
 
+extern cvar_t gl_xflip;
+
 /*
 ================
 CL_AdjustAngles
@@ -229,6 +231,8 @@ void CL_AdjustAngles (void)
 		speed = host_frametime * cl_anglespeedkey.value;
 	else
 		speed = host_frametime;
+	
+	if (gl_xflip.value) cl.viewangles[YAW] *= -1;
 
 	if (!(in_strafe.state & 1))
 	{
@@ -236,6 +240,9 @@ void CL_AdjustAngles (void)
 		cl.viewangles[YAW] += speed*cl_yawspeed.value*CL_KeyState (&in_left);
 		cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
 	}
+	
+	if (gl_xflip.value) cl.viewangles[YAW] *= -1;
+	
 	if (in_klook.state & 1)
 	{
 		V_StopPitchDrift ();
@@ -305,6 +312,8 @@ void CL_BaseMove (usercmd_t *cmd)
 
 	cmd->sidemove += 225 * CL_KeyState (&in_moveright);
 	cmd->sidemove -= 225 * CL_KeyState (&in_moveleft);
+
+	if(gl_xflip.value) cmd->sidemove *= -1;
 
 	cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up);
 	cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down);

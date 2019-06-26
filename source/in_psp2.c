@@ -115,13 +115,15 @@ void IN_Move (usercmd_t *cmd)
 	int x_mov = abs(left_x) < 30 ? 0 : (left_x * cl_sidespeed.value) * 0.005;
 	int y_mov = abs(left_y) < 30 ? 0 : (left_y * (left_y > 0 ? cl_backspeed.value : cl_forwardspeed.value)) * 0.006;
 	cmd->forwardmove -= y_mov;
-	cmd->sidemove += x_mov;
+	if (gl_xflip.value) cmd->sidemove -= x_mov;
+	else cmd->sidemove += x_mov;
 	
 	// Right analog support for camera movement
 	IN_RescaleAnalog(&right_x, &right_y, 30);
 	float x_cam = (right_x * sensitivity.value) * 0.008;
 	float y_cam = (right_y * sensitivity.value) * 0.008;
-	cl.viewangles[YAW] -= x_cam;
+	if (gl_xflip.value) cl.viewangles[YAW] += x_cam;
+	else cl.viewangles[YAW] -= x_cam;
 	V_StopPitchDrift();
 	if (inverted.value) cl.viewangles[PITCH] -= y_cam;
 	else cl.viewangles[PITCH] += y_cam;
