@@ -25,6 +25,7 @@ int cfg_width;
 int cfg_height;
 extern cvar_t gl_bilinear;
 cvar_t m_oldmission = {"m_oldmission","1",true};
+cvar_t vid_vsync = {"vid_vsync", "1", true};
 int msaa = 0;
 extern uint8_t is_uma0;
 
@@ -1964,7 +1965,7 @@ again:
 /* OPTIONS MENU */
 
 #define	SLIDER_RANGE	10
-#define OPTIONS_NUM 19
+#define OPTIONS_NUM 20
 
 int		options_cursor;
 
@@ -2087,8 +2088,12 @@ void M_AdjustSliders (int dir)
 		else if (r_idx < 0) r_idx = 3;
 		SetResolution(w_res[r_idx], h_res[r_idx]);
 		break;
-		
+	
 	case 18:
+		Cvar_SetValue ("vid_vsync", !vid_vsync.value);
+		break;
+	
+	case 19:
 		Cvar_SetValue ("r_shadows", !r_shadows.value);
 		break;
 		
@@ -2179,8 +2184,11 @@ void M_Options_Draw (void)
 	M_Print (16, 60+(17*8), "           Resolution");
 	M_Print (220, 60+(17*8), res_str);
 	
-	M_Print (16, 60+(18*8), "      Dynamic Shadows");
-	M_DrawCheckbox (220, 60+(18*8), r_shadows.value);
+	M_Print (16, 60+(18*8), "               V-Sync");
+	M_DrawCheckbox (220, 60+(18*8), vid_vsync.value);
+
+	M_Print (16, 60+(19*8), "      Dynamic Shadows");
+	M_DrawCheckbox (220, 60+(19*8), r_shadows.value);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -2232,6 +2240,7 @@ void M_Options_Key (int k)
 			SetResolution(960, 544);
 			r_idx = -1;
 			msaa = 0;
+			vid_vsync.value = 1;
 			SetAntiAliasing(msaa);
 
 			break;

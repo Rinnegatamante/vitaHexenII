@@ -47,6 +47,7 @@ extern int scr_width;
 extern int scr_height;
 extern int cfg_width;
 extern int cfg_height;
+extern cvar_t vid_vsync;
 
 /*
 ===============================================================================
@@ -477,9 +478,18 @@ int main (int argc, char **argv)
 	
 	u64 lastTick;
 	sceRtcGetCurrentTick(&lastTick);
+		
+	vglWaitVblankStart(vid_vsync.value);
+	int old_vsync = vid_vsync.value;
 	
 	while (1)
 	{
+		// Changing V-Sync setting in realtime
+		if (old_vsync != vid_vsync.value) {
+			vglWaitVblankStart(vid_vsync.value);
+			old_vsync = vid_vsync.value;
+		}
+		
 		// Prevent screen power-off
 		sceKernelPowerTick(0);
 		
