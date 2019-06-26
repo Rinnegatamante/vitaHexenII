@@ -822,7 +822,8 @@ void M_Main_Draw (void)
 	
 	M_Print (-40, 300, "Huge thanks for their awesome support on Patreon to:");
 	M_Print (-40, 308, "- RaveHeart");
-	M_Print (-40, 316, "- XandridFire");
+	M_Print (-40, 316, "- nobodywasishere");
+	M_Print (-40, 324, "- Tain Sueiras");
 }
 
 
@@ -1963,7 +1964,7 @@ again:
 /* OPTIONS MENU */
 
 #define	SLIDER_RANGE	10
-#define OPTIONS_NUM 18
+#define OPTIONS_NUM 19
 
 int		options_cursor;
 
@@ -2087,6 +2088,10 @@ void M_AdjustSliders (int dir)
 		SetResolution(w_res[r_idx], h_res[r_idx]);
 		break;
 		
+	case 18:
+		Cvar_SetValue ("r_shadows", !r_shadows.value);
+		break;
+		
 	}
 }
 
@@ -2128,7 +2133,7 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 60+(4*8), r);
 #endif
 
-	M_Print (16, 60+(5*8),       "    Camera Sensitivity");
+	M_Print (16, 60+(5*8), "    Camera Sensitivity");
 	r = (sensitivity.value - 1)/10;
 	M_DrawSlider (220, 60+(5*8), r);
 	
@@ -2173,6 +2178,9 @@ void M_Options_Draw (void)
 	sprintf(res_str, "%dx%d", cfg_width, cfg_height);
 	M_Print (16, 60+(17*8), "           Resolution");
 	M_Print (220, 60+(17*8), res_str);
+	
+	M_Print (16, 60+(18*8), "      Dynamic Shadows");
+	M_DrawCheckbox (220, 60+(18*8), r_shadows.value);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
