@@ -1977,6 +1977,9 @@ void M_Menu_Options_f (void)
 		options_cursor = 0;
 }
 
+int w_res[] = {480, 640, 720, 960};
+int h_res[] = {272, 368, 408, 544};
+int r_idx = -1;
 
 void M_AdjustSliders (int dir)
 {
@@ -2066,25 +2069,22 @@ void M_AdjustSliders (int dir)
 		break;
 		
 	case 16:
-		msaa = (msaa + 1) % 3;
+		msaa += dir;
+		if (msaa < 0) msaa = 2;
+		else if (msaa > 2) msaa = 0;
 		SetAntiAliasing(msaa);
 		break;
 		
 	case 17:
-		switch (cfg_width){
-		case 480:
-			SetResolution(640, 368);
-			break;
-		case 640:
-			SetResolution(720, 408);
-			break;
-		case 720:
-			SetResolution(960, 544);
-			break;
-		case 960:
-			SetResolution(480, 272);
-			break;
+		if (r_idx == -1) {
+			for (r_idx = 0; r_idx < 4; r_idx++) {
+				if (cfg_width == w_res[r_idx]) break;
+			}
 		}
+		r_idx += dir;
+		if (r_idx > 3) r_idx = 0;
+		else if (r_idx < 0) r_idx = 3;
+		SetResolution(w_res[r_idx], h_res[r_idx]);
 		break;
 		
 	}
@@ -2222,6 +2222,7 @@ void M_Options_Key (int k)
 			
 			gl_xflip.value = 0;
 			SetResolution(960, 544);
+			r_idx = -1;
 			msaa = 0;
 			SetAntiAliasing(msaa);
 
