@@ -2162,32 +2162,32 @@ void M_Options_Draw (void)
 	M_Print (16, 60+(11*8),	"        Show Crosshair");
 	M_DrawCheckbox (220, 60+(11*8), crosshair.value);
 
-	M_Print (16, 60+(12*8),"         Rumble Effect");
+	M_Print (16, 60+(12*8), "         Rumble Effect");
 	M_DrawCheckbox (220, 60+(12*8), pstv_rumble.value);
 	
-	M_Print (16, 60+(13*8),"        Show Framerate");
+	M_Print (16, 60+(13*8), "        Show Framerate");
 	M_DrawCheckbox (220, 60+(13*8), show_fps.value);
 	
-	M_Print (16, 60+(14*8),"         Specular Mode");
+	M_Print (16, 60+(14*8), "         Specular Mode");
 	M_DrawCheckbox (220, 60+(14*8), gl_xflip.value);
 	
 	M_Print (16, 60+(15*8), "    Bilinear Filtering");
 	M_DrawCheckbox (220, 60+(15*8), gl_bilinear.value);
 	
-	M_Print (16, 60+(16*8), "        Anti-Aliasing");
+	M_Print (16, 60+(16*8), "         Anti-Aliasing");
 	if (msaa == 0) M_Print (220, 60+(16*8), "Disabled");
 	else if (msaa == 1) M_Print (220, 60+(16*8), "MSAA 2x");
 	else M_Print (220, 60+(16*8), "MSAA 4x");
 	
 	char res_str[64];
 	sprintf(res_str, "%dx%d", cfg_width, cfg_height);
-	M_Print (16, 60+(17*8), "           Resolution");
+	M_Print (16, 60+(17*8), "            Resolution");
 	M_Print (220, 60+(17*8), res_str);
 	
-	M_Print (16, 60+(18*8), "               V-Sync");
+	M_Print (16, 60+(18*8), "                V-Sync");
 	M_DrawCheckbox (220, 60+(18*8), vid_vsync.value);
 
-	M_Print (16, 60+(19*8), "      Dynamic Shadows");
+	M_Print (16, 60+(19*8), "       Dynamic Shadows");
 	M_DrawCheckbox (220, 60+(19*8), r_shadows.value);
 
 // cursor
