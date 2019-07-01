@@ -1999,7 +1999,6 @@ void M_AdjustSliders (int dir)
 		SB_ViewSizeChanged();
 		vid.recalc_refdef = 1;
 		break;
-#ifndef GLQUAKE
 	case 4:	// gamma
 		v_gamma.value -= dir * 0.05;
 		if (v_gamma.value < 0.5)
@@ -2008,7 +2007,6 @@ void M_AdjustSliders (int dir)
 			v_gamma.value = 1;
 		Cvar_SetValue ("gamma", v_gamma.value);
 		break;
-#endif
 	case 5:	// mouse speed
 		sensitivity.value += dir * 0.5;
 		if (sensitivity.value < 1)
@@ -2132,11 +2130,9 @@ void M_Options_Draw (void)
 	r = (scr_viewsize.value - 30) / (120 - 30);
 	M_DrawSlider (220, 60+(3*8), r);
 
-#ifndef GLQUAKE
 	M_Print (16, 60+(4*8), "            Brightness");
 	r = (1.0 - v_gamma.value) / 0.5;
 	M_DrawSlider (220, 60+(4*8), r);
-#endif
 
 	M_Print (16, 60+(5*8), "    Camera Sensitivity");
 	r = (sensitivity.value - 1)/10;
@@ -2235,14 +2231,36 @@ void M_Options_Key (int k)
 			Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
 			
 			Cbuf_AddText ("gl_texturemode GL_LINEAR\n");
-			
+			scr_viewsize.value = 120;
+			v_gamma.value = 1;
+			sensitivity.value = 3;
+			inverted.value = 0;
+			bgmvolume.value = 1.0;
+			volume.value = 0.7;
+			retrotouch.value = 0;
+			pstv_rumble.value = 1.0;
+			show_fps.value = 0;
+			crosshair.value = 1;
+			r_shadows.value = 0;
 			gl_xflip.value = 0;
+			vid_vsync.value = 1;
+			Cvar_SetValue ("viewsize", scr_viewsize.value);
+			Cvar_SetValue ("v_gamma", v_gamma.value);
+			Cvar_SetValue ("sensitivity", sensitivity.value);
+			Cvar_SetValue ("invert_camera", inverted.value);
+			Cvar_SetValue ("bgmvolume", bgmvolume.value);
+			Cvar_SetValue ("volume", volume.value);
+			Cvar_SetValue ("retrotouch", retrotouch.value);
+			Cvar_SetValue ("pstv_rumble", pstv_rumble.value);
+			Cvar_SetValue ("show_fps", show_fps.value);
+			Cvar_SetValue ("crosshair", crosshair.value);
+			Cvar_SetValue ("r_shadows", r_shadows.value);
+			Cvar_SetValue ("gl_xflip", gl_xflip.value);
+			Cvar_SetValue ("vid_vsync", vid_vsync.value);
 			SetResolution(960, 544);
+			SetAntiAliasing(msaa);
 			r_idx = -1;
 			msaa = 0;
-			vid_vsync.value = 1;
-			SetAntiAliasing(msaa);
-
 			break;
 		default:
 			M_AdjustSliders (1);
@@ -2257,11 +2275,6 @@ void M_Options_Key (int k)
 			options_cursor = OPTIONS_NUM - 1;
 		else if (options_cursor == 2)
 			options_cursor = 0;
-
-#ifdef GLQUAKE	
-		if ((options_cursor == 4)) options_cursor--;
-#endif
-
 		break;
 
 	case K_DOWNARROW:
@@ -2271,11 +2284,6 @@ void M_Options_Key (int k)
 			options_cursor = 0;
 		else if (options_cursor == 0)
 			options_cursor = 2;
-
-#ifdef GLQUAKE	
-		if ((options_cursor == 4)) options_cursor++;
-#endif
-
 		break;	
 
 	case K_LEFTARROW:
@@ -2676,7 +2684,7 @@ static qboolean SoundPlayed;
 #define MAX_LINES 146
 char *CreditText[MAX_LINES] =
 {
-   "vitaHexenII version 1.0",
+   "vitaHexenII version 2.2",
    "  PSVITA port by Rinnegatamante ",
    "      based on vitaQuake and    ",
    "  original Hexen II source code ",
