@@ -2228,12 +2228,11 @@ void M_Options_Key (int k)
 			Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
 			Cbuf_AddText ("bind LEFTARROW invleft\n"); // Left
 			Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
-			Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
-			
+
 			Cbuf_AddText ("gl_texturemode GL_LINEAR\n");
 			scr_viewsize.value = 120;
 			v_gamma.value = 1;
-			sensitivity.value = 3;
+			sensitivity.value = 5;
 			inverted.value = 0;
 			bgmvolume.value = 1.0;
 			volume.value = 0.7;
@@ -2244,6 +2243,7 @@ void M_Options_Key (int k)
 			r_shadows.value = 0;
 			gl_xflip.value = 0;
 			vid_vsync.value = 1;
+			gl_bilinear.value = 1;
 			Cvar_SetValue ("viewsize", scr_viewsize.value);
 			Cvar_SetValue ("v_gamma", v_gamma.value);
 			Cvar_SetValue ("sensitivity", sensitivity.value);
@@ -2257,6 +2257,7 @@ void M_Options_Key (int k)
 			Cvar_SetValue ("r_shadows", r_shadows.value);
 			Cvar_SetValue ("gl_xflip", gl_xflip.value);
 			Cvar_SetValue ("vid_vsync", vid_vsync.value);
+			Cvar_SetValue ("gl_bilinear", gl_bilinear.value);
 			SetResolution(960, 544);
 			SetAntiAliasing(msaa);
 			r_idx = -1;
