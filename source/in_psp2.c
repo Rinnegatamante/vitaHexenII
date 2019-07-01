@@ -25,10 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t	m_filter = {"m_filter","0"};
 extern cvar_t always_run, inverted;
 
-cvar_t	pstv_rumble = {"pstv_rumble","1"};
-cvar_t	retrotouch = {"retrotouch","0"};
-cvar_t always_run = {"always_run","0"};
-cvar_t inverted = {"invert_camera","0"};
+cvar_t	pstv_rumble = {"pstv_rumble","1", true};
+cvar_t	retrotouch = {"retrotouch","0", true};
+cvar_t always_run = {"always_run","0", true};
+cvar_t inverted = {"invert_camera","0", true};
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 uint64_t rumble_tick = 0;
 SceCtrlData oldanalogs, analogs;
