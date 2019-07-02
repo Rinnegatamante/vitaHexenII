@@ -385,10 +385,9 @@ void Chase_Update (void);
 void DrawQuad_NoTex(GLfloat x, GLfloat y, GLfloat w, GLfloat h, GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 void DrawQuad(GLfloat x, GLfloat y, GLfloat w, GLfloat h, GLfloat u, GLfloat v, GLfloat uw, GLfloat vh);
 
-#define VERTEXARRAYSIZE 18360
-extern float gVertexBuffer[VERTEXARRAYSIZE];
-extern float gColorBuffer[VERTEXARRAYSIZE];
-extern float gTexCoordBuffer[VERTEXARRAYSIZE];
+extern float *gVertexBuffer;
+extern float *gColorBuffer;
+extern float *gTexCoordBuffer;
 
 // Fragment shaders
 #define MODULATE_WITH_COLOR  0

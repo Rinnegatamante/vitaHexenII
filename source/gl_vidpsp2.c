@@ -19,6 +19,13 @@
 #define NO_MODE					(MODE_WINDOWED - 1)
 #define MODE_FULLSCREEN_DEFAULT	(MODE_WINDOWED + 1)
 
+float *gVertexBuffer;
+float *gColorBuffer;
+float *gTexCoordBuffer;
+float *gVertexBufferPtr;
+float *gColorBufferPtr;
+float *gTexCoordBufferPtr;
+
 int scr_width = 960, scr_height = 544;
 
 byte globalcolormap[VID_GRADES*256];
@@ -421,7 +428,9 @@ void GL_Init (void)
 	for (i=0;i<MAX_INDICES;i++){
 		indices[i] = i;
 	}
-	
+	gVertexBufferPtr = (float*)malloc(0x400000);
+	gColorBufferPtr = (float*)malloc(0x200000);
+	gTexCoordBufferPtr = (float*)malloc(0x200000);
 }
 
 /*
@@ -438,6 +447,9 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 
 	vglStartRendering();
 	vglIndexPointerMapped(indices);
+	gVertexBuffer = gVertexBufferPtr;
+	gColorBuffer = gColorBufferPtr;
+	gTexCoordBuffer = gTexCoordBufferPtr;
 }
 
 

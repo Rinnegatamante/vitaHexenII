@@ -195,14 +195,14 @@ void EmitWaterPolys (msurface_t *fa)
 			t = ot + turbsin[(int)((os*0.125+realtime) * TURBSCALE) & 255];
 			t *= (1.0/64);
 			
-			*pUV++ = s;
-			*pUV++ = t;
-			*pPoint++ = v[0];
-			*pPoint++ = v[1];
-			*pPoint++ = v[2] + gl_waterripple.value*sinf(v[0]*0.05+realtime)*sinf(v[2]*0.05+realtime);
+			*gTexCoordBuffer++ = s;
+			*gTexCoordBuffer++ = t;
+			*gVertexBuffer++ = v[0];
+			*gVertexBuffer++ = v[1];
+			*gVertexBuffer++ = v[2] + gl_waterripple.value*sinf(v[0]*0.05+realtime)*sinf(v[2]*0.05+realtime);
 		}
-		vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, p->numverts, gVertexBuffer);
-		vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, p->numverts, gTexCoordBuffer);
+		vglVertexAttribPointerMapped(0, pPoint);
+		vglVertexAttribPointerMapped(1, pUV);
 		GL_DrawPolygon(GL_TRIANGLE_FAN, p->numverts);
 	}
 }
@@ -281,13 +281,13 @@ void EmitSkyPolys (msurface_t *fa, qboolean save)
 			s = (speedscale + dir[0]) * (1.0/128);
 			t = (speedscale + dir[1]) * (1.0/128);
 
-			*pUV++ = s;
-			*pUV++ = t;
-			memcpy(pPoint, &v[0], sizeof(vec3_t));
-			pPoint += 3;
+			*gTexCoordBuffer++ = s;
+			*gTexCoordBuffer++ = t;
+			memcpy(gVertexBuffer, &v[0], sizeof(vec3_t));
+			gVertexBuffer += 3;
 		}
-		vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, p->numverts, gVertexBuffer);
-		vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, p->numverts, gTexCoordBuffer);
+		vglVertexAttribPointerMapped(0, pPoint);
+		vglVertexAttribPointerMapped(1, pUV);
 		GL_DrawPolygon(GL_TRIANGLE_FAN, p->numverts);
 	}
 }

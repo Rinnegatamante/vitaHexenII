@@ -1517,40 +1517,40 @@ void R_DrawParticles (void)
 			
 			if (p->color <= 255){
 				byte *c = (byte *)&d_8to24table[(int)p->color];
-				*pColor++ = ((float)(c[0])) / 255.0f;
-				*pColor++ = ((float)(c[1])) / 255.0f;
-				*pColor++ = ((float)(c[2])) / 255.0f;
-				*pColor++ = 1.0f;
+				*gColorBuffer++ = ((float)(c[0])) / 255.0f;
+				*gColorBuffer++ = ((float)(c[1])) / 255.0f;
+				*gColorBuffer++ = ((float)(c[2])) / 255.0f;
+				*gColorBuffer++ = 1.0f;
 			}else{
 				byte *c = (byte *)&d_8to24TranslucentTable[(int)p->color-256];
-				*pColor++ = ((float)(c[0])) / 255.0f;
-				*pColor++ = ((float)(c[1])) / 255.0f;
-				*pColor++ = ((float)(c[2])) / 255.0f;
-				*pColor++ = ((float)(c[3])) / 255.0f;
+				*gColorBuffer++ = ((float)(c[0])) / 255.0f;
+				*gColorBuffer++ = ((float)(c[1])) / 255.0f;
+				*gColorBuffer++ = ((float)(c[2])) / 255.0f;
+				*gColorBuffer++ = ((float)(c[3])) / 255.0f;
 			}
 			
-			*pUV++ = 1.0f;
-			*pUV++ = 0.0f;
-			*pUV++ = 1.0f;
-			*pUV++ = 0.5f;
-			*pUV++ = 0.5f;
-			*pUV++ = 0.0f;
+			*gTexCoordBuffer++ = 1.0f;
+			*gTexCoordBuffer++ = 0.0f;
+			*gTexCoordBuffer++ = 1.0f;
+			*gTexCoordBuffer++ = 0.5f;
+			*gTexCoordBuffer++ = 0.5f;
+			*gTexCoordBuffer++ = 0.0f;
 
-			*pPos++ = p->org[0];
-			*pPos++ = p->org[1];
-			*pPos++ = p->org[2];
-			*pPos++ = p->org[0] + r_pup[0]*scale;
-			*pPos++ = p->org[1] + r_pup[1]*scale;
-			*pPos++ = p->org[2] + r_pup[2]*scale;
-			*pPos++ = p->org[0] + r_pright[0]*scale;
-			*pPos++ = p->org[1] + r_pright[1]*scale;
-			*pPos++ = p->org[2] + r_pright[2]*scale;
+			*gVertexBuffer++ = p->org[0];
+			*gVertexBuffer++ = p->org[1];
+			*gVertexBuffer++ = p->org[2];
+			*gVertexBuffer++ = p->org[0] + r_pup[0]*scale;
+			*gVertexBuffer++ = p->org[1] + r_pup[1]*scale;
+			*gVertexBuffer++ = p->org[2] + r_pup[2]*scale;
+			*gVertexBuffer++ = p->org[0] + r_pright[0]*scale;
+			*gVertexBuffer++ = p->org[1] + r_pright[1]*scale;
+			*gVertexBuffer++ = p->org[2] + r_pright[2]*scale;
 		}
 	}
 	
-	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, num_vertices, gVertexBuffer);
-	vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, num_vertices, gTexCoordBuffer);
-	vglVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, num_vertices, gColorBuffer);
+	vglVertexAttribPointerMapped(0, pPos);
+	vglVertexAttribPointerMapped(1, pUV);
+	vglVertexAttribPointerMapped(2, pColor);
 	GL_DrawPolygon(GL_TRIANGLES, num_vertices);
 	GL_DisableState(GL_COLOR_ARRAY);
 	glDisable (GL_BLEND);

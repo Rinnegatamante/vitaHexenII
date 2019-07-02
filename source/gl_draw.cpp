@@ -10,10 +10,6 @@ extern "C"{
 #include "quakedef.h"
 }
 
-float gVertexBuffer[VERTEXARRAYSIZE];
-float gColorBuffer[VERTEXARRAYSIZE];
-float gTexCoordBuffer[VERTEXARRAYSIZE];
-
 extern int ColorIndex[16];
 extern unsigned ColorPercent[16];
 extern qboolean	vid_initialized;

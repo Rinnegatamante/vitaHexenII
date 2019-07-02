@@ -448,21 +448,22 @@ void R_DrawSpriteModel (entity_t *e)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	VectorMA (e->origin, frame->down, r_spritedesc.vup, point);
-	VectorMA (point, frame->left, r_spritedesc.vright, pPoint);
-	pPoint += 3;
+	VectorMA (point, frame->left, r_spritedesc.vright, gVertexBuffer);
+	gVertexBuffer += 3;
 	
 	VectorMA (e->origin, frame->up, r_spritedesc.vup, point);
-	VectorMA (point, frame->left, r_spritedesc.vright, pPoint);
-	pPoint += 3;
+	VectorMA (point, frame->left, r_spritedesc.vright, gVertexBuffer);
+	gVertexBuffer += 3;
 
 	VectorMA (e->origin, frame->up, r_spritedesc.vup, point);
-	VectorMA (point, frame->right, r_spritedesc.vright, pPoint);
-	pPoint += 3;
+	VectorMA (point, frame->right, r_spritedesc.vright, gVertexBuffer);
+	gVertexBuffer += 3;
 
 	VectorMA (e->origin, frame->down, r_spritedesc.vup, point);
-	VectorMA (point, frame->right, r_spritedesc.vright, pPoint);
-
-	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 4, gVertexBuffer);
+	VectorMA (point, frame->right, r_spritedesc.vright, gVertexBuffer);
+	gVertexBuffer += 3;
+	
+	vglVertexAttribPointerMapped(0, pPoint);
 	vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 4, texCoords);
 	GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
 
@@ -570,8 +571,8 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 		for (c = 0; c < count; ++c)
 		{
 			// texture coordinates come from the draw list
-			*pTexCoord++ = ((float *)order)[0];
-			*pTexCoord++ = ((float *)order)[1];
+			*gTexCoordBuffer++ = ((float *)order)[0];
+			*gTexCoordBuffer++ = ((float *)order)[1];
 			order += 2;
 			
 			//  calculate light as vector so that intensity is it's length
@@ -598,19 +599,19 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 			}
 			
 			// normals and vertexes come from the frame list
-			*pColor++ = l[0];
-			*pColor++ = l[1];
-			*pColor++ = l[2];
-			*pColor++ = model_constant_alpha;
-			*pPos++ = verts->v[0];
-			*pPos++ = verts->v[1];
-			*pPos++ = verts->v[2];
+			*gColorBuffer++ = l[0];
+			*gColorBuffer++ = l[1];
+			*gColorBuffer++ = l[2];
+			*gColorBuffer++ = model_constant_alpha;
+			*gVertexBuffer++ = verts->v[0];
+			*gVertexBuffer++ = verts->v[1];
+			*gVertexBuffer++ = verts->v[2];
 			verts++;
 		}
 
-		vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, count, gVertexBuffer);
-		vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, count, gTexCoordBuffer);
-		vglVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, count, gColorBuffer);
+		vglVertexAttribPointerMapped(0, pPos);
+		vglVertexAttribPointerMapped(1, pTexCoord);
+		vglVertexAttribPointerMapped(2, pColor);
 		GL_DrawPolygon(primType, count);
 	}
 	
@@ -639,8 +640,6 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 				break;		// done
 		
 			int primType;
-			float* pColor;
-			float* pPos;
 			if (count < 0)
 			{
 				count = -count;
@@ -649,22 +648,21 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 			else
 				primType = GL_TRIANGLE_STRIP;
 			
-			pPos = gVertexBuffer;
-			pColor = gColorBuffer;
+			float *pPos = gVertexBuffer;
 			int c;
 			for (c = 0; c < count; ++c)
 			{
 				order += 2;
 			
-				*pPos++ = verts->v[0];
-				*pPos++ = verts->v[1];
-				*pPos++ = verts->v[2];
+				*gVertexBuffer++ = verts->v[0];
+				*gVertexBuffer++ = verts->v[1];
+				*gVertexBuffer++ = verts->v[2];
 				verts++;
 			}
 			
 			float color[4] = {0.0f, 0.0f, 0.0f, model_constant_alpha};
 			glUniform4fv(monocolor, 1, color);
-			vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, count, gVertexBuffer);
+			vglVertexAttribPointerMapped(0, pPos);
 			GL_DrawPolygon(primType, count);
 		}
 		
@@ -734,15 +732,15 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 			order += 2;
 
 			// normals and vertexes come from the frame list
-			pVertex[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
-			pVertex[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
-			pVertex[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
+			gVertexBuffer[0] = verts->v[0] * paliashdr->scale[0] + paliashdr->scale_origin[0];
+			gVertexBuffer[1] = verts->v[1] * paliashdr->scale[1] + paliashdr->scale_origin[1];
+			gVertexBuffer[2] = verts->v[2] * paliashdr->scale[2] + paliashdr->scale_origin[2];
 
-			pVertex[0] -= shadevector[0]*(pVertex[2]+lheight);
-			pVertex[1] -= shadevector[1]*(pVertex[2]+lheight);
-			pVertex[2] = height;
+			gVertexBuffer[0] -= shadevector[0]*(pVertex[2]+lheight);
+			gVertexBuffer[1] -= shadevector[1]*(pVertex[2]+lheight);
+			gVertexBuffer[2] = height;
 //			height -= 0.001;
-			pVertex += 3;
+			gVertexBuffer += 3;
 
 			verts++;
 		}
@@ -750,7 +748,7 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 		GL_DisableState(GL_TEXTURE_COORD_ARRAY);
 		const float color[] = {0,0,0,0.5f};
 		glUniform4fv(monocolor, 1, color);
-		vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, count, gVertexBuffer);
+		vglVertexAttribPointerMapped(0, pVertex);
 		GL_DrawPolygon(primType, count);
 		GL_EnableState(GL_TEXTURE_COORD_ARRAY);
 	}	
