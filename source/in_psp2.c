@@ -21,17 +21,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include <vitasdk.h>
 
+#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
+
 // mouse variables
 cvar_t	m_filter = {"m_filter","0"};
 extern cvar_t always_run, inverted;
 
-cvar_t	pstv_rumble = {"pstv_rumble","1", true};
-cvar_t	retrotouch = {"retrotouch","0", true};
+cvar_t pstv_rumble = {"pstv_rumble","1", true};
+cvar_t retrotouch = {"retrotouch","0", true};
 cvar_t always_run = {"always_run","0", true};
 cvar_t inverted = {"invert_camera","0", true};
-#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
+cvar_t motioncam = {"motioncam", "0", true};
+cvar_t motion_horizontal_sensitivity = {"motioncam", "0", true};
+cvar_t motion_vertical_sensitivity = {"motioncam", "0", true};
+
 uint64_t rumble_tick = 0;
 SceCtrlData oldanalogs, analogs;
+SceMotionState motionstate;
 
 void IN_Init (void)
 {
@@ -43,6 +49,12 @@ void IN_Init (void)
   Cvar_RegisterVariable (&always_run);
   Cvar_RegisterVariable (&inverted);
   Cvar_RegisterVariable (&pstv_rumble);
+  Cvar_RegisterVariable (&motioncam);
+  Cvar_RegisterVariable (&motion_horizontal_sensitivity);
+  Cvar_RegisterVariable (&motion_vertical_sensitivity);
+  
+  sceMotionReset();
+  sceMotionStartSampling();
 }
 
 void IN_Shutdown (void)
@@ -147,5 +159,26 @@ void IN_Move (usercmd_t *cmd)
 			else cl.viewangles[PITCH] += y_cam;
 		}
 	}
+	
+	// gyro analog support for camera movement
+	if (motioncam.value){
+		sceMotionGetState(&motionstate);
 
+		// not sure why YAW or the horizontal x axis is the controlled by angularVelocity.y
+		// and the PITCH or the vertical y axis is controlled by angularVelocity.x but its what seems to work
+		float x_gyro_cam = motionstate.angularVelocity.y * motion_horizontal_sensitivity.value;
+		float y_gyro_cam = motionstate.angularVelocity.x * motion_vertical_sensitivity.value;
+
+		if (gl_xflip.value)
+			cl.viewangles[YAW] -= x_gyro_cam;
+		else
+			cl.viewangles[YAW] += x_gyro_cam;
+
+		V_StopPitchDrift();
+
+		if (inverted.value)
+			cl.viewangles[PITCH] += y_gyro_cam;
+		else
+			cl.viewangles[PITCH] -= y_gyro_cam;
+	}
 }

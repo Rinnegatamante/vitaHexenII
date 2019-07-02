@@ -21,6 +21,10 @@ extern cvar_t	pstv_rumble;
 extern cvar_t	retrotouch;
 extern cvar_t	always_run;
 extern cvar_t	show_fps;
+extern cvar_t	motioncam;
+extern cvar_t	motion_sensitivity;
+extern cvar_t	motion_horizontal_sensitivity;
+extern cvar_t	motion_vertical_sensitivity;
 int cfg_width;
 int cfg_height;
 extern cvar_t gl_bilinear;
@@ -1965,7 +1969,7 @@ again:
 /* OPTIONS MENU */
 
 #define	SLIDER_RANGE	10
-#define OPTIONS_NUM 20
+#define OPTIONS_NUM 23
 
 int		options_cursor;
 
@@ -2042,40 +2046,62 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("invert_camera", !inverted.value);
 		break;
 	
-	case 10:	// retrotouch
+	case 10: // retrotouch
 		Cvar_SetValue ("retrotouch", !retrotouch.value);
 		break;
+	
+	case 11: // motion camera
+		Cvar_SetValue ("motioncam", !motioncam.value);
+		break;
+	
+	case 12:	// motion camera sensitivity horizontal
+		motion_horizontal_sensitivity.value += dir * 0.5;
+		if (motion_horizontal_sensitivity.value < 0)
+			motion_horizontal_sensitivity.value = 0;
+		if (motion_horizontal_sensitivity.value > 10)
+			motion_horizontal_sensitivity.value = 10;
+		Cvar_SetValue ("motion_horizontal_sensitivity", motion_horizontal_sensitivity.value);
+		break;
 
-	case 11:	// crosshair
+	case 13:	// motion camera sensitivity vertical
+		motion_vertical_sensitivity.value += dir * 0.5;
+		if (motion_vertical_sensitivity.value < 0)
+			motion_vertical_sensitivity.value = 0;
+		if (motion_vertical_sensitivity.value > 10)
+			motion_vertical_sensitivity.value = 10;
+		Cvar_SetValue ("motion_vertical_sensitivity", motion_vertical_sensitivity.value);
+		break;
+	
+	case 14: // crosshair
 		Cvar_SetValue ("crosshair", !crosshair.value);
 		break;
 
-	case 12:	// rumble effect
+	case 15: // rumble effect
 		Cvar_SetValue ("pstv_rumble", !pstv_rumble.value);
 		break;
 		
-	case 13:
+	case 16: // show fps
 		Cvar_SetValue ("show_fps", !show_fps.value);
 		break;
 		
-	case 14:
+	case 17: // specular mode
 		Cvar_SetValue ("gl_xflip", !gl_xflip.value);
 		break;
 	
-	case 15:
+	case 18: // bilinear filtering
 		Cvar_SetValue ("gl_bilinear", !gl_bilinear.value);
 		if (gl_bilinear.value) Cbuf_AddText("gl_texturemode GL_LINEAR\n");
 		else Cbuf_AddText("gl_texturemode GL_NEAREST\n");
 		break;
 		
-	case 16:
+	case 19: // msaa
 		msaa += dir;
 		if (msaa < 0) msaa = 2;
 		else if (msaa > 2) msaa = 0;
 		SetAntiAliasing(msaa);
 		break;
 		
-	case 17:
+	case 20: // resolution
 		if (r_idx == -1) {
 			for (r_idx = 0; r_idx < 4; r_idx++) {
 				if (cfg_width == w_res[r_idx]) break;
@@ -2087,11 +2113,11 @@ void M_AdjustSliders (int dir)
 		SetResolution(w_res[r_idx], h_res[r_idx]);
 		break;
 	
-	case 18:
+	case 21: // v-sync
 		Cvar_SetValue ("vid_vsync", !vid_vsync.value);
 		break;
 	
-	case 19:
+	case 22: // dynamic shadows
 		Cvar_SetValue ("r_shadows", !r_shadows.value);
 		break;
 		
@@ -2154,37 +2180,48 @@ void M_Options_Draw (void)
 
 	M_Print (16, 60+(10*8), "        Use Retrotouch");
 	M_DrawCheckbox (220, 60+(10*8), retrotouch.value);
+	
+	M_Print (16, 60+(11*8), "         Use Gyroscope");
+	M_DrawCheckbox (220, 60+(11*8), motioncam.value);
+	
+	M_Print (16, 60+(12*8), "    Gyro X Sensitivity");
+	r = motion_horizontal_sensitivity.value/10;
+	M_DrawSlider (220, 60+(12*8), r);
+	
+	M_Print (16, 60+(13*8), "    Gyro Y Sensitivity");
+	r = motion_vertical_sensitivity.value/10;
+	M_DrawSlider (220, 60+(13*8), r);
+	
+	M_Print (16, 60+(14*8),	"        Show Crosshair");
+	M_DrawCheckbox (220, 60+(14*8), crosshair.value);
 
-	M_Print (16, 60+(11*8),	"        Show Crosshair");
-	M_DrawCheckbox (220, 60+(11*8), crosshair.value);
-
-	M_Print (16, 60+(12*8), "         Rumble Effect");
-	M_DrawCheckbox (220, 60+(12*8), pstv_rumble.value);
+	M_Print (16, 60+(15*8), "         Rumble Effect");
+	M_DrawCheckbox (220, 60+(15*8), pstv_rumble.value);
 	
-	M_Print (16, 60+(13*8), "        Show Framerate");
-	M_DrawCheckbox (220, 60+(13*8), show_fps.value);
+	M_Print (16, 60+(16*8), "        Show Framerate");
+	M_DrawCheckbox (220, 60+(16*8), show_fps.value);
 	
-	M_Print (16, 60+(14*8), "         Specular Mode");
-	M_DrawCheckbox (220, 60+(14*8), gl_xflip.value);
+	M_Print (16, 60+(17*8), "         Specular Mode");
+	M_DrawCheckbox (220, 60+(17*8), gl_xflip.value);
 	
-	M_Print (16, 60+(15*8), "    Bilinear Filtering");
-	M_DrawCheckbox (220, 60+(15*8), gl_bilinear.value);
+	M_Print (16, 60+(18*8), "    Bilinear Filtering");
+	M_DrawCheckbox (220, 60+(18*8), gl_bilinear.value);
 	
-	M_Print (16, 60+(16*8), "         Anti-Aliasing");
-	if (msaa == 0) M_Print (220, 60+(16*8), "Disabled");
-	else if (msaa == 1) M_Print (220, 60+(16*8), "MSAA 2x");
-	else M_Print (220, 60+(16*8), "MSAA 4x");
+	M_Print (16, 60+(19*8), "         Anti-Aliasing");
+	if (msaa == 0) M_Print (220, 60+(19*8), "Disabled");
+	else if (msaa == 1) M_Print (220, 60+(19*8), "MSAA 2x");
+	else M_Print (220, 60+(19*8), "MSAA 4x");
 	
 	char res_str[64];
 	sprintf(res_str, "%dx%d", cfg_width, cfg_height);
-	M_Print (16, 60+(17*8), "            Resolution");
-	M_Print (220, 60+(17*8), res_str);
+	M_Print (16, 60+(20*8), "            Resolution");
+	M_Print (220, 60+(20*8), res_str);
 	
-	M_Print (16, 60+(18*8), "                V-Sync");
-	M_DrawCheckbox (220, 60+(18*8), vid_vsync.value);
+	M_Print (16, 60+(21*8), "                V-Sync");
+	M_DrawCheckbox (220, 60+(21*8), vid_vsync.value);
 
-	M_Print (16, 60+(19*8), "       Dynamic Shadows");
-	M_DrawCheckbox (220, 60+(19*8), r_shadows.value);
+	M_Print (16, 60+(22*8), "       Dynamic Shadows");
+	M_DrawCheckbox (220, 60+(22*8), r_shadows.value);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -2244,6 +2281,9 @@ void M_Options_Key (int k)
 			gl_xflip.value = 0;
 			vid_vsync.value = 1;
 			gl_bilinear.value = 1;
+			motioncam.value = 0;
+			motion_horizontal_sensitivity.value = 3;
+			motion_vertical_sensitivity.value = 3;
 			Cvar_SetValue ("viewsize", scr_viewsize.value);
 			Cvar_SetValue ("v_gamma", v_gamma.value);
 			Cvar_SetValue ("sensitivity", sensitivity.value);
@@ -2258,6 +2298,9 @@ void M_Options_Key (int k)
 			Cvar_SetValue ("gl_xflip", gl_xflip.value);
 			Cvar_SetValue ("vid_vsync", vid_vsync.value);
 			Cvar_SetValue ("gl_bilinear", gl_bilinear.value);
+			Cvar_SetValue ("motioncam", motioncam.value);
+			Cvar_SetValue ("motion_horizontal_sensitivity", motion_horizontal_sensitivity.value);
+			Cvar_SetValue ("motion_vertical_sensitivity", motion_vertical_sensitivity.value);
 			SetResolution(960, 544);
 			SetAntiAliasing(msaa);
 			r_idx = -1;
