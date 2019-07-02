@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
+#include "neon_mathfun.h"
+
 #if defined(_WIN32) && !defined(WINDED)
 
 #if defined(_M_IX86)

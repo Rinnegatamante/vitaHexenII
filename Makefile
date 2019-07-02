@@ -63,7 +63,8 @@ COMMON_OBJS =	source/chase.o \
 	source/snd_psp2.o \
 	source/net_none.o \
 	source/in_psp2.o \
-	source/gl_vidpsp2.o
+	source/gl_vidpsp2.o \
+	source/neon_mathfun.o
 
 CPPSOURCES	:= source/audiodec
 

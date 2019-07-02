@@ -1304,8 +1304,9 @@ void R_InitTurb (void)
 	
 	for (i=0 ; i<(SIN_BUFFER_SIZE) ; i++)
 	{
-		sintable[i] = AMP + sinf(i*3.14159*2/CYCLE)*AMP;
-		intsintable[i] = AMP2 + sinf(i*3.14159*2/CYCLE)*AMP2;	// AMP2, not 20
+		float a = sinf(i*3.14159*2/CYCLE);
+		sintable[i] = AMP + a*AMP;
+		intsintable[i] = AMP2 + a*AMP2;	// AMP2, not 20
 	}
 }
 

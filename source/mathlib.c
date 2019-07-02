@@ -111,12 +111,15 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 	im[2][1] = m[1][2];
 
 	memset( zrot, 0, sizeof( zrot ) );
-	zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0F;
-
-	zrot[0][0] = cosf( DEG2RAD( degrees ) );
-	zrot[0][1] = sinf( DEG2RAD( degrees ) );
-	zrot[1][0] = -sinf( DEG2RAD( degrees ) );
-	zrot[1][1] = cosf( DEG2RAD( degrees ) );
+	zrot[2][2] = 1.0F;
+	
+	float cz = cosf(DEG2RAD(degrees));
+	float sz = sinf(DEG2RAD(degrees));
+	
+	zrot[0][0] = cz;
+	zrot[0][1] = sz;
+	zrot[1][0] = -sz;
+	zrot[1][1] = cz;
 
 	R_ConcatRotations( m, zrot, tmpmat );
 	R_ConcatRotations( tmpmat, im, rot );
@@ -271,15 +274,22 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 	float		angle;
 	float		sr, sp, sy, cr, cp, cy;
 	
-	angle = angles[YAW] * (M_PI*2 / 360);
-	sy = sinf(angle);
-	cy = cosf(angle);
-	angle = angles[PITCH] * (M_PI*2 / 360);
-	sp = sinf(angle);
-	cp = cosf(angle);
-	angle = angles[ROLL] * (M_PI*2 / 360);
-	sr = sinf(angle);
-	cr = cosf(angle);
+	v4sf src = {
+		angles[YAW] * (M_PI * 2 / 360),
+		angles[PITCH] * (M_PI * 2 / 360),
+		angles[ROLL] * (M_PI * 2 / 360),
+		0
+	};
+	
+	v4sf sins, coss;	
+	sincos_ps(src, &sins, &coss);
+	
+	sy = sins[0];
+	cy = coss[0];
+	sp = sins[1];
+	cp = coss[1];
+	sr = sins[2];
+	cr = coss[2];
 
 	forward[0] = cp*cy;
 	forward[1] = cp*sy;

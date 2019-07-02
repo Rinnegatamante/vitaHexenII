@@ -416,8 +416,8 @@ void R_DrawSpriteModel (entity_t *e)
 	// that plane around the center according to the sprite entity's roll
 	// angle. So vpn stays the same, but vright and vup rotate
 		angle = currententity->angles[ROLL] * (M_PI*2 / 360);
-		sr = sin(angle);
-		cr = cos(angle);
+		sr = sinf(angle);
+		cr = cosf(angle);
 
 		for (i=0 ; i<3 ; i++)
 		{
@@ -776,7 +776,7 @@ void R_DrawAliasModel (entity_t *e)
 	if(currententity->model->flags&EF_ROTATE)
 	{
 		ambientlight = shadelight =
-			60+34+sin(currententity->origin[0]+currententity->origin[1]
+			60+34+sinf(currententity->origin[0]+currententity->origin[1]
 				+(cl.time*3.8))*34;
 	}
 	else if (mls == MLS_ABSLIGHT)
@@ -793,8 +793,8 @@ void R_DrawAliasModel (entity_t *e)
 	shadelight = shadelight / 200.0;
 	
 	an = e->angles[1]/180*M_PI;
-	shadevector[0] = cos(-an);
-	shadevector[1] = sin(-an);
+	shadevector[0] = cosf(-an);
+	shadevector[1] = sinf(-an);
 	shadevector[2] = 1;
 	VectorNormalize (shadevector);
 
@@ -869,7 +869,7 @@ void R_DrawAliasModel (entity_t *e)
 
 	if(clmodel->flags&EF_ROTATE)
 	{ // Floating motion
-		tmatrix[2][3] += sin(currententity->origin[0]
+		tmatrix[2][3] += sinf(currententity->origin[0]
 			+currententity->origin[1]+(cl.time*3))*5.5;
 	}
 
