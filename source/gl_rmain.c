@@ -50,6 +50,7 @@ float	r_world_matrix[16];
 float	r_base_world_matrix[16];
 
 extern	cvar_t	v_gamma; // muff
+extern	cvar_t	gl_outline;
 
 // idea originally nicked from LordHavoc
 // re-worked + extended - muff 5 Feb 2001
@@ -500,6 +501,10 @@ float	*shadedots = r_avertexnormal_dots[0];
 
 int	lastposenum;
 
+//  Gongo - cel shade tutorial
+//  cel shading table
+float celshade[16] = { 0.2, 0.2, 0.2, 0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
+
 /*
 =============
 GL_DrawAliasFrame
@@ -510,7 +515,8 @@ extern float RTint[256],GTint[256],BTint[256];
 void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 {
 	float	s, t;
-	float 	l;
+	vec3_t		l;  //  new - used for cel shading
+	float		l2;  //  cel shading lookup value
 	int		i, j;
 	int		index;
 	trivertx_t	*v, *verts;
@@ -567,12 +573,34 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 			*pTexCoord++ = ((float *)order)[0];
 			*pTexCoord++ = ((float *)order)[1];
 			order += 2;
-
+			
+			//  calculate light as vector so that intensity is it's length
+			l[0] = shadedots[verts->lightnormalindex] * shadelight * r;  //  shade as usual
+			l[1] = shadedots[verts->lightnormalindex] * shadelight * g;  //  shade as usual
+			l[2] = shadedots[verts->lightnormalindex] * shadelight * b;  //  shade as usual
+			
+			if (gl_outline.value > 0)
+			{
+				l2 = sqrt( (l[0]*l[0]) + (l[1]*l[1]) + (l[2]*l[2]) );  // get the length of the lighting vector (intensity)
+				if ( l2 > 1.0 )  // if it's greater than 1.0
+					l2 = 1.0;  //  we'll clamp down to 1.0, since it'll be the same shade anyway
+				l2 = celshade[(int)(l2 * 15)];  //  lookup the value in the cel shade lighting table
+				l2 *= 1.25;  //  brighten things up a bit
+				VectorNormalize (l);  //  bring the lighting vector length to 1 so that we can scale it to exactly the value we want
+				VectorScale (l, l2, l);  //  scale the light to the clamped cel shaded value
+				for ( i = 0; i < 3; i++ )
+				{
+					if ( l[i] > 1.0 )  //  check for overbrights
+						l[i] = 1.0;  //  clamp down to 1.0
+					if ( l[i] <= 0.0 )  //  check for no light
+						l[i] = 0.15;  //  provide some minimum light
+				}
+			}
+			
 			// normals and vertexes come from the frame list
-			l = shadedots[verts->lightnormalindex] * shadelight;
-			*pColor++ = l * r;
-			*pColor++ = l * g;
-			*pColor++ = l * b;
+			*pColor++ = l[0];
+			*pColor++ = l[1];
+			*pColor++ = l[2];
 			*pColor++ = model_constant_alpha;
 			*pPos++ = verts->v[0];
 			*pPos++ = verts->v[1];
@@ -587,6 +615,67 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 	}
 	
 	GL_DisableState(GL_COLOR_ARRAY);
+	
+	if (gl_outline.value > 0) {
+		
+		verts = (trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+		verts += posenum * paliashdr->poseverts;
+		order = (int *)((byte *)paliashdr + paliashdr->commands);
+		
+		glPolygonMode (GL_BACK, GL_LINE);  //  we're drawing the outlined edges
+		glEnable (GL_CULL_FACE);  //  enable culling so that we don't draw the entire wireframe
+		glLineWidth(gl_outline.value);
+		glCullFace (GL_FRONT);  //  get rid of the front facing wireframe
+		glFrontFace (GL_CW);  //  hack to avoid using the depth buffer tests
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //  make sure the outline shows up
+		GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+		
+		while (1)
+		{
+			// get the vertex count and primitive type
+			count = *order++;
+			if (!count)
+				break;		// done
+		
+			int primType;
+			float* pColor;
+			float* pPos;
+			if (count < 0)
+			{
+				count = -count;
+				primType = GL_TRIANGLE_FAN;
+			}
+			else
+				primType = GL_TRIANGLE_STRIP;
+			
+			pPos = gVertexBuffer;
+			pColor = gColorBuffer;
+			int c;
+			for (c = 0; c < count; ++c)
+			{
+				order += 2;
+			
+				*pPos++ = verts->v[0];
+				*pPos++ = verts->v[1];
+				*pPos++ = verts->v[2];
+				verts++;
+			}
+			
+			float color[4] = {0.0f, 0.0f, 0.0f, model_constant_alpha};
+			glUniform4fv(monocolor, 1, color);
+			vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, count, gVertexBuffer);
+			GL_DrawPolygon(primType, count);
+		}
+		
+		glPolygonMode (GL_BACK, GL_FILL);  //  get out of wireframe mode
+		glFrontFace (GL_CCW);  //  end of hack for depth buffer
+		glCullFace (GL_BACK);  //  back to normal face culling
+		glDisable (GL_CULL_FACE);
+		glDisable (GL_BLEND);
+		GL_EnableState(GL_TEXTURE_COORD_ARRAY);	
+	}
+
 }
 
 

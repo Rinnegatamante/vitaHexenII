@@ -68,6 +68,7 @@ cvar_t		vid_config_y = {"vid_config_y","544", true};
 cvar_t		vid_stretch_by_2 = {"vid_stretch_by_2","1", true};
 cvar_t		_windowed_mouse = {"_windowed_mouse","0", true};
 cvar_t		show_fps = {"show_fps", "0", true};
+cvar_t		gl_outline = {"gl_outline", "0", true};
 
 extern cvar_t vid_vsync;
 
@@ -539,6 +540,7 @@ void	VID_Init (unsigned char *palette)
 	Cvar_RegisterVariable (&vid_stretch_by_2);
 	Cvar_RegisterVariable (&_windowed_mouse);
 	Cvar_RegisterVariable (&gl_ztrick);
+	Cvar_RegisterVariable (&gl_outline);
 
 	vid_initialized = true;
 

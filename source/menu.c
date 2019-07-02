@@ -25,6 +25,7 @@ extern cvar_t	motioncam;
 extern cvar_t	motion_sensitivity;
 extern cvar_t	motion_horizontal_sensitivity;
 extern cvar_t	motion_vertical_sensitivity;
+extern cvar_t	gl_outline;
 int cfg_width;
 int cfg_height;
 extern cvar_t gl_bilinear;
@@ -1969,7 +1970,7 @@ again:
 /* OPTIONS MENU */
 
 #define	SLIDER_RANGE	10
-#define OPTIONS_NUM 23
+#define OPTIONS_NUM 24
 
 int		options_cursor;
 
@@ -2121,6 +2122,13 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("r_shadows", !r_shadows.value);
 		break;
 		
+	case 23: // cel shading
+		gl_outline.value += dir;
+		if (gl_outline.value > 6) gl_outline.value = 6;
+		else if (gl_outline.value < 0) gl_outline.value = 0;
+		Cvar_SetValue ("gl_outline",gl_outline.value);
+		break;
+		
 	}
 }
 
@@ -2222,6 +2230,10 @@ void M_Options_Draw (void)
 
 	M_Print (16, 60+(22*8), "       Dynamic Shadows");
 	M_DrawCheckbox (220, 60+(22*8), r_shadows.value);
+	
+	M_Print (16, 60+(23*8), "           Cel Shading");
+	r = gl_outline.value / 6;
+	M_DrawSlider (220, 60+(23*8), r);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
