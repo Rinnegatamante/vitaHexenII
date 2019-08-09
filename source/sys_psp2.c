@@ -448,7 +448,6 @@ int main (int argc, char **argv)
 		break;
 	}
 	vglUseVram(GL_TRUE);
-	vglMapHeapMem();
 
 	COM_InitArgv (argc, argv);
 
