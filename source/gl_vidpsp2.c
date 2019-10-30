@@ -402,7 +402,7 @@ void GL_Init (void)
 	GL_EnableState(GL_REPLACE);
 	
 	int i;
-	indices = (uint16_t*)malloc(sizeof(uint16_t*)*MAX_INDICES);
+	indices = (uint16_t*)malloc(sizeof(uint16_t)*MAX_INDICES);
 	for (i=0;i<MAX_INDICES;i++){
 		indices[i] = i;
 	}
