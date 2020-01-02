@@ -1,0 +1,84 @@
+ifeq ($(LIBRETRO_COMM_DIR),)
+LIBRETRO_COMM_DIR  = $(CORE_DIR)/libretro-common
+endif
+JPEG8C_DIR = $(CORE_DIR)/jpeg-8c
+SOURCES_C := 
+
+INCFLAGS   := \
+	-I$(CORE_DIR) \
+	-I$(LIBRETRO_COMM_DIR)/include \
+	-I$(JPEG8C_DIR)
+
+SYSTEM = 	$(CORE_DIR)/libretro/libretro.c \
+				$(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
+				$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
+				$(LIBRETRO_COMM_DIR)/string/stdstring.c \
+				$(LIBRETRO_COMM_DIR)/file/file_path.c \
+				$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
+				$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+				$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
+				$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
+				$(LIBRETRO_COMM_DIR)/compat/compat_snprintf.c \
+				$(LIBRETRO_COMM_DIR)/features/features_cpu.c \
+				$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+				$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
+				$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
+				$(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c \
+				$(LIBRETRO_COMM_DIR)/glsm/glsm.c
+
+COMMON_OBJS =	source/chase.c \
+	source/cl_demo.c \
+	source/cl_input.c \
+	source/cl_main.c \
+	source/cl_parse.c \
+	source/cl_tent.c \
+	source/cl_effect.c \
+	source/cmd.c \
+	source/common.c \
+	source/console.c \
+	source/crc.c \
+	source/cvar.c \
+	source/host.c \
+	source/host_cmd.c \
+	source/keys.c \
+	source/mathlib.c \
+	source/menu.c \
+	source/net_dgrm.c \
+	source/net_loop.c \
+	source/net_main.c \
+	source/net_vcr.c \
+	source/pr_cmds.c \
+	source/pr_edict.c \
+	source/pr_exec.c \
+	source/gl_draw.c \
+	source/gl_mesh.c \
+	source/gl_model.c \
+	source/gl_refrag.c \
+	source/gl_rlight.c \
+	source/gl_rmain.c \
+	source/gl_rmisc.c \
+	source/gl_rsurf.c \
+	source/gl_screen.c \
+	source/gl_test.c \
+	source/gl_warp.c \
+	source/r_part.c \
+	source/sbar.c \
+	source/sv_main.c \
+	source/sv_move.c \
+	source/sv_phys.c \
+	source/sv_user.c \
+	source/view.c \
+	source/wad.c \
+	source/world.c \
+	source/zone.c \
+	source/sys_psp2.c \
+	source/fnmatch.c \
+	source/snd_dma.c \
+	source/snd_mix.c \
+	source/snd_mem.c \
+	source/snd_psp2.c \
+	source/net_none.c \
+	source/in_psp2.c \
+	source/gl_vidpsp2.c
+
+SOURCES_C   += $(COMMON_OBJS) $(SYSTEM)

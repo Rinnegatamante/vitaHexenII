@@ -1,120 +1,193 @@
-TARGET		:= vitaHexenII
-TITLE		:= HXEN00001
-SOURCES		:=	source
-DATA		:=	data
-INCLUDES	:=	include
+STATIC_LINKING := 0
+AR             := ar
+HAVE_OPENGL    := 0
 
-LIBS = -lvitaGL -lvorbisfile -lvorbis -logg -lspeexdsp -lmpg123 \
-	-lc -lpng -lz -lvita2d -lSceAudio_stub -lSceLibKernel_stub \
-	-lSceCommonDialog_stub -lSceDisplay_stub -lSceGxm_stub \
-	-lSceSysmodule_stub -lSceCtrl_stub -lSceTouch_stub -lm -lSceMotion_stub \
-	-lSceRtc_stub -lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub
+ifneq ($(V),1)
+   Q := @
+endif
 
-COMMON_OBJS =	source/chase.o \
-	source/cl_demo.o \
-	source/cl_input.o \
-	source/cl_main.o \
-	source/cl_parse.o \
-	source/cl_tent.o \
-	source/cl_effect.o \
-	source/cmd.o \
-	source/common.o \
-	source/console.o \
-	source/crc.o \
-	source/cvar.o \
-	source/host.o \
-	source/host_cmd.o \
-	source/keys.o \
-	source/mathlib.o \
-	source/menu.o \
-	source/net_dgrm.o \
-	source/net_loop.o \
-	source/net_main.o \
-	source/net_vcr.o \
-	source/pr_cmds.o \
-	source/pr_edict.o \
-	source/pr_exec.o \
-	source/gl_draw.o \
-	source/gl_mesh.o \
-	source/gl_model.o \
-	source/gl_refrag.o \
-	source/gl_rlight.o \
-	source/gl_rmain.o \
-	source/gl_rmisc.o \
-	source/gl_rsurf.o \
-	source/gl_screen.o \
-	source/gl_test.o \
-	source/gl_warp.o \
-	source/r_part.o \
-	source/sbar.o \
-	source/sv_main.o \
-	source/sv_move.o \
-	source/sv_phys.o \
-	source/sv_user.o \
-	source/view.o \
-	source/wad.o \
-	source/world.o \
-	source/zone.o \
-	source/sys_psp2.o \
-	source/fnmatch.o \
-	source/snd_dma.o \
-	source/snd_mix.o \
-	source/snd_mem.o \
-	source/snd_psp2.o \
-	source/net_none.o \
-	source/in_psp2.o \
-	source/gl_vidpsp2.o \
-	source/neon_mathfun.o
+ifneq ($(SANITIZER),)
+   CFLAGS   := -fsanitize=$(SANITIZER) $(CFLAGS)
+   CXXFLAGS := -fsanitize=$(SANITIZER) $(CXXFLAGS)
+   LDFLAGS  := -fsanitize=$(SANITIZER) $(LDFLAGS)
+endif
 
-CPPSOURCES	:= source/audiodec
+ifeq ($(platform),)
+platform = unix
+ifeq ($(shell uname -a),)
+   platform = win
+else ifneq ($(findstring MINGW,$(shell uname -a)),)
+   platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+   platform = osx
+else ifneq ($(findstring win,$(shell uname -a)),)
+   platform = win
+endif
+endif
 
-CGSOURCES := shaders
+# system platform
+system_platform = unix
+ifeq ($(shell uname -a),)
+	EXE_EXT = .exe
+	system_platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+	system_platform = osx
+	arch = intel
+ifeq ($(shell uname -p),powerpc)
+	arch = ppc
+endif
+else ifneq ($(findstring MINGW,$(shell uname -a)),)
+	system_platform = win
+endif
 
-CFILES   :=	$(COMMON_OBJS)
-CPPFILES := $(foreach dir,$(CPPSOURCES), $(wildcard $(dir)/*.cpp))
-CGFILES  := $(foreach dir,$(CGSOURCES), $(wildcard $(dir)/*.cg))
-BINFILES := $(foreach dir,$(DATA), $(wildcard $(dir)/*.bin))
-OBJS     := $(addsuffix .o,$(BINFILES)) $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) 
-GXPFILES := $(CGFILES:.cg=.gxp) 
+CORE_DIR    += .
+TARGET_NAME := vitahexen2
 
-PREFIX  = arm-vita-eabi
-CC      = $(PREFIX)-gcc
-CXX      = $(PREFIX)-g++
-CFLAGS  = -w -Wl,-q -O3 -g -Did386="0" -DGLQUAKE -DHAVE_OGGVORBIS \
-	-DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 \
-	-DQUAKE2RJ -DRJNET -fsigned-char -ffast-math -mtune=cortex-a9 -mfpu=neon \
-	-fno-short-enums
-CXXFLAGS  = $(CFLAGS) -fpermissive -fno-exceptions -std=gnu++11
-ASFLAGS = $(CFLAGS)
+LIBM		    = -lm
 
-all: $(TARGET).vpk
+ifeq ($(ARCHFLAGS),)
+ifeq ($(archs),ppc)
+   ARCHFLAGS = -arch ppc -arch ppc64
+else
+   ARCHFLAGS = -arch i386 -arch x86_64
+endif
+endif
 
-shaders: $(GXPFILES)
+ifeq ($(platform), osx)
+ifndef ($(NOUNIVERSAL))
+   CXXFLAGS += $(ARCHFLAGS)
+   LFLAGS += $(ARCHFLAGS)
+endif
+endif
 
-%_f.gxp:
-	psp2cgc -profile sce_fp_psp2 $(@:_f.gxp=_f.cg) -Wperf -fastprecision -O3 -o $@
-	
-%_v.gxp:
-	psp2cgc -profile sce_vp_psp2 $(@:_v.gxp=_v.cg) -Wperf -fastprecision -O3 -o $@
+ifeq ($(STATIC_LINKING), 1)
+EXT := a
+endif
 
-$(TARGET).vpk: $(TARGET).velf
-	vita-make-fself -s $< build\eboot.bin
-	vita-mksfoex -s TITLE_ID=$(TITLE) -d ATTRIBUTE2=12 "$(TARGET)" param.sfo
-	cp -f param.sfo build/sce_sys/param.sfo
-	
-	#------------ Comment this if you don't have 7zip ------------------
-	7z a -tzip $(TARGET).vpk -r ./build/sce_sys ./build/eboot.bin ./build/shaders
-	#-------------------------------------------------------------------
+ifeq ($(platform), unix)
+	EXT ?= so
+   TARGET := $(TARGET_NAME)_libretro.$(EXT)
+   fpic := -fPIC
+	HAVE_OPENGL = 1
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/link.T -Wl,--no-undefined
+else ifeq ($(platform), linux-portable)
+   TARGET := $(TARGET_NAME)_libretro.$(EXT)
+   fpic := -fPIC -nostdlib
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/link.T
+	LIBM :=
+else ifneq (,$(findstring osx,$(platform)))
+   TARGET := $(TARGET_NAME)_libretro.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib
+else ifneq (,$(findstring ios,$(platform)))
+   TARGET := $(TARGET_NAME)_libretro_ios.dylib
+	fpic := -fPIC
+	SHARED := -dynamiclib
 
-%.velf: %.elf
-	cp -f $< $@.unstripped.elf
-	vita-elf-create $< $@
+ifeq ($(IOSSDK),)
+   IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
+endif
 
-$(TARGET).elf: $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
+	DEFINES := -DIOS
+	CC = cc -arch armv7 -isysroot $(IOSSDK)
+ifeq ($(platform),ios9)
+CC     += -miphoneos-version-min=8.0
+CXXFLAGS += -miphoneos-version-min=8.0
+else
+CC     += -miphoneos-version-min=5.0
+CXXFLAGS += -miphoneos-version-min=5.0
+endif
+else ifneq (,$(findstring qnx,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro_qnx.so
+   fpic := -fPIC
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/link.T -Wl,--no-undefined
+else ifeq ($(platform), emscripten)
+   TARGET := $(TARGET_NAME)_libretro_emscripten.bc
+   fpic := -fPIC
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/link.T -Wl,--no-undefined
+else ifeq ($(platform), vita)
+   TARGET := $(TARGET_NAME)_vita.a
+   CC = arm-vita-eabi-gcc
+   AR = arm-vita-eabi-ar
+   CFLAGS += -DVITA
+   CXXFLAGS += -Wl,-q -Wall -O3
+	STATIC_LINKING = 1
+else ifeq ($(platform), libnx)
+    include $(DEVKITPRO)/libnx/switch_rules
+    EXT=a
+    TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
+    DEFINES := -DSWITCH=1 -U__linux__ -U__linux -DRARCH_INTERNAL
+    CFLAGS	:=	 $(DEFINES) -g -O3 \
+                 -fPIE -I$(LIBNX)/include/ -ffunction-sections -fdata-sections -ftls-model=local-exec -Wl,--allow-multiple-definition -specs=$(LIBNX)/switch.specs
+    CFLAGS += $(INCDIRS) -I$(PORTLIBS)/include/
+    CFLAGS	+=	-D__SWITCH__ -DHAVE_LIBNX -march=armv8-a -mtune=cortex-a57 -mtp=soft
+    CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fno-rtti -std=gnu++11
+    CFLAGS += -std=gnu11
+    STATIC_LINKING = 1
+    HAVE_OPENGL = 1
+else
+   CC = gcc
+   TARGET := $(TARGET_NAME)_libretro.dll
+   HAVE_OPENGL = 1
+   SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=$(CORE_DIR)/link.T -Wl,--no-undefined
+   LDFLAGS += -lopengl32
+endif
+
+LDFLAGS += $(LIBM)
+
+ifeq ($(DEBUG), 1)
+   CFLAGS += -O0 -g -DDEBUG
+   CXXFLAGS += -O0 -g -DDEBUG
+else
+   CFLAGS += -O3 -DNDEBUG
+   CXXFLAGS += -O3 -DNDEBUG
+endif
+
+include Makefile.common
+
+OBJECTS := $(SOURCES_C:.c=.o)
+
+CFLAGS   += -Wall -D__LIBRETRO__ $(fpic) -Did386="0" -DGLQUAKE -DRELEASE -DQUAKE2RJ -DRJNET -fsigned-char -fno-short-enums
+CXXFLAGS += -Wall -D__LIBRETRO__ $(fpic) -fpermissive
+
+ifeq ($(HAVE_OPENGL),1)
+CFLAGS   += -DHAVE_OPENGL
+endif
+
+ifeq ($(basegame),xatrix)
+CFLAGS   += -DXATRIX
+else ifeq ($(basegame),rogue)
+CFLAGS   += -DROGUE
+else ifeq ($(basegame),zaero)
+CFLAGS   += -DZAERO
+endif
+
+ifeq ($(platform), unix)
+CFLAGS += -std=gnu99
+else
+CFLAGS += -std=c99
+endif
+CFLAGS     += $(INCFLAGS)
+CXXFLAGS   += $(INCFLAGS)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+ifeq ($(STATIC_LINKING), 1)
+	$(AR) rcs $@ $(OBJECTS)
+else
+	@$(if $(Q), $(shell echo echo LD $@),)
+	$(Q)$(CC) $(fpic) $(SHARED) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS)
+endif
+
+%.o: %.c
+	@$(if $(Q), $(shell echo echo CC $<),)
+	$(Q)$(CC) $(CFLAGS) $(fpic) -c -o $@ $<
 
 clean:
-	@rm -rf $(TARGET).velf $(TARGET).elf $(OBJS) $(TARGET).elf.unstripped.elf $(TARGET).vpk build/eboot.bin build/sce_sys/param.sfo ./param.sfo
+	rm -f $(OBJECTS) $(TARGET)
 
-run: $(TARGET).velf
-	@sh run_homebrew_unity.sh $(TARGET).velf
+.PHONY: clean
+
+print-%:
+	@echo '$*=$($*)'
