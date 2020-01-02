@@ -14,7 +14,11 @@
 #include <windows.h>
 #endif
 
-#include <vitaGL.h>
+#ifdef __LIBRETRO__
+#include <glsym/rglgen_private_headers.h>
+#else
+#include <GL/gl.h>
+#endif
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
