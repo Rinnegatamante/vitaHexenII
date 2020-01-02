@@ -274,22 +274,15 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 	float		angle;
 	float		sr, sp, sy, cr, cp, cy;
 	
-	v4sf src = {
-		angles[YAW] * (M_PI * 2 / 360),
-		angles[PITCH] * (M_PI * 2 / 360),
-		angles[ROLL] * (M_PI * 2 / 360),
-		0
-	};
-	
-	v4sf sins, coss;	
-	sincos_ps(src, &sins, &coss);
-	
-	sy = sins[0];
-	cy = coss[0];
-	sp = sins[1];
-	cp = coss[1];
-	sr = sins[2];
-	cr = coss[2];
+	angle = angles[YAW] * (M_PI*2 / 360);
+	sy = sinf(angle);
+	cy = cosf(angle);
+	angle = angles[PITCH] * (M_PI*2 / 360);
+	sp = sinf(angle);
+	cp = cosf(angle);
+	angle = angles[ROLL] * (M_PI*2 / 360);
+	sr = sinf(angle);
+	cr = cosf(angle);
 
 	forward[0] = cp*cy;
 	forward[1] = cp*sy;

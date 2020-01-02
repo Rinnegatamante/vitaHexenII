@@ -65,20 +65,12 @@ void R_RotateBmodel (void)
 // TODO: should really be stored with the entity instead of being reconstructed
 // TODO: could cache lazily, stored in the entity
 // TODO: share work with R_SetUpAliasTransform
-
-	v4sf src = {
-		currententity->angles[YAW] * (M_PI*2 / 360),
-		currententity->angles[PITCH] * (M_PI*2 / 360),
-		currententity->angles[ROLL] * (M_PI*2 / 360),
-		0
-	};
-	
-	v4sf sins, coss;
-	sincos_ps(src, &sins, &coss);
 	
 // yaw
-	s = sins[0];
-	c = coss[0];
+	angle = currententity->angles[YAW];		
+	angle = angle * M_PI*2 / 360;
+	s = sinf(angle);
+	c = cosf(angle);
 
 	temp1[0][0] = c;
 	temp1[0][1] = s;
@@ -92,8 +84,10 @@ void R_RotateBmodel (void)
 
 
 // pitch
-	s = sins[1];
-	c = coss[1];
+	angle = currententity->angles[PITCH];		
+	angle = angle * M_PI*2 / 360;
+	s = sinf(angle);
+	c = cosf(angle);
 
 	temp2[0][0] = c;
 	temp2[0][1] = 0;
@@ -108,8 +102,10 @@ void R_RotateBmodel (void)
 	R_ConcatRotations (temp2, temp1, temp3);
 
 // roll
-	s = sins[2];
-	c = coss[2];
+	angle = currententity->angles[ROLL];		
+	angle = angle * M_PI*2 / 360;
+	s = sinf(angle);
+	c = cosf(angle);
 
 	temp1[0][0] = 1;
 	temp1[0][1] = 0;
