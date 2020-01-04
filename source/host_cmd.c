@@ -7,7 +7,8 @@
 #include <sys/stat.h>
 //#include <dirent.h>
 #include <unistd.h>
-#include <psp2/rtc.h>
+#include <features/features_cpu.h>
+
 extern  cvar_t	pausable;
 extern	cvar_t	sv_flypitch;
 extern	cvar_t	sv_walkpitch;
@@ -469,16 +470,14 @@ void Host_SavegameComment (char *text)
 	int		i;
 	char	kills[20];
 	struct tm *tblock;
-	time_t TempTime;
+	retro_time_t TempTime;
 
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
 		text[i] = ' ';
 	memcpy (text, cl.levelname, strlen(cl.levelname));
 //	sprintf (kills,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	
-	const SceDateTime date;
-	time_t time;
-	sceRtcGetTime_t(&date, &time);
+	retro_time_t time = cpu_features_get_time_usec() / 1000;
 	TempTime = time;
 	tblock = localtime(&TempTime);
 	strftime(kills,sizeof(kills),ShortTime,tblock);

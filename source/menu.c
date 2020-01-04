@@ -3,9 +3,9 @@
  */
 
 #include "quakedef.h"
-#ifdef _WIN32
+/*#ifdef _WIN32
 #include "winquake.h"
-#endif
+#endif*/
 
 #include <string.h>
 #include "net_dgrm.h"

@@ -50,7 +50,6 @@ COMMON_OBJS =	source/chase.c \
 	source/pr_cmds.c \
 	source/pr_edict.c \
 	source/pr_exec.c \
-	source/gl_draw.c \
 	source/gl_mesh.c \
 	source/gl_model.c \
 	source/gl_refrag.c \
@@ -79,6 +78,8 @@ COMMON_OBJS =	source/chase.c \
 	source/snd_psp2.c \
 	source/net_none.c \
 	source/in_psp2.c \
-	source/gl_vidpsp2.c
+	source/gl_vidpsp2.c \
+	source/libretro.c
 
 SOURCES_C   += $(COMMON_OBJS) $(SYSTEM)
+SOURCES_CPP += source/gl_draw.cpp

@@ -180,6 +180,10 @@ else
 	$(Q)$(CC) $(fpic) $(SHARED) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS)
 endif
 
+gl_draw.o: %.cpp
+	@$(if $(Q), $(shell echo echo CC $<),)
+	$(Q)$(CXX) $(CFLAGS) $(CXXFLAGS) $(fpic) -c -o $@ $<
+	
 %.o: %.c
 	@$(if $(Q), $(shell echo echo CC $<),)
 	$(Q)$(CC) $(CFLAGS) $(fpic) -c -o $@ $<

@@ -23,29 +23,6 @@
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
 
-#ifdef _WIN32
-// Function prototypes for the Texture Object Extension routines
-typedef GLboolean (APIENTRY *ARETEXRESFUNCPTR)(GLsizei, const GLuint *,
-                    const GLboolean *);
-typedef void (APIENTRY *BINDTEXFUNCPTR)(GLenum, GLuint);
-typedef void (APIENTRY *DELTEXFUNCPTR)(GLsizei, const GLuint *);
-typedef void (APIENTRY *GENTEXFUNCPTR)(GLsizei, GLuint *);
-typedef GLboolean (APIENTRY *ISTEXFUNCPTR)(GLuint);
-typedef void (APIENTRY *PRIORTEXFUNCPTR)(GLsizei, const GLuint *,
-                    const GLclampf *);
-typedef void (APIENTRY *TEXSUBIMAGEPTR)(int, int, int, int, int, int, int, int, void *);
-typedef int  (APIENTRY *FX_DISPLAY_MODE_EXT)(int);
-typedef void (APIENTRY *FX_SET_PALETTE_EXT)( unsigned long * );
-typedef void (APIENTRY *FX_MARK_PAL_TEXTURE_EXT)( void );
-
-extern	BINDTEXFUNCPTR bindTexFunc;
-extern	DELTEXFUNCPTR delTexFunc;
-extern	TEXSUBIMAGEPTR TexSubImage2DFunc;
-extern  FX_DISPLAY_MODE_EXT fxDisplayModeExtension;
-extern  FX_SET_PALETTE_EXT fxSetPaletteExtension;
-extern  FX_MARK_PAL_TEXTURE_EXT fxMarkPalTextureExtension;
-#endif
-
 #define INVERSE_PAL_R_BITS 6
 #define INVERSE_PAL_G_BITS 6
 #define INVERSE_PAL_B_BITS 6
@@ -84,13 +61,6 @@ typedef struct
 } glpic_t;
 
 extern	int glx, gly, glwidth, glheight;
-
-#ifdef _WIN32
-extern	PROC glArrayElementEXT;
-extern	PROC glColorPointerEXT;
-extern	PROC glTexturePointerEXT;
-extern	PROC glVertexPointerEXT;
-#endif
 
 // r_local.h -- private refresh defs
 
