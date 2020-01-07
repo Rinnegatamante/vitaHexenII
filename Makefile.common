@@ -70,12 +70,10 @@ COMMON_OBJS =	source/chase.c \
 	source/wad.c \
 	source/world.c \
 	source/zone.c \
-	source/sys_psp2.c \
 	source/fnmatch.c \
 	source/snd_dma.c \
 	source/snd_mix.c \
 	source/snd_mem.c \
-	source/snd_psp2.c \
 	source/net_none.c \
 	source/in_psp2.c \
 	source/gl_vidpsp2.c \
