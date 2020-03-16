@@ -75,8 +75,6 @@ COMMON_OBJS =	source/chase.c \
 	source/snd_mix.c \
 	source/snd_mem.c \
 	source/net_none.c \
-	source/in_psp2.c \
-	source/gl_vidpsp2.c \
 	source/libretro.c
 
 SOURCES_C   += $(COMMON_OBJS) $(SYSTEM)

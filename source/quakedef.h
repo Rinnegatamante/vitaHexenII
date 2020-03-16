@@ -6,6 +6,9 @@
 
 //#define	GLTEST			// experimental stuff
 
+#ifndef _QUAKEDEF_H_
+#define _QUAKEDEF_H_
+
 #define	QUAKE_GAME			// as opposed to utilities
 
 #define HEXEN2_VERSION		1.12
@@ -574,3 +577,4 @@ extern float costablef[17];
  * 9     1/28/97 10:28a Rjohnson
  * Added experience and level advancement
  */
+#endif

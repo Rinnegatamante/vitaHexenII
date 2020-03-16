@@ -10,12 +10,9 @@
 
 #include "libretro_core_options.h"
 
-#include "../client/client.h"
-#include "../client/qmenu.h"
+#include "quakedef.h"
 
 #ifdef HAVE_OPENGL
-#include "../ref_gl/gl_local.h"
-
 #include <glsm/glsm.h>
 #endif
 
@@ -25,8 +22,8 @@
 #include "errno.h"
 #define u64 uint64_t
 #include "sys.h"
-#include "quakedef.h"
-#include "fnmatch_mod.h"
+
+#include "fnmatch.h"
 #include <features/features_cpu.h>
 
 qboolean gl_set = false;
@@ -981,4 +978,760 @@ void SNDDMA_Submit(void)
 {
   //if(snd_initialized)
 	//update = true;
+}
+
+/* in_psp2.c */
+
+#include "quakedef.h"
+
+#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
+
+// mouse variables
+cvar_t	m_filter = {"m_filter","0"};
+extern cvar_t always_run, inverted;
+
+cvar_t pstv_rumble = {"pstv_rumble","1", true};
+cvar_t retrotouch = {"retrotouch","0", true};
+cvar_t always_run = {"always_run","0", true};
+cvar_t inverted = {"invert_camera","0", true};
+cvar_t motioncam = {"motioncam", "0", true};
+cvar_t motion_horizontal_sensitivity = {"motioncam", "0", true};
+cvar_t motion_vertical_sensitivity = {"motioncam", "0", true};
+
+uint64_t rumble_tick = 0;
+SceCtrlData oldanalogs, analogs;
+SceMotionState motionstate;
+
+void IN_Init (void)
+{
+  if ( COM_CheckParm ("-nomouse") )
+    return;
+
+  Cvar_RegisterVariable (&m_filter);
+  Cvar_RegisterVariable (&retrotouch);
+  Cvar_RegisterVariable (&always_run);
+  Cvar_RegisterVariable (&inverted);
+  Cvar_RegisterVariable (&pstv_rumble);
+  Cvar_RegisterVariable (&motioncam);
+  Cvar_RegisterVariable (&motion_horizontal_sensitivity);
+  Cvar_RegisterVariable (&motion_vertical_sensitivity);
+  
+  sceMotionReset();
+  sceMotionStartSampling();
+}
+
+void IN_Shutdown (void)
+{
+}
+
+void IN_Commands (void)
+{
+}
+
+void IN_RescaleAnalog(int *x, int *y, int dead) {
+	//radial and scaled deadzone
+	//http://www.third-helix.com/2013/04/12/doing-thumbstick-dead-zones-right.html
+
+	float analogX = (float) *x;
+	float analogY = (float) *y;
+	float deadZone = (float) dead;
+	float maximum = 128.0f;
+	float magnitude = sqrt(analogX * analogX + analogY * analogY);
+	if (magnitude >= deadZone)
+	{
+		float scalingFactor = maximum / magnitude * (magnitude - deadZone) / (maximum - deadZone);		
+		*x = (int) (analogX * scalingFactor);
+		*y = (int) (analogY * scalingFactor);
+	} else {
+		*x = 0;
+		*y = 0;
+	}
+}
+
+void IN_StartRumble (void)
+{
+	if (!pstv_rumble->value) return;
+	
+	uint16_t strength_strong = 0xffff;
+	if (!rumble.set_rumble_state)
+		return;
+
+	rumble.set_rumble_state(0, RETRO_RUMBLE_STRONG, strength_strong);
+	rumble_tick = cpu_features_get_time_usec();
+}
+
+void IN_StopRumble (void)
+{
+	if (!rumble.set_rumble_state)
+		return;
+
+	rumble.set_rumble_state(0, RETRO_RUMBLE_STRONG, 0);
+	rumble_tick = 0;
+}
+
+void IN_Move (usercmd_t *cmd)
+{
+	#if 0
+   static int cur_mx;
+   static int cur_my;
+   int mx, my;
+#endif
+   int lsx, lsy, rsx, rsy;
+   float speed;
+   
+   if ( (in_speed.state & 1) ^ (int)cl_run->value)
+       speed = 2;
+   else
+       speed = 1;
+   
+   /*if (quake_devices[0] == RETRO_DEVICE_KEYBOARD) {
+      mx = input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+      my = input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+      if (mx != cur_mx || my != cur_my)
+      {
+         mx *= sensitivity->value;
+         my *= sensitivity->value;
+         cl.viewangles[YAW] -= m_yaw->value * mx;
+         cl.viewangles[PITCH] += m_pitch->value * my;
+         if (cl.viewangles[PITCH] > 80)
+            cl.viewangles[PITCH] = 80;
+         if (cl.viewangles[PITCH] < -70)
+            cl.viewangles[PITCH] = -70;
+         cur_mx = mx;
+         cur_my = my;
+      }
+   } else */if (quake_devices[0] != RETRO_DEVICE_NONE && quake_devices[0] != RETRO_DEVICE_KEYBOARD)
+   {
+      /* Left stick move */
+      lsx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,
+               RETRO_DEVICE_ID_ANALOG_X);
+      lsy = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT,
+               RETRO_DEVICE_ID_ANALOG_Y);
+
+      if (lsx > analog_deadzone || lsx < -analog_deadzone) {
+         if (lsx > analog_deadzone)
+            lsx = lsx - analog_deadzone;
+         if (lsx < -analog_deadzone)
+            lsx = lsx + analog_deadzone;
+         if (gl_xflip->value)
+            cmd->sidemove -= speed * cl_sidespeed->value * lsx / (ANALOG_RANGE - analog_deadzone);
+         else
+            cmd->sidemove += speed * cl_sidespeed->value * lsx / (ANALOG_RANGE - analog_deadzone);
+      }
+
+      if (lsy > analog_deadzone || lsy < -analog_deadzone) {
+         if (lsy > analog_deadzone)
+            lsy = lsy - analog_deadzone;
+         if (lsy < -analog_deadzone)
+            lsy = lsy + analog_deadzone;
+         cmd->forwardmove -= speed * cl_forwardspeed->value * lsy / (ANALOG_RANGE - analog_deadzone);
+      }
+
+      /* Right stick Look */
+      rsx = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,
+               RETRO_DEVICE_ID_ANALOG_X);
+      rsy = invert_y_axis * input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT,
+               RETRO_DEVICE_ID_ANALOG_Y);
+
+      if (rsx > analog_deadzone || rsx < -analog_deadzone)
+      {
+         if (rsx > analog_deadzone)
+            rsx = rsx - analog_deadzone;
+         if (rsx < -analog_deadzone)
+            rsx = rsx + analog_deadzone;
+         /* For now we are sharing the sensitivity with the mouse setting */
+         if (gl_xflip->value)
+            cl.viewangles[YAW] += (float)(sensitivity->value * rsx / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
+         else
+            cl.viewangles[YAW] -= (float)(sensitivity->value * rsx / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
+      }
+
+      if (rsy > analog_deadzone || rsy < -analog_deadzone) {
+         if (rsy > analog_deadzone)
+            rsy = rsy - analog_deadzone;
+         if (rsy < -analog_deadzone)
+            rsy = rsy + analog_deadzone;
+         cl.viewangles[PITCH] -= (float)(sensitivity->value * rsy / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
+      }
+
+      if (cl.viewangles[PITCH] > 80)
+         cl.viewangles[PITCH] = 80;
+      if (cl.viewangles[PITCH] < -70)
+         cl.viewangles[PITCH] = -70;
+   }
+}
+
+/* gl_vidpsp2.c */
+
+#include <stdarg.h>
+#include <stdio.h>
+#include "quakedef.h"
+
+#define MAX_MODE_LIST	30
+#define VID_ROW_SIZE	3
+#define WARP_WIDTH		320
+#define WARP_HEIGHT		200
+#define MAXWIDTH		10000
+#define MAXHEIGHT		10000
+#define BASEWIDTH		320
+#define BASEHEIGHT		200
+
+#define MODE_WINDOWED			0
+#define NO_MODE					(MODE_WINDOWED - 1)
+#define MODE_FULLSCREEN_DEFAULT	(MODE_WINDOWED + 1)
+
+float *gVertexBuffer;
+float *gColorBuffer;
+float *gTexCoordBuffer;
+float *gVertexBufferPtr;
+float *gColorBufferPtr;
+float *gTexCoordBufferPtr;
+
+int scr_width = 960, scr_height = 544;
+
+byte globalcolormap[VID_GRADES*256];
+
+const char *gl_vendor;
+const char *gl_renderer;
+const char *gl_version;
+const char *gl_extensions;
+
+qboolean		DDActive;
+qboolean		scr_skipupdate;
+
+qboolean	vid_initialized = false;
+
+unsigned char	vid_curpal[256*3];
+float RTint[256],GTint[256],BTint[256];
+
+glvert_t glv;
+
+cvar_t	gl_ztrick = {"gl_ztrick","0"};
+
+viddef_t	vid;				// global video state
+
+unsigned short	d_8to16table[256];
+unsigned	d_8to24table[256];
+unsigned	d_8to24TranslucentTable[256];
+
+float		gldepthmin, gldepthmax;
+
+char *VID_GetModeDescription (int mode);
+void ClearAllStates (void);
+void VID_UpdateWindowStatus (void);
+void GL_Init (void);
+
+//====================================
+
+cvar_t		vid_mode = {"vid_mode","0", false};
+// Note that 0 is MODE_WINDOWED
+cvar_t		_vid_default_mode = {"_vid_default_mode","0", true};
+// Note that 3 is MODE_FULLSCREEN_DEFAULT
+cvar_t		_vid_default_mode_win = {"_vid_default_mode_win","3", true};
+cvar_t		vid_wait = {"vid_wait","0"};
+cvar_t		vid_nopageflip = {"vid_nopageflip","0", true};
+cvar_t		_vid_wait_override = {"_vid_wait_override", "0", true};
+cvar_t		vid_config_x = {"vid_config_x","960", true};
+cvar_t		vid_config_y = {"vid_config_y","544", true};
+cvar_t		vid_stretch_by_2 = {"vid_stretch_by_2","1", true};
+cvar_t		_windowed_mouse = {"_windowed_mouse","0", true};
+cvar_t		show_fps = {"show_fps", "0", true};
+cvar_t		gl_outline = {"gl_outline", "0", true};
+
+extern cvar_t vid_vsync;
+
+int			window_center_x, window_center_y, window_x, window_y, window_width, window_height;
+
+float sintablef[17] = {
+	 0.000000f, 0.382683f, 0.707107f,
+	 0.923879f, 1.000000f, 0.923879f,
+	 0.707107f, 0.382683f, 0.000000f,
+	-0.382683f,-0.707107f,-0.923879f,
+	-1.000000f,-0.923879f,-0.707107f,
+	-0.382683f, 0.000000f
+};
+	
+float costablef[17] = {
+	 1.000000f, 0.923879f, 0.707107f,
+	 0.382683f, 0.000000f,-0.382683f,
+	-0.707107f,-0.923879f,-1.000000f,
+	-0.923879f,-0.707107f,-0.382683f,
+	 0.000000f, 0.382683f, 0.707107f,
+	 0.923879f, 1.000000f
+};
+
+// direct draw software compatability stuff
+
+void VID_HandlePause (qboolean pause)
+{
+}
+
+void VID_ForceLockState (int lk)
+{
+}
+
+int VID_ForceUnlockedAndReturnState (void)
+{
+	return 0;
+}
+
+void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height)
+{
+}
+
+void D_EndDirectRect (int x, int y, int width, int height)
+{
+}
+
+#define MAX_INDICES 4096
+uint16_t* indices;
+
+GLuint fs[9];
+GLuint vs[4];
+GLuint programs[9];
+
+void GL_LoadShader(const char* filename, GLuint idx, GLboolean fragment){
+	FILE* f = fopen(filename, "rb");
+	fseek(f, 0, SEEK_END);
+	long int size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	void* res = malloc(size);
+	fread(res, 1, size, f);
+	fclose(f);
+	if (fragment) glShaderBinary(1, &fs[idx], 0, res, size);
+	else glShaderBinary(1, &vs[idx], 0, res, size);
+	free(res);
+}
+
+static int state_mask = 0;
+GLint monocolor;
+GLint modulcolor[2];
+
+void GL_SetProgram(){
+	switch (state_mask){
+		case 0x00: // Everything off
+		case 0x04: // Modulate
+		case 0x08: // Alpha Test
+		case 0x0C: // Alpha Test + Modulate
+			glUseProgram(programs[NO_COLOR]);
+			break;
+		case 0x01: // Texcoord
+		case 0x03: // Texcoord + Color
+			glUseProgram(programs[TEX2D_REPL]);
+			break;
+		case 0x02: // Color
+		case 0x06: // Color + Modulate
+			glUseProgram(programs[RGBA_COLOR]);
+			break;
+		case 0x05: // Modulate + Texcoord
+			glUseProgram(programs[TEX2D_MODUL]);
+			break;
+		case 0x07: // Modulate + Texcoord + Color
+			glUseProgram(programs[TEX2D_MODUL_CLR]);
+			break;
+		case 0x09: // Alpha Test + Texcoord
+		case 0x0B: // Alpha Test + Color + Texcoord
+			glUseProgram(programs[TEX2D_REPL_A]);
+			break;
+		case 0x0A: // Alpha Test + Color
+		case 0x0E: // Alpha Test + Modulate + Color
+			glUseProgram(programs[RGBA_CLR_A]);
+			break;
+		case 0x0D: // Alpha Test + Modulate + Texcoord
+			glUseProgram(programs[TEX2D_MODUL_A]);
+			break;
+		case 0x0F: // Alpha Test + Modulate + Texcood + Color
+			glUseProgram(programs[FULL_A]);
+			break;
+		default:
+			break;
+	}
+}
+
+void GL_EnableState(GLenum state){	
+	switch (state){
+		case GL_TEXTURE_COORD_ARRAY:
+			state_mask |= 0x01;
+			break;
+		case GL_COLOR_ARRAY:
+			state_mask |= 0x02;
+			break;
+		case GL_MODULATE:
+			state_mask |= 0x04;
+			break;
+		case GL_REPLACE:
+			state_mask &= ~0x04;
+			break;
+		case GL_ALPHA_TEST:
+			state_mask |= 0x08;
+			break;
+	}
+	GL_SetProgram();
+}
+
+void GL_DisableState(GLenum state){	
+	switch (state){
+		case GL_TEXTURE_COORD_ARRAY:
+			state_mask &= ~0x01;
+			break;
+		case GL_COLOR_ARRAY:
+			state_mask &= ~0x02;
+			break;
+		case GL_ALPHA_TEST:
+			state_mask &= ~0x08;
+			break;
+		default:
+			break;
+	}
+	GL_SetProgram();
+}
+
+static float cur_clr[4];
+
+void GL_DrawPolygon(GLenum prim, int num){
+	if (state_mask == 0x05) glUniform4fv(modulcolor[0], 1, cur_clr);
+	else if (state_mask == 0x0D) glUniform4fv(modulcolor[1], 1, cur_clr);
+	vglDrawObjects(prim, num, GL_TRUE);
+}
+
+void GL_Color(float r, float g, float b, float a){
+	cur_clr[0] = r;
+	cur_clr[1] = g;
+	cur_clr[2] = b;
+	cur_clr[3] = a;
+}
+
+qboolean shaders_set = false;
+void GL_ResetShaders(){
+	glFinish();
+	int i;
+	if (shaders_set){
+		for (i=0;i<9;i++){
+			glDeleteProgram(programs[i]);
+		}
+		for (i=0;i<9;i++){
+			glDeleteShader(fs[i]);
+		}
+		for (i=0;i<4;i++){
+			glDeleteShader(vs[i]);
+		}
+	}else shaders_set = true; 
+	
+	// Loading shaders
+	for (i=0;i<9;i++){
+		fs[i] = glCreateShader(GL_FRAGMENT_SHADER);
+	}
+	for (i=0;i<4;i++){
+		vs[i] = glCreateShader(GL_VERTEX_SHADER);
+	}
+	
+	GL_LoadShader("app0:shaders/modulate_f.gxp", MODULATE, GL_TRUE);
+	GL_LoadShader("app0:shaders/modulate_rgba_f.gxp", MODULATE_WITH_COLOR, GL_TRUE);
+	GL_LoadShader("app0:shaders/replace_f.gxp", REPLACE, GL_TRUE);
+	GL_LoadShader("app0:shaders/modulate_alpha_f.gxp", MODULATE_A, GL_TRUE);
+	GL_LoadShader("app0:shaders/modulate_rgba_alpha_f.gxp", MODULATE_COLOR_A, GL_TRUE);
+	GL_LoadShader("app0:shaders/replace_alpha_f.gxp", REPLACE_A, GL_TRUE);
+	GL_LoadShader("app0:shaders/texture2d_v.gxp", TEXTURE2D, GL_FALSE);
+	GL_LoadShader("app0:shaders/texture2d_rgba_v.gxp", TEXTURE2D_WITH_COLOR, GL_FALSE);
+	
+	GL_LoadShader("app0:shaders/rgba_f.gxp", RGBA_COLOR, GL_TRUE);
+	GL_LoadShader("app0:shaders/vertex_f.gxp", MONO_COLOR, GL_TRUE);
+	GL_LoadShader("app0:shaders/rgba_alpha_f.gxp", RGBA_A, GL_TRUE);
+	GL_LoadShader("app0:shaders/rgba_v.gxp", COLOR, GL_FALSE);
+	GL_LoadShader("app0:shaders/vertex_v.gxp", VERTEX_ONLY, GL_FALSE);
+	
+	// Setting up programs
+	for (i=0;i<9;i++){
+		programs[i] = glCreateProgram();
+		switch (i){
+			case TEX2D_REPL:
+				glAttachShader(programs[i], fs[REPLACE]);
+				glAttachShader(programs[i], vs[TEXTURE2D]);
+				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
+				break;
+			case TEX2D_MODUL:
+				glAttachShader(programs[i], fs[MODULATE]);
+				glAttachShader(programs[i], vs[TEXTURE2D]);
+				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
+				modulcolor[0] = glGetUniformLocation(programs[i], "vColor");
+				break;
+			case TEX2D_MODUL_CLR:
+				glAttachShader(programs[i], fs[MODULATE_WITH_COLOR]);
+				glAttachShader(programs[i], vs[TEXTURE2D_WITH_COLOR]);
+				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 2, "color", 4, GL_FLOAT);
+				break;
+			case RGBA_COLOR:
+				glAttachShader(programs[i], fs[RGBA_COLOR]);
+				glAttachShader(programs[i], vs[COLOR]);
+				vglBindAttribLocation(programs[i], 0, "aPosition", 3, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 1, "aColor", 4, GL_FLOAT);
+				break;
+			case NO_COLOR:
+				glAttachShader(programs[i], fs[MONO_COLOR]);
+				glAttachShader(programs[i], vs[VERTEX_ONLY]);
+				vglBindAttribLocation(programs[i], 0, "aPosition", 3, GL_FLOAT);
+				monocolor = glGetUniformLocation(programs[i], "color");
+				break;
+			case TEX2D_REPL_A:
+				glAttachShader(programs[i], fs[REPLACE_A]);
+				glAttachShader(programs[i], vs[TEXTURE2D]);
+				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
+				break;
+			case TEX2D_MODUL_A:
+				glAttachShader(programs[i], fs[MODULATE_A]);
+				glAttachShader(programs[i], vs[TEXTURE2D]);
+				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
+				modulcolor[1] = glGetUniformLocation(programs[i], "vColor");
+				break;
+			case FULL_A:
+				glAttachShader(programs[i], fs[MODULATE_COLOR_A]);
+				glAttachShader(programs[i], vs[TEXTURE2D_WITH_COLOR]);
+				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 2, "color", 4, GL_FLOAT);
+				break;
+			case RGBA_CLR_A:
+				glAttachShader(programs[i], fs[RGBA_A]);
+				glAttachShader(programs[i], vs[COLOR]);
+				vglBindAttribLocation(programs[i], 0, "aPosition", 3, GL_FLOAT);
+				vglBindAttribLocation(programs[i], 1, "aColor", 4, GL_FLOAT);
+				break;
+		}
+		glLinkProgram(programs[i]);
+	}
+}
+
+void VID_Shutdown(void)
+{
+}
+
+//int		texture_mode = GL_NEAREST;
+//int		texture_mode = GL_NEAREST_MIPMAP_NEAREST;
+//int		texture_mode = GL_NEAREST_MIPMAP_LINEAR;
+int		texture_mode = GL_LINEAR;
+//int		texture_mode = GL_LINEAR_MIPMAP_NEAREST;
+//int		texture_mode = GL_LINEAR_MIPMAP_LINEAR;
+
+int		texture_extension_number = 1;
+
+/*
+===============
+GL_Init
+===============
+*/
+void GL_Init (void)
+{
+	gl_vendor = glGetString (GL_VENDOR);
+	Con_Printf ("GL_VENDOR: %s\n", gl_vendor);
+	gl_renderer = glGetString (GL_RENDERER);
+	Con_Printf ("GL_RENDERER: %s\n", gl_renderer);
+
+	gl_version = glGetString (GL_VERSION);
+	Con_Printf ("GL_VERSION: %s\n", gl_version);
+	gl_extensions = glGetString (GL_EXTENSIONS);
+	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
+
+	glClearColor (1,0,0,0);
+	glCullFace(GL_FRONT);
+	
+	GL_ResetShaders();
+
+	GL_EnableState(GL_ALPHA_TEST);
+	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
+	//glAlphaFunc(GL_GREATER, 0.666);
+
+	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+	//->glShadeModel (GL_FLAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+	Cvar_RegisterVariable(&show_fps);
+	Cvar_RegisterVariable(&vid_vsync);
+	
+//	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	GL_EnableState(GL_REPLACE);
+	
+	int i;
+	indices = (uint16_t*)malloc(sizeof(uint16_t)*MAX_INDICES);
+	for (i=0;i<MAX_INDICES;i++){
+		indices[i] = i;
+	}
+	gVertexBufferPtr = (float*)malloc(0x400000);
+	gColorBufferPtr = (float*)malloc(0x200000);
+	gTexCoordBufferPtr = (float*)malloc(0x200000);
+}
+
+/*
+=================
+GL_BeginRendering
+
+=================
+*/
+void GL_BeginRendering (int *x, int *y, int *width, int *height)
+{
+	*x = *y = 0;
+	*width = scr_width;
+	*height = scr_height;
+
+	vglStartRendering();
+	vglIndexPointerMapped(indices);
+	gVertexBuffer = gVertexBufferPtr;
+	gColorBuffer = gColorBufferPtr;
+	gTexCoordBuffer = gTexCoordBufferPtr;
+}
+
+
+void GL_EndRendering (void)
+{
+	GL_DrawFPS();
+	vglStopRendering();
+}
+
+
+int ColorIndex[16] =
+{
+	0, 31, 47, 63, 79, 95, 111, 127, 143, 159, 175, 191, 199, 207, 223, 231
+};
+
+unsigned ColorPercent[16] =
+{
+	25, 51, 76, 102, 114, 127, 140, 153, 165, 178, 191, 204, 216, 229, 237, 247
+};
+
+void VID_SetPalette (unsigned char *palette)
+{
+	byte	*pal;
+	int		r,g,b,v;
+	int		i,c,p;
+	unsigned	*table;
+
+//
+// 8 8 8 encoding
+//
+	pal = palette;
+	table = d_8to24table;
+	
+	for (i=0 ; i<256 ; i++)
+	{
+		r = pal[0];
+		g = pal[1];
+		b = pal[2];
+		pal += 3;
+		
+//		v = (255<<24) + (r<<16) + (g<<8) + (b<<0);
+//		v = (255<<0) + (r<<8) + (g<<16) + (b<<24);
+		v = (255<<24) + (r<<0) + (g<<8) + (b<<16);
+		*table++ = v;
+	}
+
+	d_8to24table[255] &= 0xffffff;	// 255 is transparent
+
+	pal = palette;
+	table = d_8to24TranslucentTable;
+
+	for (i=0; i<16;i++)
+	{
+		c = ColorIndex[i]*3;
+
+		r = pal[c];
+		g = pal[c+1];
+		b = pal[c+2];
+
+		for(p=0;p<16;p++)
+		{
+			v = (ColorPercent[15-p]<<24) + (r<<0) + (g<<8) + (b<<16);
+			//v = (255<<24) + (r<<0) + (g<<8) + (b<<16);
+			*table++ = v;
+
+			RTint[i*16+p] = ((float)r) / ((float)ColorPercent[15-p]) ;
+			GTint[i*16+p] = ((float)g) / ((float)ColorPercent[15-p]);
+			BTint[i*16+p] = ((float)b) / ((float)ColorPercent[15-p]);
+		}
+	}
+}
+
+void	VID_ShiftPalette (unsigned char *palette)
+{	
+//	VID_SetPalette (palette);
+
+//	gammaworks = SetDeviceGammaRamp (maindc, ramps);
+}
+
+/*
+===================
+VID_Init
+===================
+*/
+void	VID_Init (unsigned char *palette)
+{
+	int		width, height;
+	char	gldir[MAX_OSPATH];
+	
+	width = scr_width, height = scr_height;
+
+	Cvar_RegisterVariable (&vid_mode);
+	Cvar_RegisterVariable (&vid_wait);
+	Cvar_RegisterVariable (&vid_nopageflip);
+	Cvar_RegisterVariable (&_vid_wait_override);
+	Cvar_RegisterVariable (&_vid_default_mode);
+	Cvar_RegisterVariable (&_vid_default_mode_win);
+	Cvar_RegisterVariable (&vid_config_x);
+	Cvar_RegisterVariable (&vid_config_y);
+	Cvar_RegisterVariable (&vid_stretch_by_2);
+	Cvar_RegisterVariable (&_windowed_mouse);
+	Cvar_RegisterVariable (&gl_ztrick);
+	Cvar_RegisterVariable (&gl_outline);
+
+	vid_initialized = true;
+
+	vid.maxwarpwidth = width;
+	vid.maxwarpheight = height;
+	vid.colormap = host_colormap;
+	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
+	vid.aspect = (float) width / (float) height;
+	vid.numpages = 2;
+	vid.rowbytes = 2 * width;
+	vid.width = width;
+	vid.height = height;
+
+	vid.conwidth = width;
+	vid.conheight = height;
+
+	GL_Init ();
+
+	sprintf (gldir, "%s/glhexen", com_gamedir);
+	Sys_mkdir (gldir);
+	sprintf (gldir, "%s/glhexen/boss", com_gamedir);
+	Sys_mkdir (gldir);
+	sprintf (gldir, "%s/glhexen/puzzle", com_gamedir);
+	Sys_mkdir (gldir);
+
+	VID_SetPalette (palette);
+	
+	Con_SafePrintf ("Video mode %dx%d initialized.\n", width, height);
+	
+	vid.recalc_refdef = 1; // force a surface cache flush
+}
+
+void D_ShowLoadingSize(void)
+{
+	/*if (!vid_initialized)
+		return;
+
+	glDrawBuffer  (GL_FRONT);
+
+	SCR_DrawLoading();
+
+	glDrawBuffer  (GL_BACK);*/
 }
