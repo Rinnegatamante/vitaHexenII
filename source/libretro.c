@@ -38,6 +38,7 @@ extern cvar_t *sw_texfilt;
 int      framerate    = 60;
 unsigned framerate_ms = 16;
 
+#define MAX_PADS 1
 static unsigned quake_devices[1];
 static int invert_y_axis = 1;
 
@@ -356,6 +357,11 @@ gp_layout_t classic_alt = {
 
 gp_layout_t *gp_layoutp = NULL;
 
+static void audio_callback(void);
+
+#define SAMPLE_RATE   	48000
+#define BUFFER_SIZE 	2048
+
 /* sys.c */
 
 extern int old_char;
@@ -365,7 +371,6 @@ qboolean		isDedicated;
 
 uint64_t initialTime = 0;
 int hostInitialized = 0;
-SceCtrlData pad, oldpad;
 uint8_t is_uma0 = 0;
 extern int msaa;
 extern int scr_width;
@@ -1292,10 +1297,10 @@ static void audio_callback(void)
 	read_first  = read_end - audio_buffer_ptr;
 	read_second = samples_per_frame - read_first;
 
-	audio_batch_cb(audio_buffer + audio_buffer_ptr, read_first / (dma.samplebits / 8));
+	audio_batch_cb(audio_buffer + audio_buffer_ptr, read_first / (shm->samplebits / 8));
 	audio_buffer_ptr += read_first;
 	if (read_second >= 1) {
-		audio_batch_cb(audio_buffer, read_second / (dma.samplebits / 8));
+		audio_batch_cb(audio_buffer, read_second / (shm->samplebits / 8));
 		audio_buffer_ptr = read_second;
 	}
 }
@@ -1313,7 +1318,7 @@ qboolean SNDDMA_Init(void)
 	shm->samples = BUFFER_SIZE;
 	shm->samplepos = 0;
 	shm->submission_chunk = 1;
-	shm->buffer = audiobuffer;
+	shm->buffer = audio_buffer;
 	
 	initial_tick         = cpu_features_get_time_usec();
 
@@ -1382,9 +1387,6 @@ void IN_Init (void)
   Cvar_RegisterVariable (&motioncam);
   Cvar_RegisterVariable (&motion_horizontal_sensitivity);
   Cvar_RegisterVariable (&motion_vertical_sensitivity);
-  
-  sceMotionReset();
-  sceMotionStartSampling();
 }
 
 void IN_Shutdown (void)
