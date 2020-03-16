@@ -38,6 +38,9 @@ extern cvar_t *sw_texfilt;
 int      framerate    = 60;
 unsigned framerate_ms = 16;
 
+static unsigned quake_devices[1];
+static int invert_y_axis = 1;
+
 #ifdef HAVE_OPENGL
 void ( APIENTRY * qglBlendFunc )(GLenum sfactor, GLenum dfactor);
 void ( APIENTRY * qglTexImage2D )(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
@@ -114,6 +117,11 @@ static retro_input_poll_t poll_cb;
 static retro_input_state_t input_cb;
 static struct retro_rumble_interface rumble;
 static bool libretro_supports_bitmasks = false;
+
+/* System analog stick range is -0x8000 to 0x8000 */
+#define ANALOG_RANGE 0x8000
+/* Default deadzone: 15% */
+static int analog_deadzone = (int)(0.15f * ANALOG_RANGE);
 
 static bool initialize_gl()
 {
@@ -769,7 +777,368 @@ void Sys_FindClose (void)
 }
 
 //=============================================================================
-int _newlib_heap_size_user = 192 * 1024 * 1024;
+bool initial_resolution_set = false;
+static void update_variables(bool startup)
+{
+	struct retro_variable var;
+
+   var.key = "vitahexenii_framerate";
+   var.value = NULL;
+
+   if (startup)
+   {
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+      {
+         if (!strcmp(var.value, "auto"))
+         {
+            float target_framerate = 0.0f;
+            if (!environ_cb(RETRO_ENVIRONMENT_GET_TARGET_REFRESH_RATE,
+                     &target_framerate))
+               target_framerate = 60.0f;
+            framerate = (unsigned)target_framerate;
+         }
+         else
+            framerate = atoi(var.value);
+      }
+      else
+      {
+         framerate    = 60;
+         framerate_ms = 16;
+      }
+
+      switch (framerate)
+      {
+         case 50:
+            framerate_ms = 20;
+            break;
+         case 60:
+            framerate_ms = 16;
+            break;
+         case 72:
+            framerate_ms = 14;
+            break;
+         case 75:
+            framerate_ms = 13;
+            break;
+         case 90:
+            framerate_ms = 11;
+            break;
+         case 100:
+            framerate_ms = 10;
+            break;
+         case 119:
+         case 120:
+            framerate_ms = 8;
+            break;
+         case 144:
+            framerate_ms = 7;
+            break;
+         case 155:
+         case 160:
+         case 165:
+            framerate_ms = 6;
+            break;
+         case 180:
+         case 200:
+            framerate_ms = 5;
+            break;
+         case 240:
+         case 244:
+            framerate_ms = 4;
+            break;
+         case 300:
+         case 360:
+            framerate_ms = 3;
+            break;
+      }
+
+      var.key = "vitahexenii_resolution";
+      var.value = NULL;
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && !initial_resolution_set)
+      {
+         char *pch;
+         char str[100];
+         snprintf(str, sizeof(str), "%s", var.value);
+
+         pch = strtok(str, "x");
+         if (pch)
+            scr_width = strtoul(pch, NULL, 0);
+         pch = strtok(NULL, "x");
+         if (pch)
+            scr_height = strtoul(pch, NULL, 0);
+
+         if (log_cb)
+            log_cb(RETRO_LOG_INFO, "Got size: %u x %u.\n", scr_width, scr_height);
+
+         initial_resolution_set = true;
+      }
+
+/*#ifdef HAVE_OPENGL
+      var.key = "vitaquakeii_renderer";
+      var.value = NULL;
+
+      enable_opengl = !environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) || strcmp(var.value, "software") != 0;
+#endif*/
+   }
+   
+	var.key = "vitahexenii_invert_y_axis";
+	var.value = NULL;
+
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	{
+		if (strcmp(var.value, "disabled") == 0)
+			invert_y_axis = 1;
+		else
+			invert_y_axis = -1;
+	}
+   
+	/* We need Qcommon_Init to be executed to be able to set Cvars */
+	if (!startup) {
+		var.key = "vitahexenii_rumble";
+		var.value = NULL;
+	
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		{
+			if (strcmp(var.value, "disabled") == 0)
+				Cvar_SetValue( "pstv_rumble", 0 );
+			else
+				Cvar_SetValue( "pstv_rumble", 1 );
+		}
+		
+/*		var.key = "vitahexenii_dithered_filtering";
+		var.value = NULL;
+
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && sw_texfilt)
+		{
+			if (strcmp(var.value, "enabled") == 0)
+				Cvar_SetValue( "sw_texfilt", 1 );
+			else
+				Cvar_SetValue( "sw_texfilt", 0);
+		}*/
+#ifdef HAVE_OPENGL	
+		var.key = "vitahexenii_specular";
+		var.value = NULL;
+
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		{
+			if (strcmp(var.value, "disabled") == 0)
+				Cvar_SetValue( "gl_xflip", 0 );
+			else
+				Cvar_SetValue( "gl_xflip", 1 );
+		}
+#endif		
+		var.key = "vitahexenii_xhair";
+		var.value = NULL;
+
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		{
+			if (strcmp(var.value, "disabled") == 0)
+				Cvar_SetValue( "crosshair", 0 );
+			else
+				Cvar_SetValue( "crosshair", 1 );
+		}
+		
+		var.key = "vitahexenii_fps";
+		var.value = NULL;
+
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		{
+			if (strcmp(var.value, "disabled") == 0)
+				Cvar_SetValue( "cl_drawfps", 0 );
+			else
+				Cvar_SetValue( "cl_drawfps", 1 );
+		}
+		
+		var.key = "vitahexenii_shadows";
+		var.value = NULL;
+#ifdef HAVE_OPENGL
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !is_soft_render)
+		{
+			if (strcmp(var.value, "disabled") == 0)
+				Cvar_SetValue( "gl_shadows", 0 );
+			else
+				Cvar_SetValue( "gl_shadows", 1 );
+		}
+#endif		
+	}
+
+}
+
+void retro_init(void)
+{
+   if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
+      libretro_supports_bitmasks = true;
+}
+
+void retro_deinit(void)
+{
+   libretro_supports_bitmasks = false;
+}
+
+static void extract_basename(char *buf, const char *path, size_t size)
+{
+   char *ext        = NULL;
+   const char *base = strrchr(path, '/');
+   if (!base)
+      base = strrchr(path, '\\');
+   if (!base)
+      base = path;
+
+   if (*base == '\\' || *base == '/')
+      base++;
+
+   strncpy(buf, base, size - 1);
+   buf[size - 1] = '\0';
+
+   ext = strrchr(buf, '.');
+   if (ext)
+      *ext = '\0';
+}
+
+unsigned retro_api_version(void)
+{
+   return RETRO_API_VERSION;
+}
+
+void gp_layout_set_bind(gp_layout_t gp_layout)
+{
+   char buf[100];
+   unsigned i;
+   for (i=0; gp_layout.bind[i].key; ++i)
+   {
+      snprintf(buf, sizeof(buf), "bind %s \"%s\"\n", gp_layout.bind[i].key,
+                                                   gp_layout.bind[i].com);
+      Cbuf_AddText(buf);
+   }
+}
+
+void retro_set_controller_port_device(unsigned port, unsigned device)
+{
+   if (port == 0)
+   {
+      switch (device)
+      {
+         case RETRO_DEVICE_JOYPAD:
+            quake_devices[port] = RETRO_DEVICE_JOYPAD;
+            environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, classic.desc);
+            gp_layout_set_bind(classic);
+            break;
+         case RETRO_DEVICE_JOYPAD_ALT:
+            quake_devices[port] = RETRO_DEVICE_JOYPAD;
+            environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, classic_alt.desc);
+            gp_layout_set_bind(classic_alt);
+            break;
+         case RETRO_DEVICE_MODERN:
+            quake_devices[port] = RETRO_DEVICE_MODERN;
+            environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, modern.desc);
+            gp_layout_set_bind(modern);
+            break;
+         case RETRO_DEVICE_KEYBOARD:
+            quake_devices[port] = RETRO_DEVICE_KEYBOARD;
+            break;
+         case RETRO_DEVICE_NONE:
+         default:
+            quake_devices[port] = RETRO_DEVICE_NONE;
+            if (log_cb)
+               log_cb(RETRO_LOG_ERROR, "[libretro]: Invalid device.\n");
+      }
+   }
+}
+
+void retro_get_system_info(struct retro_system_info *info)
+{
+   memset(info, 0, sizeof(*info));
+   info->library_name     = "vitaHexenII";
+   info->library_version  = "v2.2" ;
+   info->need_fullpath    = true;
+   info->valid_extensions = "pak";
+}
+
+void retro_get_system_av_info(struct retro_system_av_info *info)
+{
+   info->timing.fps            = framerate;
+   info->timing.sample_rate    = SAMPLE_RATE;
+
+   info->geometry.base_width   = scr_width;
+   info->geometry.base_height  = scr_height;
+   info->geometry.max_width    = scr_width;
+   info->geometry.max_height   = scr_height;
+   info->geometry.aspect_ratio = (scr_width * 1.0f) / (scr_height * 1.0f);
+}
+
+void retro_set_environment(retro_environment_t cb)
+{
+   static const struct retro_controller_description port_1[] = {
+      { "Gamepad Classic", RETRO_DEVICE_JOYPAD },
+      { "Gamepad Classic Alt", RETRO_DEVICE_JOYPAD_ALT },
+      { "Gamepad Modern", RETRO_DEVICE_MODERN },
+      { "Keyboard + Mouse", RETRO_DEVICE_KEYBOARD },
+   };
+
+   static const struct retro_controller_info ports[] = {
+      { port_1, 4 },
+      { 0 },
+   };
+
+   environ_cb = cb;
+
+   libretro_set_core_options(environ_cb);
+   cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+
+   struct retro_log_callback log;
+
+   if(environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
+      log_cb = log.log;
+   else
+      log_cb = NULL;
+}
+
+void retro_reset(void)
+{
+}
+
+void retro_set_rumble_strong(void)
+{
+   uint16_t strength_strong = 0xffff;
+   if (!rumble.set_rumble_state)
+      return;
+
+   rumble.set_rumble_state(0, RETRO_RUMBLE_STRONG, strength_strong);
+}
+
+void retro_unset_rumble_strong(void)
+{
+   if (!rumble.set_rumble_state)
+      return;
+
+   rumble.set_rumble_state(0, RETRO_RUMBLE_STRONG, 0);
+}
+
+void retro_set_audio_sample(retro_audio_sample_t cb)
+{
+   audio_cb = cb;
+}
+
+void retro_set_audio_sample_batch(retro_audio_sample_batch_t cb)
+{
+   audio_batch_cb = cb;
+}
+
+void retro_set_input_poll(retro_input_poll_t cb)
+{
+   poll_cb = cb;
+}
+
+void retro_set_input_state(retro_input_state_t cb)
+{
+   input_cb = cb;
+}
+
+void retro_set_video_refresh(retro_video_refresh_t cb)
+{
+   video_cb = cb;
+}
 
 int main (int argc, char **argv)
 {
@@ -999,8 +1368,6 @@ cvar_t motion_horizontal_sensitivity = {"motioncam", "0", true};
 cvar_t motion_vertical_sensitivity = {"motioncam", "0", true};
 
 uint64_t rumble_tick = 0;
-SceCtrlData oldanalogs, analogs;
-SceMotionState motionstate;
 
 void IN_Init (void)
 {
@@ -1050,7 +1417,7 @@ void IN_RescaleAnalog(int *x, int *y, int dead) {
 
 void IN_StartRumble (void)
 {
-	if (!pstv_rumble->value) return;
+	if (!pstv_rumble.value) return;
 	
 	uint16_t strength_strong = 0xffff;
 	if (!rumble.set_rumble_state)
@@ -1079,10 +1446,15 @@ void IN_Move (usercmd_t *cmd)
    int lsx, lsy, rsx, rsy;
    float speed;
    
-   if ( (in_speed.state & 1) ^ (int)cl_run->value)
-       speed = 2;
-   else
-       speed = 1;
+   if ((in_speed.state & 1) || always_run.value){
+		cl_forwardspeed.value = 400;
+		cl_backspeed.value = 400;
+		cl_sidespeed.value = 700;
+	}else{
+		cl_forwardspeed.value = 200;
+		cl_backspeed.value = 200;
+		cl_sidespeed.value = 300;
+	}
    
    /*if (quake_devices[0] == RETRO_DEVICE_KEYBOARD) {
       mx = input_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
@@ -1113,10 +1485,10 @@ void IN_Move (usercmd_t *cmd)
             lsx = lsx - analog_deadzone;
          if (lsx < -analog_deadzone)
             lsx = lsx + analog_deadzone;
-         if (gl_xflip->value)
-            cmd->sidemove -= speed * cl_sidespeed->value * lsx / (ANALOG_RANGE - analog_deadzone);
+         if (gl_xflip.value)
+            cmd->sidemove -= speed * cl_sidespeed.value * lsx / (ANALOG_RANGE - analog_deadzone);
          else
-            cmd->sidemove += speed * cl_sidespeed->value * lsx / (ANALOG_RANGE - analog_deadzone);
+            cmd->sidemove += speed * cl_sidespeed.value * lsx / (ANALOG_RANGE - analog_deadzone);
       }
 
       if (lsy > analog_deadzone || lsy < -analog_deadzone) {
@@ -1124,7 +1496,7 @@ void IN_Move (usercmd_t *cmd)
             lsy = lsy - analog_deadzone;
          if (lsy < -analog_deadzone)
             lsy = lsy + analog_deadzone;
-         cmd->forwardmove -= speed * cl_forwardspeed->value * lsy / (ANALOG_RANGE - analog_deadzone);
+         cmd->forwardmove -= speed * cl_forwardspeed.value * lsy / (ANALOG_RANGE - analog_deadzone);
       }
 
       /* Right stick Look */
@@ -1140,10 +1512,10 @@ void IN_Move (usercmd_t *cmd)
          if (rsx < -analog_deadzone)
             rsx = rsx + analog_deadzone;
          /* For now we are sharing the sensitivity with the mouse setting */
-         if (gl_xflip->value)
-            cl.viewangles[YAW] += (float)(sensitivity->value * rsx / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
+         if (gl_xflip.value)
+            cl.viewangles[YAW] += (float)(sensitivity.value * rsx / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
          else
-            cl.viewangles[YAW] -= (float)(sensitivity->value * rsx / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
+            cl.viewangles[YAW] -= (float)(sensitivity.value * rsx / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
       }
 
       if (rsy > analog_deadzone || rsy < -analog_deadzone) {
@@ -1151,7 +1523,7 @@ void IN_Move (usercmd_t *cmd)
             rsy = rsy - analog_deadzone;
          if (rsy < -analog_deadzone)
             rsy = rsy + analog_deadzone;
-         cl.viewangles[PITCH] -= (float)(sensitivity->value * rsy / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
+         cl.viewangles[PITCH] -= (float)(sensitivity.value * rsy / (ANALOG_RANGE - analog_deadzone)) / (framerate / 60.0f);
       }
 
       if (cl.viewangles[PITCH] > 80)
