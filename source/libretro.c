@@ -26,6 +26,8 @@
 #include "fnmatch.h"
 #include <features/features_cpu.h>
 
+#define GP_MAXBINDS 32
+
 qboolean gl_set = false;
 bool is_soft_render = false;
 
@@ -431,7 +433,7 @@ int             findhandle (void)
 filelength
 ================
 */
-int filelength (FILE *f)
+int filelength_internal (FILE *f)
 {
 	int             pos;
 	int             end;
@@ -460,7 +462,7 @@ int Sys_FileOpenRead (char *path, int *hndl)
 	sys_handles[i] = f;
 	*hndl = i;
 
-	return filelength(f);
+	return filelength_internal(f);
 }
 
 int Sys_FileOpenWrite (char *path)
@@ -614,106 +616,102 @@ void Sys_SendKeyEvents (void)
 			}
 
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
-				Sys_SetKeys(K_UPARROW, 1);
+				Key_Event(K_UPARROW, 1);
 			else
-				Sys_SetKeys(K_UPARROW, 0);
+				Key_Event(K_UPARROW, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
-				Sys_SetKeys(K_DOWNARROW, 1);
+				Key_Event(K_DOWNARROW, 1);
 			else
-				Sys_SetKeys(K_DOWNARROW, 0);
+				Key_Event(K_DOWNARROW, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
-				Sys_SetKeys(K_LEFTARROW, 1);
+				Key_Event(K_LEFTARROW, 1);
 			else
-				Sys_SetKeys(K_LEFTARROW, 0);
+				Key_Event(K_LEFTARROW, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
-				Sys_SetKeys(K_RIGHTARROW, 1);
+				Key_Event(K_RIGHTARROW, 1);
 			else
-				Sys_SetKeys(K_RIGHTARROW, 0);
+				Key_Event(K_RIGHTARROW, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
-				Sys_SetKeys(K_ESCAPE, 1);
+				Key_Event(K_START, 1);
 			else
-				Sys_SetKeys(K_ESCAPE, 0);
+				Key_Event(K_START, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
-				Sys_SetKeys(K_ENTER, 1);
+				Key_Event(K_SELECT, 1);
 			else
-				Sys_SetKeys(K_ENTER, 0);
+				Key_Event(K_SELECT, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_Y))
-				Sys_SetKeys(K_AUX3, 1);
+				Key_Event(K_SQUARE, 1);
 			else
-				Sys_SetKeys(K_AUX3, 0);
+				Key_Event(K_SQUARE, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_X))
-				Sys_SetKeys(K_AUX4, 1);
+				Key_Event(K_TRIANGLE, 1);
 			else
-				Sys_SetKeys(K_AUX4, 0);
+				Key_Event(K_TRIANGLE, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
-			{
-				Sys_SetKeys(K_AUX1, 1);
-			}
+				Key_Event(K_CROSS, 1);
 			else
-			{
-				Sys_SetKeys(K_AUX1, 0);
-			}
+				Key_Event(K_CROSS, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
-				Sys_SetKeys(K_AUX2, 1);
+				Key_Event(K_CIRCLE, 1);
 			else
-				Sys_SetKeys(K_AUX2, 0);
+				Key_Event(K_CIRCLE, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
-				Sys_SetKeys(K_AUX5, 1);
+				Key_Event(K_LEFTTRIGGER, 1);
 			else
-				Sys_SetKeys(K_AUX5, 0);
+				Key_Event(K_LEFTTRIGGER, 0);
 			if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R))
-				Sys_SetKeys(K_AUX7, 1);
+				Key_Event(K_RIGHTTRIGGER, 1);
 			else
-				Sys_SetKeys(K_AUX7, 0);
+				Key_Event(K_RIGHTTRIGGER, 0);
 		}
 		break;
 		/*
 		case RETRO_DEVICE_KEYBOARD:
 			if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
-				Sys_SetKeys(K_MOUSE1, 1);
+				Key_Event(K_MOUSE1, 1);
 			else
-				Sys_SetKeys(K_MOUSE1, 0);
+				Key_Event(K_MOUSE1, 0);
 			if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
-				Sys_SetKeys(K_MOUSE2, 1);
+				Key_Event(K_MOUSE2, 1);
 			else
-				Sys_SetKeys(K_MOUSE2, 0);
+				Key_Event(K_MOUSE2, 0);
 			if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
-				Sys_SetKeys(K_MOUSE3, 1);
+				Key_Event(K_MOUSE3, 1);
 			else
-				Sys_SetKeys(K_MOUSE3, 0);
+				Key_Event(K_MOUSE3, 0);
 			if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
-				Sys_SetKeys(K_MOUSE4, 1);
+				Key_Event(K_MOUSE4, 1);
 			else
-				Sys_SetKeys(K_MOUSE4, 0);
+				Key_Event(K_MOUSE4, 0);
 			if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
-				Sys_SetKeys(K_MOUSE5, 1);
+				Key_Event(K_MOUSE5, 1);
 			else
-				Sys_SetKeys(K_MOUSE5, 0);
+				Key_Event(K_MOUSE5, 0);
 			if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP))
-				Sys_SetKeys(K_MOUSE6, 1);
+				Key_Event(K_MOUSE6, 1);
 			else
-				Sys_SetKeys(K_MOUSE6, 0);
+				Key_Event(K_MOUSE6, 0);
 			if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN))
-				Sys_SetKeys(K_MOUSE7, 1);
+				Key_Event(K_MOUSE7, 1);
 			else
-				Sys_SetKeys(K_MOUSE7, 0);
+				Key_Event(K_MOUSE7, 0);
 			if (quake_devices[0] == RETRO_DEVICE_KEYBOARD) {
 				if (input_cb(port, RETRO_DEVICE_KEYBOARD, 0, RETROK_UP))
-					Sys_SetKeys(K_UPARROW, 1);
+					Key_Event(K_UPARROW, 1);
 				else
-					Sys_SetKeys(K_UPARROW, 0);
+					Key_Event(K_UPARROW, 0);
 				if (input_cb(port, RETRO_DEVICE_KEYBOARD, 0, RETROK_DOWN))
-					Sys_SetKeys(K_DOWNARROW, 1);
+					Key_Event(K_DOWNARROW, 1);
 				else
-					Sys_SetKeys(K_DOWNARROW, 0);
+					Key_Event(K_DOWNARROW, 0);
 				if (input_cb(port, RETRO_DEVICE_KEYBOARD, 0, RETROK_LEFT))
-					Sys_SetKeys(K_LEFTARROW, 1);
+					Key_Event(K_LEFTARROW, 1);
 				else
-					Sys_SetKeys(K_LEFTARROW, 0);
+					Key_Event(K_LEFTARROW, 0);
 				if (input_cb(port, RETRO_DEVICE_KEYBOARD, 0, RETROK_RIGHT))
-					Sys_SetKeys(K_RIGHTARROW, 1);
+					Key_Event(K_RIGHTARROW, 1);
 				else
-					Sys_SetKeys(K_RIGHTARROW, 0);
+					Key_Event(K_RIGHTARROW, 0);
 			}
 			break;
 		*/
