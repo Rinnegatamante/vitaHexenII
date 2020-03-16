@@ -38,6 +38,11 @@ extern cvar_t *sw_texfilt;
 int      framerate    = 60;
 unsigned framerate_ms = 16;
 
+static bool context_needs_reinit = true;
+
+#define RETRO_DEVICE_MODERN  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_ANALOG, 2)
+#define RETRO_DEVICE_JOYPAD_ALT  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+
 #define MAX_PADS 1
 static unsigned quake_devices[1];
 static int invert_y_axis = 1;
@@ -107,6 +112,26 @@ uint16_t* indices;
 float *gVertexBufferPtr;
 float *gColorBufferPtr;
 float *gTexCoordBufferPtr;
+
+void GL_DrawPolygon(GLenum prim, int num){
+	qglDrawElements(prim, num, GL_UNSIGNED_SHORT, indices);
+}
+
+void vglVertexAttribPointerMapped(int id, void* ptr)
+{
+   switch (id)
+   {
+      case 0: /* Vertex */
+         qglVertexPointer(3, GL_FLOAT, 0, ptr);
+         break;
+      case 1: /* TexCoord */
+         qglTexCoordPointer(2, GL_FLOAT, 0, ptr);
+         break;
+      case 2: /* Color */
+         qglColorPointer(4, GL_FLOAT, 0, ptr);
+         break;
+   }
+}
 #endif
 
 static retro_log_printf_t log_cb;
@@ -715,18 +740,17 @@ what we presently need in this engine.
 =================================================
 */
 
-static SceUID	*finddir;
-static struct SceIoDirent	*finddata;
+static RDIR	*finddir = NULL;
 static char		*findpath, *findpattern;
 
 char *Sys_FindFirstFile (char *path, char *pattern)
 {
 	size_t	tmp_len;
 
-	if (finddir)
+	if (finddir != NULL)
 		Sys_Error ("Sys_FindFirst without FindClose");
 
-	finddir = sceIoDopen(path);
+	finddir = retro_opendir(path);
 	if (!finddir)
 		return NULL;
 
@@ -748,22 +772,16 @@ char *Sys_FindFirstFile (char *path, char *pattern)
 
 char *Sys_FindNextFile (void)
 {
-	struct stat	test;
-
 	if (!finddir)
 		return NULL;
-
-	do {
-		sceIoDread(finddir, finddata);
-		if (finddata != NULL)
-		{
-			if (!fnmatch_mod(findpattern, finddata->d_name, FNM_PATHNAME))
-			{
-				if ( (stat(va("%s/%s", findpath, finddata->d_name), &test) == 0) && S_ISREG(test.st_mode) )
-					return finddata->d_name;
-			}
-		}
-	} while (finddata != NULL);
+	
+	while ((retro_readdir(finddir)) > 0)
+	{
+	  if (!fnmatch_mod(findpattern, retro_dirent_get_name(finddir), FNM_PATHNAME))
+      {
+            return retro_dirent_get_name(finddir);
+      }
+	}
 
 	return NULL;
 }
@@ -771,7 +789,7 @@ char *Sys_FindNextFile (void)
 void Sys_FindClose (void)
 {
 	if (finddir != NULL)
-		sceIoDclose(finddir);
+		retro_closedir(finddir);
 	if (findpath != NULL)
 		free (findpath);
 	if (findpattern != NULL)
@@ -1143,128 +1161,6 @@ void retro_set_input_state(retro_input_state_t cb)
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
    video_cb = cb;
-}
-
-int main (int argc, char **argv)
-{
-	scePowerSetArmClockFrequency(444);
-	scePowerSetBusClockFrequency(222);
-	scePowerSetGpuClockFrequency(222);
-	scePowerSetGpuXbarClockFrequency(166);
-
-	// Checking for uma0 support
-	FILE *f = fopen("uma0:/data/Hexen II/data1/pak0.pak", "rb");
-	if (f) {
-		fclose(f);
-		is_uma0 = 1;
-	}
-
-	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
-	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, 1);
-	sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, 1);
-	
-	const float tickRate = 1.0f / sceRtcGetTickResolution();
-	
-	static quakeparms_t    parms;
-
-	parms.memsize = 20*1024*1024;
-	parms.membase = malloc (parms.memsize);
-	parms.basedir = ".";
-
-	// Loading resolution and MSAA mode from config files, those are not handled via Host cause Host_Init requires vitaGL to be working
-	char res_str[64];
-	if (is_uma0) f = fopen("uma0:data/Hexen II/resolution.cfg", "rb");
-	else f = fopen("ux0:data/Hexen II/resolution.cfg", "rb");
-	if (f != NULL){
-		fread(res_str, 1, 64, f);
-		fclose(f);
-		sscanf(res_str, "%dx%d", &scr_width, &scr_height);
-	}
-	if (is_uma0) f = fopen("uma0:data/Hexen II/antialiasing.cfg", "rb");
-	else f = fopen("ux0:data/Hexen II/antialiasing.cfg", "rb");
-	if (f != NULL){
-		fread(res_str, 1, 64, f);
-		fclose(f);
-		sscanf(res_str, "%d", &msaa);
-	}
-	cfg_width = scr_width;
-	cfg_height = scr_height;
-
-	// Initializing vitaGL
-	// Initializing vitaGL
-	switch (msaa) {
-	case 1:
-		vglInitExtended(0x1400000, scr_width, scr_height, 0x1000000, SCE_GXM_MULTISAMPLE_2X);
-		break;
-	case 2:
-		vglInitExtended(0x1400000, scr_width, scr_height, 0x1000000, SCE_GXM_MULTISAMPLE_4X);
-		break;
-	default:
-		vglInitExtended(0x1400000, scr_width, scr_height, 0x1000000, SCE_GXM_MULTISAMPLE_NONE);
-		break;
-	}
-	vglUseVram(GL_TRUE);
-
-	COM_InitArgv (argc, argv);
-
-	parms.argc = com_argc;
-	parms.argv = com_argv;
-	
-	Host_Init (&parms);
-	hostInitialized = 1;
-	//Sys_Init();
-	
-	// Set default PSVITA controls
-	Cbuf_AddText ("unbindall\n");
-	Cbuf_AddText ("bind CROSS +jump\n"); // Cross
-	Cbuf_AddText ("bind SQUARE +attack\n"); // Square
-	Cbuf_AddText ("bind CIRCLE +crouch\n"); // Circle
-	Cbuf_AddText ("bind TRIANGLE \"impulse 10\"\n"); // Triangle
-	Cbuf_AddText ("bind LTRIGGER +speed\n"); // Left Trigger
-	Cbuf_AddText ("bind RTRIGGER +attack\n"); // Right Trigger
-	Cbuf_AddText ("bind UPARROW +showinfo\n"); // Up
-	Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
-	Cbuf_AddText ("bind LEFTARROW invleft\n"); // Left
-	Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
-	Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
-	
-	// Loading default config file
-	Cbuf_AddText ("exec config.cfg\n");
-	
-	u64 lastTick;
-	sceRtcGetCurrentTick(&lastTick);
-		
-	vglWaitVblankStart(vid_vsync.value);
-	int old_vsync = vid_vsync.value;
-	
-	while (1)
-	{
-		// Changing V-Sync setting in realtime
-		if (old_vsync != vid_vsync.value) {
-			vglWaitVblankStart(vid_vsync.value);
-			old_vsync = vid_vsync.value;
-		}
-		
-		// Prevent screen power-off
-		sceKernelPowerTick(0);
-		
-		// Rumble effect managing (PSTV only)
-		if (rumble_tick != 0){
-			if (sceKernelGetProcessTimeWide() - rumble_tick > 500000) IN_StopRumble(); // 0.5 sec
-		}
-		
-		// Get current frame
-		u64 tick;
-		sceRtcGetCurrentTick(&tick);
-		const unsigned int deltaTick  = tick - lastTick;
-		const float   deltaSecond = deltaTick * tickRate;
-		Host_Frame(deltaSecond);
-		lastTick = tick;
-		
-	}
-	
-	free(parms.membase);
-	return 0;
 }
 
 /* snddma.c */
@@ -1658,228 +1554,7 @@ void D_EndDirectRect (int x, int y, int width, int height)
 }
 
 #define MAX_INDICES 4096
-uint16_t* indices;
-
-GLuint fs[9];
-GLuint vs[4];
-GLuint programs[9];
-
-void GL_LoadShader(const char* filename, GLuint idx, GLboolean fragment){
-	FILE* f = fopen(filename, "rb");
-	fseek(f, 0, SEEK_END);
-	long int size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	void* res = malloc(size);
-	fread(res, 1, size, f);
-	fclose(f);
-	if (fragment) glShaderBinary(1, &fs[idx], 0, res, size);
-	else glShaderBinary(1, &vs[idx], 0, res, size);
-	free(res);
-}
-
-static int state_mask = 0;
-GLint monocolor;
-GLint modulcolor[2];
-
-void GL_SetProgram(){
-	switch (state_mask){
-		case 0x00: // Everything off
-		case 0x04: // Modulate
-		case 0x08: // Alpha Test
-		case 0x0C: // Alpha Test + Modulate
-			glUseProgram(programs[NO_COLOR]);
-			break;
-		case 0x01: // Texcoord
-		case 0x03: // Texcoord + Color
-			glUseProgram(programs[TEX2D_REPL]);
-			break;
-		case 0x02: // Color
-		case 0x06: // Color + Modulate
-			glUseProgram(programs[RGBA_COLOR]);
-			break;
-		case 0x05: // Modulate + Texcoord
-			glUseProgram(programs[TEX2D_MODUL]);
-			break;
-		case 0x07: // Modulate + Texcoord + Color
-			glUseProgram(programs[TEX2D_MODUL_CLR]);
-			break;
-		case 0x09: // Alpha Test + Texcoord
-		case 0x0B: // Alpha Test + Color + Texcoord
-			glUseProgram(programs[TEX2D_REPL_A]);
-			break;
-		case 0x0A: // Alpha Test + Color
-		case 0x0E: // Alpha Test + Modulate + Color
-			glUseProgram(programs[RGBA_CLR_A]);
-			break;
-		case 0x0D: // Alpha Test + Modulate + Texcoord
-			glUseProgram(programs[TEX2D_MODUL_A]);
-			break;
-		case 0x0F: // Alpha Test + Modulate + Texcood + Color
-			glUseProgram(programs[FULL_A]);
-			break;
-		default:
-			break;
-	}
-}
-
-void GL_EnableState(GLenum state){	
-	switch (state){
-		case GL_TEXTURE_COORD_ARRAY:
-			state_mask |= 0x01;
-			break;
-		case GL_COLOR_ARRAY:
-			state_mask |= 0x02;
-			break;
-		case GL_MODULATE:
-			state_mask |= 0x04;
-			break;
-		case GL_REPLACE:
-			state_mask &= ~0x04;
-			break;
-		case GL_ALPHA_TEST:
-			state_mask |= 0x08;
-			break;
-	}
-	GL_SetProgram();
-}
-
-void GL_DisableState(GLenum state){	
-	switch (state){
-		case GL_TEXTURE_COORD_ARRAY:
-			state_mask &= ~0x01;
-			break;
-		case GL_COLOR_ARRAY:
-			state_mask &= ~0x02;
-			break;
-		case GL_ALPHA_TEST:
-			state_mask &= ~0x08;
-			break;
-		default:
-			break;
-	}
-	GL_SetProgram();
-}
-
-static float cur_clr[4];
-
-void GL_DrawPolygon(GLenum prim, int num){
-	if (state_mask == 0x05) glUniform4fv(modulcolor[0], 1, cur_clr);
-	else if (state_mask == 0x0D) glUniform4fv(modulcolor[1], 1, cur_clr);
-	vglDrawObjects(prim, num, GL_TRUE);
-}
-
-void GL_Color(float r, float g, float b, float a){
-	cur_clr[0] = r;
-	cur_clr[1] = g;
-	cur_clr[2] = b;
-	cur_clr[3] = a;
-}
-
-qboolean shaders_set = false;
-void GL_ResetShaders(){
-	glFinish();
-	int i;
-	if (shaders_set){
-		for (i=0;i<9;i++){
-			glDeleteProgram(programs[i]);
-		}
-		for (i=0;i<9;i++){
-			glDeleteShader(fs[i]);
-		}
-		for (i=0;i<4;i++){
-			glDeleteShader(vs[i]);
-		}
-	}else shaders_set = true; 
-	
-	// Loading shaders
-	for (i=0;i<9;i++){
-		fs[i] = glCreateShader(GL_FRAGMENT_SHADER);
-	}
-	for (i=0;i<4;i++){
-		vs[i] = glCreateShader(GL_VERTEX_SHADER);
-	}
-	
-	GL_LoadShader("app0:shaders/modulate_f.gxp", MODULATE, GL_TRUE);
-	GL_LoadShader("app0:shaders/modulate_rgba_f.gxp", MODULATE_WITH_COLOR, GL_TRUE);
-	GL_LoadShader("app0:shaders/replace_f.gxp", REPLACE, GL_TRUE);
-	GL_LoadShader("app0:shaders/modulate_alpha_f.gxp", MODULATE_A, GL_TRUE);
-	GL_LoadShader("app0:shaders/modulate_rgba_alpha_f.gxp", MODULATE_COLOR_A, GL_TRUE);
-	GL_LoadShader("app0:shaders/replace_alpha_f.gxp", REPLACE_A, GL_TRUE);
-	GL_LoadShader("app0:shaders/texture2d_v.gxp", TEXTURE2D, GL_FALSE);
-	GL_LoadShader("app0:shaders/texture2d_rgba_v.gxp", TEXTURE2D_WITH_COLOR, GL_FALSE);
-	
-	GL_LoadShader("app0:shaders/rgba_f.gxp", RGBA_COLOR, GL_TRUE);
-	GL_LoadShader("app0:shaders/vertex_f.gxp", MONO_COLOR, GL_TRUE);
-	GL_LoadShader("app0:shaders/rgba_alpha_f.gxp", RGBA_A, GL_TRUE);
-	GL_LoadShader("app0:shaders/rgba_v.gxp", COLOR, GL_FALSE);
-	GL_LoadShader("app0:shaders/vertex_v.gxp", VERTEX_ONLY, GL_FALSE);
-	
-	// Setting up programs
-	for (i=0;i<9;i++){
-		programs[i] = glCreateProgram();
-		switch (i){
-			case TEX2D_REPL:
-				glAttachShader(programs[i], fs[REPLACE]);
-				glAttachShader(programs[i], vs[TEXTURE2D]);
-				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
-				break;
-			case TEX2D_MODUL:
-				glAttachShader(programs[i], fs[MODULATE]);
-				glAttachShader(programs[i], vs[TEXTURE2D]);
-				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
-				modulcolor[0] = glGetUniformLocation(programs[i], "vColor");
-				break;
-			case TEX2D_MODUL_CLR:
-				glAttachShader(programs[i], fs[MODULATE_WITH_COLOR]);
-				glAttachShader(programs[i], vs[TEXTURE2D_WITH_COLOR]);
-				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 2, "color", 4, GL_FLOAT);
-				break;
-			case RGBA_COLOR:
-				glAttachShader(programs[i], fs[RGBA_COLOR]);
-				glAttachShader(programs[i], vs[COLOR]);
-				vglBindAttribLocation(programs[i], 0, "aPosition", 3, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 1, "aColor", 4, GL_FLOAT);
-				break;
-			case NO_COLOR:
-				glAttachShader(programs[i], fs[MONO_COLOR]);
-				glAttachShader(programs[i], vs[VERTEX_ONLY]);
-				vglBindAttribLocation(programs[i], 0, "aPosition", 3, GL_FLOAT);
-				monocolor = glGetUniformLocation(programs[i], "color");
-				break;
-			case TEX2D_REPL_A:
-				glAttachShader(programs[i], fs[REPLACE_A]);
-				glAttachShader(programs[i], vs[TEXTURE2D]);
-				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
-				break;
-			case TEX2D_MODUL_A:
-				glAttachShader(programs[i], fs[MODULATE_A]);
-				glAttachShader(programs[i], vs[TEXTURE2D]);
-				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
-				modulcolor[1] = glGetUniformLocation(programs[i], "vColor");
-				break;
-			case FULL_A:
-				glAttachShader(programs[i], fs[MODULATE_COLOR_A]);
-				glAttachShader(programs[i], vs[TEXTURE2D_WITH_COLOR]);
-				vglBindAttribLocation(programs[i], 0, "position", 3, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 1, "texcoord", 2, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 2, "color", 4, GL_FLOAT);
-				break;
-			case RGBA_CLR_A:
-				glAttachShader(programs[i], fs[RGBA_A]);
-				glAttachShader(programs[i], vs[COLOR]);
-				vglBindAttribLocation(programs[i], 0, "aPosition", 3, GL_FLOAT);
-				vglBindAttribLocation(programs[i], 1, "aColor", 4, GL_FLOAT);
-				break;
-		}
-		glLinkProgram(programs[i]);
-	}
-}
+uint16_t *indices;
 
 void VID_Shutdown(void)
 {
@@ -1911,30 +1586,28 @@ void GL_Init (void)
 	gl_extensions = glGetString (GL_EXTENSIONS);
 	Con_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
-	glClearColor (1,0,0,0);
-	glCullFace(GL_FRONT);
+	qglClearColor (1,0,0,0);
+	qglCullFace(GL_FRONT);
 	
-	GL_ResetShaders();
-
-	GL_EnableState(GL_ALPHA_TEST);
-	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
+	qglEnable(GL_ALPHA_TEST);
+	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	//glAlphaFunc(GL_GREATER, 0.666);
 
-	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+	qglPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	//->glShadeModel (GL_FLAT);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	Cvar_RegisterVariable(&show_fps);
 	Cvar_RegisterVariable(&vid_vsync);
 	
 //	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	GL_EnableState(GL_REPLACE);
+	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	
 	int i;
 	indices = (uint16_t*)malloc(sizeof(uint16_t)*MAX_INDICES);
