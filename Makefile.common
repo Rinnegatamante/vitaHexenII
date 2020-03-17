@@ -9,8 +9,7 @@ INCFLAGS   := \
 	-I$(LIBRETRO_COMM_DIR)/include \
 	-I$(JPEG8C_DIR)
 
-SYSTEM = 	$(CORE_DIR)/libretro/libretro.c \
-				$(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
+SYSTEM = 	$(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
 				$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
 				$(LIBRETRO_COMM_DIR)/string/stdstring.c \
 				$(LIBRETRO_COMM_DIR)/file/file_path.c \
