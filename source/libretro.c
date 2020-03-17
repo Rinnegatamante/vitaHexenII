@@ -517,7 +517,7 @@ int     Sys_FileTime (char *path)
 
 void Sys_mkdir (char *path)
 {
-	sceIoMkdir(path, 0777);
+	path_mkdir(path);
 }
 
 
@@ -1629,18 +1629,16 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*width = scr_width;
 	*height = scr_height;
 
-	vglStartRendering();
-	vglIndexPointerMapped(indices);
 	gVertexBuffer = gVertexBufferPtr;
 	gColorBuffer = gColorBufferPtr;
 	gTexCoordBuffer = gTexCoordBufferPtr;
+	qglEnableClientState(GL_VERTEX_ARRAY);
 }
 
 
 void GL_EndRendering (void)
 {
 	GL_DrawFPS();
-	vglStopRendering();
 }
 
 

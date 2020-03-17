@@ -377,7 +377,7 @@ void R_BlendLightmaps (qboolean Translucent)
 	else if (gl_lightmap_format == GL_INTENSITY)
 	{
 		GL_EnableState(GL_MODULATE);
-		GL_Color(0,0,0,1);
+		qglColor4f(0,0,0,1);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
@@ -416,7 +416,7 @@ void R_BlendLightmaps (qboolean Translucent)
 	else if (gl_lightmap_format == GL_INTENSITY)
 	{
 		GL_EnableState(GL_REPLACE);
-		GL_Color(1,1,1,1);
+		qglColor4f(1,1,1,1);
 	}
 
 	if (!Translucent)
@@ -458,7 +458,7 @@ void R_RenderBrushPoly (msurface_t *fa, qboolean override)
 	}
 	
 	if (!override)
-		GL_Color( intensity, intensity, intensity, alpha_val );
+		qglColor4f( intensity, intensity, intensity, alpha_val );
 		
 	if (fa->flags & SURF_DRAWSKY)
 	{	// warp texture, no lightmaps
@@ -565,9 +565,9 @@ void R_DrawWaterSurfaces (void)
 			continue;
 
 		if (s->flags & SURF_TRANSLUCENT)
-			GL_Color(1,1,1,r_wateralpha.value);
+			qglColor4f(1,1,1,r_wateralpha.value);
 		else
-			GL_Color(1,1,1,1);
+			qglColor4f(1,1,1,1);
 
 		// set modulate mode explicitly
 		GL_Bind (t->gl_texturenum);
@@ -580,8 +580,8 @@ void R_DrawWaterSurfaces (void)
 
 	GL_EnableState(GL_REPLACE);
 
-	GL_Color(1,1,1,1);
-	glDisable (GL_BLEND);
+	qglColor4f(1,1,1,1);
+	qglDisable (GL_BLEND);
 //	glDepthMask( 0 );
 }
 
@@ -663,7 +663,7 @@ void R_DrawBrushModel (entity_t *e, qboolean Translucent)
 	if (R_CullBox (mins, maxs))
 		return;
 
-	GL_Color(1,1,1,1);
+	qglColor4f(1,1,1,1);
 	memset (lightmap_polys, 0, sizeof(lightmap_polys));
 
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
@@ -870,7 +870,7 @@ void R_DrawWorld (void)
 	currententity = &ent;
 	currenttexture = -1;
 
-	GL_Color(1,1,1,1);
+	qglColor4f(1,1,1,1);
 	memset (lightmap_polys, 0, sizeof(lightmap_polys));
 #ifdef QUAKE2
 	R_ClearSkyBox ();

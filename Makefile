@@ -108,6 +108,7 @@ else ifeq ($(platform), emscripten)
 else ifeq ($(platform), vita)
    TARGET := $(TARGET_NAME)_vita.a
    CC = arm-vita-eabi-gcc
+   CXX = arm-vita-eabi-g++
    AR = arm-vita-eabi-ar
    CFLAGS += -DVITA
    CXXFLAGS += -Wl,-q -Wall -O3
@@ -127,6 +128,7 @@ else ifeq ($(platform), libnx)
     HAVE_OPENGL = 1
 else
    CC = gcc
+   CXX = g++
    TARGET := $(TARGET_NAME)_libretro.dll
    HAVE_OPENGL = 1
    SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=$(CORE_DIR)/link.T -Wl,--no-undefined
@@ -145,10 +147,10 @@ endif
 
 include Makefile.common
 
-OBJECTS := $(SOURCES_C:.c=.o)
+OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CPP:.cpp=.o)
 
 CFLAGS   += -Wall -D__LIBRETRO__ $(fpic) -Did386="0" -DGLQUAKE -DRELEASE -DQUAKE2RJ -DRJNET -fsigned-char -fno-short-enums
-CXXFLAGS += -Wall -D__LIBRETRO__ $(fpic) -fpermissive
+CXXFLAGS += -Wall -D__LIBRETRO__ $(fpic) -fpermissive -Did386="0" -DGLQUAKE -DRELEASE -DQUAKE2RJ -DRJNET -fsigned-char -fno-short-enums
 
 ifeq ($(HAVE_OPENGL),1)
 CFLAGS   += -DHAVE_OPENGL
@@ -181,7 +183,7 @@ else
 endif
 
 gl_draw.o: %.cpp
-	@$(if $(Q), $(shell echo echo CC $<),)
+	@$(if $(Q), $(shell echo echo CXX $<),)
 	$(Q)$(CXX) $(CFLAGS) $(CXXFLAGS) $(fpic) -c -o $@ $<
 	
 %.o: %.c
