@@ -1361,8 +1361,8 @@ void R_DrawParticles (void)
 	GL_Bind(particletexture);
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_EnableState(GL_MODULATE);
-	GL_EnableState(GL_COLOR_ARRAY);
+	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	qglEnableClientState(GL_COLOR_ARRAY);
 
 	VectorScale (vup, 1.5, r_pup);
 	VectorScale (vright, 1.5, r_pright);
@@ -1552,9 +1552,9 @@ void R_DrawParticles (void)
 	vglVertexAttribPointerMapped(1, pUV);
 	vglVertexAttribPointerMapped(2, pColor);
 	GL_DrawPolygon(GL_TRIANGLES, num_vertices);
-	GL_DisableState(GL_COLOR_ARRAY);
+	qglDisableClientState(GL_COLOR_ARRAY);
 	glDisable (GL_BLEND);
-	GL_EnableState(GL_REPLACE);
+	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
 

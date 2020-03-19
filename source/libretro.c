@@ -93,8 +93,10 @@ void ( APIENTRY * qglScalef )(GLfloat x, GLfloat y, GLfloat z);
 void ( APIENTRY * qglDepthFunc )(GLenum func);
 void ( APIENTRY * qglTexEnvi )(GLenum target, GLenum pname, GLint param);
 void ( APIENTRY * qglAlphaFunc )(GLenum func,  GLclampf ref);
+void ( APIENTRY * qglLineWidth )(GLfloat width);
+void ( APIENTRY * qglFrontFace )(GLenum mode);
 
-#define GL_FUNCS_NUM 44
+#define GL_FUNCS_NUM 46
 
 typedef struct api_entry{
 	void *ptr;
@@ -197,6 +199,8 @@ static bool initialize_gl()
 	funcs[41].ptr = qglDepthFunc          = hw_render.get_proc_address ("glDepthFunc");
 	funcs[42].ptr = qglTexEnvi            = hw_render.get_proc_address ("glTexEnvi");
 	funcs[43].ptr = qglAlphaFunc          = hw_render.get_proc_address ("glAlphaFunc");
+	funcs[44].ptr = qglLineWidth          = hw_render.get_proc_address ("glLineWidth");
+	funcs[45].ptr = qglFrontFace          = hw_render.get_proc_address ("glFrontFace");
 	
 	if (log_cb) {
 		int i;
@@ -1777,4 +1781,41 @@ void D_ShowLoadingSize(void)
 	SCR_DrawLoading();
 
 	glDrawBuffer  (GL_BACK);*/
+}
+
+/* cd_null.c */
+
+void CDAudio_Play(byte track, qboolean looping)
+{
+}
+
+
+void CDAudio_Stop(void)
+{
+}
+
+
+void CDAudio_Pause(void)
+{
+}
+
+
+void CDAudio_Resume(void)
+{
+}
+
+
+void CDAudio_Update(void)
+{
+}
+
+
+int CDAudio_Init(void)
+{
+	return 0;
+}
+
+
+void CDAudio_Shutdown(void)
+{
 }

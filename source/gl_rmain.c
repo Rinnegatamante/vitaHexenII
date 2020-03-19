@@ -68,9 +68,9 @@ void DoGamma()
 	}
 
 	//believe it or not this actually does brighten the picture!!
-	GL_DisableState(GL_TEXTURE_COORD_ARRAY);
-	glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-	float color[4] = {1, 1, 1, v_gamma.value};
+	qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	qglBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+	qglColor4f(1, 1, 1, v_gamma.value);
 	
 	float vertices[3*4] = {
 		10, 100, 100,
@@ -79,13 +79,12 @@ void DoGamma()
 		10, 100,-100
 	};
 	
-	glUniform4fv(monocolor, 1, color);
-	vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 4, vertices);
+	vglVertexAttribPointerMapped(0, vertices);
 	GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
 	
 	//if we do this twice, we double the brightening effect for a wider range of gamma's
 	GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
-	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
+	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_TEXTURE_COORD_ARRAY);
 }
 
 //
@@ -317,23 +316,23 @@ void R_DrawSpriteModel (entity_t *e)
 	if (currententity->drawflags & DRF_TRANSLUCENT)
 	{
 		// rjr
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable( GL_BLEND );
-		GL_Color(1,1,1,r_wateralpha.value);
+		qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		qglEnable( GL_BLEND );
+		qglColor4f(1,1,1,r_wateralpha.value);
 	}
 	else if (currententity->model->flags & EF_TRANSPARENT)
 	{
 		// rjr
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable( GL_BLEND );
-		GL_Color(1,1,1,1);
+		qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		qglEnable( GL_BLEND );
+		qglColor4f(1,1,1,1);
 	}
 	else
 	{
 		// rjr
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable( GL_BLEND );
-		GL_Color(1,1,1,1);
+		qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		qglEnable( GL_BLEND );
+		qglColor4f(1,1,1,1);
 	}
 
 	if (psprite->type == SPR_FACING_UPRIGHT)
@@ -444,8 +443,8 @@ void R_DrawSpriteModel (entity_t *e)
 		1, 1
 	};
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	VectorMA (e->origin, frame->down, r_spritedesc.vup, point);
 	VectorMA (point, frame->left, r_spritedesc.vright, gVertexBuffer);
@@ -464,14 +463,14 @@ void R_DrawSpriteModel (entity_t *e)
 	gVertexBuffer += 3;
 	
 	vglVertexAttribPointerMapped(0, pPoint);
-	vglVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 4, texCoords);
+	vglVertexAttribPointerMapped(1, texCoords);
 	GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
 
 	//restore tex parms
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glDisable( GL_BLEND );
+	qglDisable( GL_BLEND );
 }
 
 /*
@@ -528,7 +527,7 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 	int		count;
 	float	r,g,b,p;
 	
-	GL_EnableState(GL_COLOR_ARRAY);
+	qglEnableClientState(GL_COLOR_ARRAY);
 
 	lastposenum = posenum;
 
@@ -615,7 +614,7 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 		GL_DrawPolygon(primType, count);
 	}
 	
-	GL_DisableState(GL_COLOR_ARRAY);
+	qglDisableClientState(GL_COLOR_ARRAY);
 	
 	if (gl_outline.value > 0) {
 		
@@ -623,14 +622,14 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 		verts += posenum * paliashdr->poseverts;
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
 		
-		glPolygonMode (GL_BACK, GL_LINE);  //  we're drawing the outlined edges
-		glEnable (GL_CULL_FACE);  //  enable culling so that we don't draw the entire wireframe
-		glLineWidth(gl_outline.value);
-		glCullFace (GL_FRONT);  //  get rid of the front facing wireframe
-		glFrontFace (GL_CW);  //  hack to avoid using the depth buffer tests
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //  make sure the outline shows up
-		GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+		qglPolygonMode (GL_BACK, GL_LINE);  //  we're drawing the outlined edges
+		qglEnable (GL_CULL_FACE);  //  enable culling so that we don't draw the entire wireframe
+		qglLineWidth(gl_outline.value);
+		qglCullFace (GL_FRONT);  //  get rid of the front facing wireframe
+		qglFrontFace (GL_CW);  //  hack to avoid using the depth buffer tests
+		qglEnable (GL_BLEND);
+		qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //  make sure the outline shows up
+		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		
 		while (1)
 		{
@@ -660,18 +659,17 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, int posenum)
 				verts++;
 			}
 			
-			float color[4] = {0.0f, 0.0f, 0.0f, model_constant_alpha};
-			glUniform4fv(monocolor, 1, color);
+			qglColor4f(0.0f, 0.0f, 0.0f, model_constant_alpha);
 			vglVertexAttribPointerMapped(0, pPos);
 			GL_DrawPolygon(primType, count);
 		}
 		
-		glPolygonMode (GL_BACK, GL_FILL);  //  get out of wireframe mode
-		glFrontFace (GL_CCW);  //  end of hack for depth buffer
-		glCullFace (GL_BACK);  //  back to normal face culling
-		glDisable (GL_CULL_FACE);
-		glDisable (GL_BLEND);
-		GL_EnableState(GL_TEXTURE_COORD_ARRAY);	
+		qglPolygonMode (GL_BACK, GL_FILL);  //  get out of wireframe mode
+		qglFrontFace (GL_CCW);  //  end of hack for depth buffer
+		qglCullFace (GL_BACK);  //  back to normal face culling
+		qglDisable (GL_CULL_FACE);
+		qglDisable (GL_BLEND);
+		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);	
 	}
 
 }
@@ -745,12 +743,11 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum)
 			verts++;
 		}
 
-		GL_DisableState(GL_TEXTURE_COORD_ARRAY);
-		const float color[] = {0,0,0,0.5f};
-		glUniform4fv(monocolor, 1, color);
+		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		qglColor4f(0,0,0,0.5f);
 		vglVertexAttribPointerMapped(0, pVertex);
 		GL_DrawPolygon(primType, count);
-		GL_EnableState(GL_TEXTURE_COORD_ARRAY);
+		qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	}	
 }
 
@@ -1004,7 +1001,7 @@ void R_DrawAliasModel (entity_t *e)
 	else
 	{
 		// rjr
-		GL_Color(1,1,1, 1);
+		qglColor4f(1,1,1, 1);
 		model_constant_alpha = 1.0f;
 	}
 
@@ -1049,7 +1046,7 @@ void R_DrawAliasModel (entity_t *e)
 
 	//->if (gl_smoothmodels.value)
 	//->	glShadeModel (GL_SMOOTH);
-	GL_EnableState(GL_MODULATE);
+	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	//->if (gl_affinemodels.value)
 	//->	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
@@ -1057,39 +1054,39 @@ void R_DrawAliasModel (entity_t *e)
 	R_SetupAliasFrame (currententity->frame, paliashdr);
 	if ((currententity->drawflags & DRF_TRANSLUCENT) ||
 		(currententity->model->flags & EF_SPECIAL_TRANS))
-		glDisable (GL_BLEND);
+		qglDisable (GL_BLEND);
 
 	if ((currententity->model->flags & EF_TRANSPARENT))
-		glDisable (GL_BLEND);
+		qglDisable (GL_BLEND);
 
 	if ((currententity->model->flags & EF_HOLEY))
-		glDisable (GL_BLEND);
+		qglDisable (GL_BLEND);
 
 	if ((currententity->model->flags & EF_SPECIAL_TRANS))
 	{
 		// rjr
-		glEnable( GL_CULL_FACE );
+		qglEnable( GL_CULL_FACE );
 	}
 
-	GL_EnableState(GL_REPLACE);
+	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	//->glShadeModel (GL_FLAT);
 	//->if (gl_affinemodels.value)
 	//->	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-	glPopMatrix ();
+	qglPopMatrix ();
 
 	if (r_shadows.value)
 	{
-		glPushMatrix ();
+		qglPushMatrix ();
 		R_RotateForEntity2(e);
-		GL_DisableState(GL_TEXTURE_COORD_ARRAY);
-		glEnable (GL_BLEND);
+		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		qglEnable (GL_BLEND);
 		GL_DrawAliasShadow (paliashdr, lastposenum);
-		GL_EnableState(GL_TEXTURE_COORD_ARRAY);
-		glDisable (GL_BLEND);
-		GL_Color(1,1,1,1);
-		glPopMatrix ();
+		qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		qglDisable (GL_BLEND);
+		qglColor4f(1,1,1,1);
+		qglPopMatrix ();
 	}
 
 }
@@ -1306,11 +1303,11 @@ void R_DrawViewModel (void)
 	diffuse[0] = diffuse[1] = diffuse[2] = diffuse[3] = (float)shadelight / 128;
 
 	// hack the depth range to prevent view model from poking into walls
-	glDepthRangef (gldepthmin, gldepthmin + 0.3*(gldepthmax-gldepthmin));
+	qglDepthRange (gldepthmin, gldepthmin + 0.3*(gldepthmax-gldepthmin));
 	AlwaysDrawModel = true;
 	R_DrawAliasModel (currententity);
 	AlwaysDrawModel = false;
-	glDepthRangef (gldepthmin, gldepthmax);
+	qglDepthRange (gldepthmin, gldepthmax);
 }
 
 
@@ -1324,18 +1321,18 @@ void R_PolyBlend (void)
 	if (!gl_polyblend.value)
 		return;
 
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_DisableState(GL_ALPHA_TEST);
-	glEnable (GL_BLEND);
-	glDisable (GL_DEPTH_TEST);
-	GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+	qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qglDisable(GL_ALPHA_TEST);
+	qglEnable (GL_BLEND);
+	qglDisable (GL_DEPTH_TEST);
+	qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glLoadIdentity ();
+	qglLoadIdentity ();
 
-	glRotatef (-90,  1, 0, 0);	    // put Z going up
-	glRotatef (90,  0, 0, 1);	    // put Z going up
+	qglRotatef (-90,  1, 0, 0);	    // put Z going up
+	qglRotatef (90,  0, 0, 1);	    // put Z going up
 
-	GL_Color(v_blend[0],v_blend[1],v_blend[2],v_blend[3]);
+	qglColor4f(v_blend[0],v_blend[1],v_blend[2],v_blend[3]);
 	
 	if (v_blend[3]){
 	
@@ -1346,8 +1343,7 @@ void R_PolyBlend (void)
 				10, 10, -10
 		};
 	
-		vglVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 4, vertex);
-		glUniform4fv(monocolor, 1, v_blend);
+		vglVertexAttribPointerMapped(0, vertex);
 		GL_DrawPolygon(GL_TRIANGLE_FAN, 4);
 		
 	}
@@ -1356,10 +1352,10 @@ void R_PolyBlend (void)
 	if (v_gamma.value != 1)
 		DoGamma();
 
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable (GL_BLEND);
-	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
-	GL_EnableState(GL_ALPHA_TEST);
+	qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qglDisable (GL_BLEND);
+	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	qglEnable(GL_ALPHA_TEST);
 }
 
 
@@ -1470,8 +1466,8 @@ void R_SetupGL (void)
 	//
 	// set up viewpoint
 	//
-	glMatrixMode(GL_PROJECTION);
-    glLoadIdentity ();
+	qglMatrixMode(GL_PROJECTION);
+    qglLoadIdentity ();
 	// JACK: Changes for non-scaled
 	x = r_refdef.vrect.x * glwidth/vid.width /*320*/;
 	x2 = (r_refdef.vrect.x + r_refdef.vrect.width) * glwidth/vid.width /*320*/;
@@ -1497,7 +1493,7 @@ void R_SetupGL (void)
 		w = h = 256;
 	}
 
-	glViewport (glx + x, gly + y2, w, h);
+	qglViewport (glx + x, gly + y2, w, h);
     screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
 	yfov = 2*atan((float)r_refdef.vrect.height/r_refdef.vrect.width)*180/M_PI;
     MYgluPerspective (yfov,  screenaspect,  4,  4096);
@@ -1505,41 +1501,41 @@ void R_SetupGL (void)
 	if (mirror)
 	{
 		if (mirror_plane->normal[2])
-			glScalef (1, -1, 1);
+			qglScalef (1, -1, 1);
 		else
 			glScalef (-1, 1, 1);
-		glCullFace(GL_BACK);
+		qglCullFace(GL_BACK);
 	}
 	else
-		glCullFace(GL_FRONT);
+		qglCullFace(GL_FRONT);
 
-	glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity ();
+	qglMatrixMode(GL_MODELVIEW);
+    qglLoadIdentity ();
 
-    glRotatef (-90,  1, 0, 0);	    // put Z going up
-    glRotatef (90,  0, 0, 1);	    // put Z going up
+    qglRotatef (-90,  1, 0, 0);	    // put Z going up
+    qglRotatef (90,  0, 0, 1);	    // put Z going up
     if (gl_xflip.value){
-        glScalef (1, -1, 1);
-        glCullFace(GL_BACK);
+        qglScalef (1, -1, 1);
+        qglCullFace(GL_BACK);
     }
-    glRotatef (-r_refdef.viewangles[2],  1, 0, 0);
-    glRotatef (-r_refdef.viewangles[0],  0, 1, 0);
-    glRotatef (-r_refdef.viewangles[1],  0, 0, 1);
-    glTranslatef (-r_refdef.vieworg[0],  -r_refdef.vieworg[1],  -r_refdef.vieworg[2]);
+    qglRotatef (-r_refdef.viewangles[2],  1, 0, 0);
+    qglRotatef (-r_refdef.viewangles[0],  0, 1, 0);
+    qglRotatef (-r_refdef.viewangles[1],  0, 0, 1);
+    qglTranslatef (-r_refdef.vieworg[0],  -r_refdef.vieworg[1],  -r_refdef.vieworg[2]);
 
-	glGetFloatv (GL_MODELVIEW_MATRIX, r_world_matrix);
+	qglGetFloatv (GL_MODELVIEW_MATRIX, r_world_matrix);
 
 	//
 	// set drawing parms
 	//
 	if (gl_cull.value)
-		glEnable(GL_CULL_FACE);
+		qglEnable(GL_CULL_FACE);
 	else
-		glDisable(GL_CULL_FACE);
+		qglDisable(GL_CULL_FACE);
 
-	glDisable(GL_BLEND);
-	GL_DisableState(GL_ALPHA_TEST);
-	glEnable(GL_DEPTH_TEST);
+	qglDisable(GL_BLEND);
+	qglDisable(GL_ALPHA_TEST);
+	qglEnable(GL_DEPTH_TEST);
 }
 
 /*
@@ -1624,7 +1620,7 @@ void R_Clear (void)
 		glDepthFunc (GL_LEQUAL);
 	}
 
-	glDepthRangef (gldepthmin, gldepthmax);
+	qglDepthRange (gldepthmin, gldepthmax);
 }
 
 /*
@@ -1662,12 +1658,12 @@ void R_Mirror (void)
 
 	gldepthmin = 0.5;
 	gldepthmax = 1;
-	glDepthRange (gldepthmin, gldepthmax);
-	glDepthFunc (GL_LEQUAL);
+	qglDepthRange (gldepthmin, gldepthmax);
+	qglDepthFunc (GL_LEQUAL);
 
 	R_RenderScene ();
 
-	glDepthMask(0);
+	qglDepthMask(0);
 
 	R_DrawParticles ();
 // THIS IS THE F*S*D(KCING MIRROR ROUTINE!  Go down!!!
@@ -1679,28 +1675,28 @@ void R_Mirror (void)
 
 	gldepthmin = 0;
 	gldepthmax = 0.5;
-	glDepthRangef (gldepthmin, gldepthmax);
-	glDepthFunc (GL_LEQUAL);
+	qglDepthRange (gldepthmin, gldepthmax);
+	qglDepthFunc (GL_LEQUAL);
 
 	// blend on top
-	glEnable (GL_BLEND);
-	glMatrixMode(GL_PROJECTION);
+	qglEnable (GL_BLEND);
+	qglMatrixMode(GL_PROJECTION);
 	if (mirror_plane->normal[2])
 		glScalef (1,-1,1);
 	else
 		glScalef (-1,1,1);
-	glCullFace(GL_FRONT);
-	glMatrixMode(GL_MODELVIEW);
+	qglCullFace(GL_FRONT);
+	qglMatrixMode(GL_MODELVIEW);
 
-	glLoadMatrixf (r_base_world_matrix);
+	qglLoadMatrixf (r_base_world_matrix);
 
-	GL_Color(1,1,1,r_mirroralpha.value);
+	qglColor4f(1,1,1,r_mirroralpha.value);
 	s = cl.worldmodel->textures[mirrortexturenum]->texturechain;
 	for ( ; s ; s=s->texturechain)
 		R_RenderBrushPoly (s, true);
 	cl.worldmodel->textures[mirrortexturenum]->texturechain = NULL;
-	glDisable (GL_BLEND);
-	GL_Color(1,1,1,1);
+	qglDisable (GL_BLEND);
+	qglColor4f(1,1,1,1);
 }
 
 /*

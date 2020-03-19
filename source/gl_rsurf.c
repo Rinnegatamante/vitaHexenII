@@ -373,10 +373,10 @@ void R_BlendLightmaps (qboolean Translucent)
 		glDepthMask(GL_FALSE);		// don't bother writing Z
 
 	if (gl_lightmap_format == GL_LUMINANCE)
-		glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+		qglBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 	else if (gl_lightmap_format == GL_INTENSITY)
 	{
-		GL_EnableState(GL_MODULATE);
+		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		qglColor4f(0,0,0,1);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
@@ -410,17 +410,17 @@ void R_BlendLightmaps (qboolean Translucent)
 		}
 	}
 
-	glDisable (GL_BLEND);
+	qglDisable (GL_BLEND);
 	if (gl_lightmap_format == GL_LUMINANCE)
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	else if (gl_lightmap_format == GL_INTENSITY)
 	{
-		GL_EnableState(GL_REPLACE);
+		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		qglColor4f(1,1,1,1);
 	}
 
 	if (!Translucent)
-		glDepthMask(GL_TRUE);		// back to normal Z buffering
+		qglDepthMask(GL_TRUE);		// back to normal Z buffering
 }
 
 /*
@@ -444,7 +444,7 @@ void R_RenderBrushPoly (msurface_t *fa, qboolean override)
 		alpha_val = r_wateralpha.value;
 		// rjr
 
-		GL_EnableState(GL_MODULATE);
+		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		intensity = 1.0;
 
 	}
@@ -452,7 +452,7 @@ void R_RenderBrushPoly (msurface_t *fa, qboolean override)
 	{
 		// currententity->abslight   0 - 255
 		// rjr
-		GL_EnableState(GL_MODULATE);
+		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		intensity = ( float )currententity->abslight / 255.0f;
 //		intensity = 0;
 	}
@@ -506,12 +506,12 @@ dynamic:
 	if ((currententity->drawflags & MLS_ABSLIGHT) == MLS_ABSLIGHT ||
 	    (currententity->drawflags & DRF_TRANSLUCENT))
 	{
-		GL_EnableState(GL_REPLACE);
+		qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	}
 
 	if (currententity->drawflags & DRF_TRANSLUCENT)
 	{
-		glDisable (GL_BLEND);
+		qglDisable (GL_BLEND);
 	}
 }
 
@@ -548,10 +548,10 @@ void R_DrawWaterSurfaces (void)
 	//
 	// go back to the world matrix
 	//
-    glLoadMatrixf (r_world_matrix);
+    qglLoadMatrixf (r_world_matrix);
 
-	glEnable (GL_BLEND);
-	GL_EnableState(GL_MODULATE);
+	qglEnable (GL_BLEND);
+	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
 	{
@@ -578,7 +578,7 @@ void R_DrawWaterSurfaces (void)
 		t->texturechain = NULL;
 	}
 
-	GL_EnableState(GL_REPLACE);
+	qglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	qglColor4f(1,1,1,1);
 	qglDisable (GL_BLEND);

@@ -84,8 +84,8 @@ void R_RenderDlight (dlight_t *light)
 		return;
 	}
 
-	GL_EnableState(GL_COLOR_ARRAY);
-	GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+	qglEnableClientState(GL_COLOR_ARRAY);
+	qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	float* pPos = gVertexBuffer;
 	float* pColor = gColorBuffer;
 	*gColorBuffer++ = 0.2f;
@@ -107,9 +107,9 @@ void R_RenderDlight (dlight_t *light)
 	vglVertexAttribPointerMapped(0, pPos);
 	vglVertexAttribPointerMapped(1, pColor);
 	GL_DrawPolygon(GL_TRIANGLE_FAN, 18);
-	GL_DisableState(GL_COLOR_ARRAY);
-	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
-	GL_Color(0,0,0,1); // Ensure the color ends up being zero just like the non-OpenGLES code
+	qglDisableClientState(GL_COLOR_ARRAY);
+	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	qglColor4f(0,0,0,1); // Ensure the color ends up being zero just like the non-OpenGLES code
 
 }
 
@@ -128,11 +128,11 @@ void R_RenderDlights (void)
 
 	r_dlightframecount = r_framecount + 1;	// because the count hasn't
 											//  advanced yet for this frame
-	glDepthMask (0);
-	GL_DisableState(GL_TEXTURE_COORD_ARRAY);
+	qglDepthMask (0);
+	qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	//->glShadeModel (GL_SMOOTH);
-	glEnable (GL_BLEND);
-	glBlendFunc (GL_ONE, GL_ONE);
+	qglEnable (GL_BLEND);
+	qglBlendFunc (GL_ONE, GL_ONE);
 
 	l = cl_dlights;
 	for (i=0 ; i<MAX_DLIGHTS ; i++, l++)
@@ -142,11 +142,11 @@ void R_RenderDlights (void)
 		R_RenderDlight (l);
 	}
 
-	GL_Color(1,1,1,1);
-	glDisable (GL_BLEND);
-	GL_EnableState(GL_TEXTURE_COORD_ARRAY);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask (1);
+	qglColor4f(1,1,1,1);
+	qglDisable (GL_BLEND);
+	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	qglBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	qglDepthMask (1);
 }
 
 

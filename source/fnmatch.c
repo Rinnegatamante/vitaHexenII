@@ -27,7 +27,7 @@ foldcase(int ch, int flags)
 
 #define	FOLDCASE(ch, flags)	foldcase((unsigned char)(ch), (flags))
 
-int fnmatch(const char *pattern, const char *string, int flags)
+int fnmatch_mod(const char *pattern, const char *string, int flags)
 {
 	const char *stringstart;
 	char c, test;
@@ -76,7 +76,7 @@ int fnmatch(const char *pattern, const char *string, int flags)
 
 			/* General case, use recursion. */
 			while ((test = FOLDCASE(*string, flags)) != EOS) {
-				if (!fnmatch(pattern, string,
+				if (!fnmatch_mod(pattern, string,
 					     flags & ~FNM_PERIOD))
 					return (0);
 				if (test == '/' && flags & FNM_PATHNAME)
