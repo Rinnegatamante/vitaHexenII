@@ -205,7 +205,7 @@ static bool initialize_gl()
 	if (log_cb) {
 		int i;
 		for (i = 0; i < GL_FUNCS_NUM; i++) {
-			if (!funcs[i].ptr) log_cb(RETRO_LOG_ERROR, "vitaQuakeII: cannot get GL function #%d symbol.\n", i);
+			if (!funcs[i].ptr) log_cb(RETRO_LOG_ERROR, "vitaHexenII: cannot get GL function #%d symbol.\n", i);
 		}
 	}
 	
@@ -1163,6 +1163,268 @@ void retro_set_input_state(retro_input_state_t cb)
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
    video_cb = cb;
+}
+
+static void extract_directory(char *buf, const char *path, size_t size)
+{
+   char *base = NULL;
+
+   strncpy(buf, path, size - 1);
+   buf[size - 1] = '\0';
+
+   base = strrchr(buf, '/');
+   if (!base)
+      base = strrchr(buf, '\\');
+
+   if (base)
+      *base = '\0';
+   else
+    {
+       buf[0] = '.';
+       buf[1] = '\0';
+    }
+}
+
+bool retro_load_game(const struct retro_game_info *info)
+{
+	int i;
+	char path_lower[256];
+#if defined(_WIN32)
+	char slash = '\\';
+#else
+	char slash = '/';
+#endif
+	bool use_external_savedir = false;
+	const char *base_save_dir = NULL;
+#if 0
+	struct retro_keyboard_callback cb = { keyboard_cb };
+#endif
+	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+
+	update_variables(true);
+
+	if (/*enable_opengl &&*/ !environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
+	{
+		if (log_cb)
+			log_cb(RETRO_LOG_INFO, "XRGB8888 is not supported.\n");
+		return false;
+	}
+
+	if (/*!enable_opengl*/
+#ifdef HAVE_OPENGL
+	    /*||*/ !initialize_opengl()
+#endif
+	    )
+	{
+		if (log_cb)
+			log_cb(RETRO_LOG_INFO, "vitaQuakeII: using software renderer.\n");
+		
+		fmt = RETRO_PIXEL_FORMAT_RGB565;
+		if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
+		{
+			if (log_cb)
+				log_cb(RETRO_LOG_INFO, "RGB565 is not supported.\n");
+			return false;
+		}
+		is_soft_render = true;
+	} else {
+		if (log_cb)
+			log_cb(RETRO_LOG_INFO, "vitaQuakeII: using OpenGL renderer.\n");
+	}
+	
+
+	if (!info)
+		return false;
+	
+	sprintf(path_lower, "%s", info->path);
+	
+	for (i=0; path_lower[i]; ++i)
+		path_lower[i] = tolower(path_lower[i]);
+	
+#if 0
+   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
+#endif
+	
+	extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
+	
+	snprintf(g_pak_path, sizeof(g_pak_path), "%s", info->path);
+	
+	if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &base_save_dir) && base_save_dir)
+	{
+		if (strlen(base_save_dir) > 0)
+		{
+			/* Get game 'name' (i.e. subdirectory) */
+			char game_name[1024];
+			extract_basename(game_name, g_rom_dir, sizeof(game_name));
+			
+			/* > Build final save path */
+			snprintf(g_save_dir, sizeof(g_save_dir), "%s%c%s", base_save_dir, slash, game_name);
+			use_external_savedir = true;
+			
+			/* > Create save directory, if required */
+			if (!path_is_directory(g_save_dir))
+				use_external_savedir = path_mkdir(g_save_dir);
+		}
+	}
+	
+	/* > Error check */
+	if (!use_external_savedir)
+	{
+		/* > Use ROM directory fallback... */
+		snprintf(g_save_dir, sizeof(g_save_dir), "%s", g_rom_dir);
+	}
+	else
+	{
+		/* > Final check: is the save directory the same as the 'rom' directory?
+		 *   (i.e. ensure logical behaviour if user has set a bizarre save path...) */
+		use_external_savedir = (strcmp(g_save_dir, g_rom_dir) != 0);
+	}
+	
+	if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble))
+		log_cb(RETRO_LOG_INFO, "Rumble environment supported.\n");
+	else
+		log_cb(RETRO_LOG_INFO, "Rumble environment not supported.\n");
+	
+	if (strstr(path_lower, "data1"))
+		extract_directory(g_rom_dir, g_rom_dir, sizeof(g_rom_dir));
+
+	return true;
+}
+
+bool first_boot = true;
+
+static void audio_process(void)
+{
+}
+
+void retro_run(void)
+{
+	bool updated = false;
+#ifdef HAVE_OPENGL
+	if (!is_soft_render) {
+      if (!libretro_shared_context)
+         glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
+		qglBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
+		qglEnable(GL_TEXTURE_2D);
+	}
+#endif
+	if (first_boot)
+	{
+		static quakeparms_t    parms;
+		
+		parms.memsize = 20*1024*1024;
+		parms.membase = malloc (parms.memsize);
+		parms.basedir = ".";
+		
+		const char *argv[32];
+		const char *empty_string = "";
+	
+		argv[0] = empty_string;
+		int argc = 1;
+		COM_InitArgv (argc, argv);
+		
+		parms.argc = com_argc;
+		parms.argv = com_argv;
+		
+		Host_Init (&parms);
+		hostInitialized = 1;
+		
+		// Set default PSVITA controls
+		Cbuf_AddText ("unbindall\n");
+		Cbuf_AddText ("bind CROSS +jump\n"); // Cross
+		Cbuf_AddText ("bind SQUARE +attack\n"); // Square
+		Cbuf_AddText ("bind CIRCLE +crouch\n"); // Circle
+		Cbuf_AddText ("bind TRIANGLE \"impulse 10\"\n"); // Triangle
+		Cbuf_AddText ("bind LTRIGGER +speed\n"); // Left Trigger
+		Cbuf_AddText ("bind RTRIGGER +attack\n"); // Right Trigger
+		Cbuf_AddText ("bind UPARROW +showinfo\n"); // Up
+		Cbuf_AddText ("bind DOWNARROW invuse\n"); // Down
+		Cbuf_AddText ("bind LEFTARROW invleft\n"); // Left
+		Cbuf_AddText ("bind RIGHTARROW invright\n"); // Right
+		Cbuf_AddText ("sensitivity 5\n"); // Right Analog Sensitivity
+	
+		update_variables(false);
+		first_boot = false;
+	}
+	
+	if (rumble_tick != 0)
+		if (cpu_features_get_time_usec() - rumble_tick > 500000)
+         IN_StopRumble(); /* 0.5 sec */
+	
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+		update_variables(false);
+
+	Host_Frame(1.0 / framerate);
+
+	/*if (shutdown_core)
+		return;*/
+
+	/*if (is_soft_render) video_cb(tex_buffer, scr_width, scr_height, scr_width << 1);
+	else*/ {
+#ifdef HAVE_OPENGL
+      if (!libretro_shared_context)
+         glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+		video_cb(RETRO_HW_FRAME_BUFFER_VALID, scr_width, scr_height, 0);
+#endif
+	}
+	
+	audio_process();
+	audio_callback();
+  
+}
+
+void retro_unload_game(void)
+{
+}
+
+unsigned retro_get_region(void)
+{
+   return RETRO_REGION_NTSC;
+}
+
+bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num)
+{
+   (void)type;
+   (void)info;
+   (void)num;
+   return false;
+}
+
+size_t retro_serialize_size(void)
+{
+   return 0;
+}
+
+bool retro_serialize(void *data_, size_t size)
+{
+   return false;
+}
+
+bool retro_unserialize(const void *data_, size_t size)
+{
+   return false;
+}
+
+void *retro_get_memory_data(unsigned id)
+{
+   (void)id;
+   return NULL;
+}
+
+size_t retro_get_memory_size(unsigned id)
+{
+   (void)id;
+   return 0;
+}
+
+void retro_cheat_reset(void)
+{}
+
+void retro_cheat_set(unsigned index, bool enabled, const char *code)
+{
+   (void)index;
+   (void)enabled;
+   (void)code;
 }
 
 /* snddma.c */
