@@ -448,6 +448,9 @@ int main (int argc, char **argv)
 		break;
 	}
 	vglUseVram(GL_TRUE);
+	
+	// Disabling all FPU exceptions traps on main thread
+	sceKernelChangeThreadVfpException(0x0800009FU, 0x0);
 
 	COM_InitArgv (argc, argv);
 
