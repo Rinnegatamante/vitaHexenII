@@ -5,6 +5,7 @@
  */
 
 #include "quakedef.h"
+#include <math_neon.h>
 
 entity_t	r_worldentity;
 
@@ -886,9 +887,11 @@ void R_DrawAliasModel (entity_t *e)
 	shadedots = r_avertexnormal_dots[((int)(e->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 	shadelight = shadelight / 200.0;
 	
+	float cs[2];
 	an = e->angles[1]/180*M_PI;
-	shadevector[0] = cosf(-an);
-	shadevector[1] = sinf(-an);
+	sincosf_neon(-an, cs);
+	shadevector[0] = cs[1];
+	shadevector[1] = cs[0];
 	shadevector[2] = 1;
 	VectorNormalize (shadevector);
 

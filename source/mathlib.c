@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include "quakedef.h"
+#include <math_neon.h>
 
 void Sys_Error (char *error, ...);
 
@@ -47,10 +48,11 @@ void PerpendicularVector( vec3_t dst, const vec3_t src )
 	*/
 	for ( pos = 0, i = 0; i < 3; i++ )
 	{
-		if ( fabsf( src[i] ) < minelem )
+		float absrc = fabsf(src[i]);
+		if (absrc < minelem)
 		{
 			pos = i;
-			minelem = fabs( src[i] );
+			minelem = absrc;
 		}
 	}
 	tempvec[0] = tempvec[1] = tempvec[2] = 0.0F;
@@ -113,13 +115,12 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 	memset( zrot, 0, sizeof( zrot ) );
 	zrot[2][2] = 1.0F;
 	
-	float cz = cosf(DEG2RAD(degrees));
-	float sz = sinf(DEG2RAD(degrees));
-	
-	zrot[0][0] = cz;
-	zrot[0][1] = sz;
-	zrot[1][0] = -sz;
-	zrot[1][1] = cz;
+	float cs[2];
+	sincosf_c(DEG2RAD(degrees), cs);
+	zrot[0][0] = cs[1];
+	zrot[0][1] = cs[0];
+	zrot[1][0] = -cs[0];
+	zrot[1][1] = cs[1];
 
 	R_ConcatRotations( m, zrot, tmpmat );
 	R_ConcatRotations( tmpmat, im, rot );
