@@ -14,6 +14,19 @@ extern int ColorIndex[16];
 extern unsigned ColorPercent[16];
 extern qboolean	vid_initialized;
 
+int			cs_texture;
+
+static byte cs_data[64]  = {
+	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
+	0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff,
+	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
+
 #define MAX_DISC 18
 
 int GL_LoadPicTexture (qpic_t *pic);
@@ -23,6 +36,13 @@ cvar_t		gl_max_size = {"gl_max_size", "1024"};
 cvar_t		gl_round_down = {"gl_round_down", "0"};
 cvar_t		gl_picmip = {"gl_picmip", "0"};
 cvar_t		gl_bilinear = {"gl_bilinear", "1", 1};
+
+extern cvar_t crosshaircolor_r;
+extern cvar_t crosshaircolor_g;
+extern cvar_t crosshaircolor_b;
+extern cvar_t cl_crossx;
+extern cvar_t cl_crossy;
+extern cvar_t crosshair;
 
 byte		*draw_chars;				// 8*8 graphic characters
 byte		*draw_smallchars;			// Small characters for status bar
@@ -695,12 +715,6 @@ void Draw_Init (void)
 	Cvar_RegisterVariable (&st_separation );
 	Cvar_RegisterVariable (&st_zeropdist );
 	Cvar_RegisterVariable (&st_fustbal );
-	
-	// 3dfx can only handle 256 wide textures
-	if (is_3dfx || is_PowerVR)
-	{
-		Cvar_Set ("gl_max_size", "256");
-	}
 
 	Cmd_AddCommand ("gl_texturemode", &Draw_TextureMode_f);
 	Cmd_AddCommand ("gl_texels", &GL_Texels_f);
@@ -745,6 +759,16 @@ void Draw_Init (void)
 	if (!cb)
 		Sys_Error ("Couldn't load gfx/menu/conback.lmp");
 	SwapPic (cb);
+	
+	// custom crosshair support
+	char crosshair_file[1024];
+	sprintf(crosshair_file, "%s/xhair.bin", com_gamedir);
+	SceUID fd = sceIoOpen(crosshair_file, SCE_O_RDONLY, 0777);
+	if (fd >= 0) {
+		sceIoRead(fd, cs_data, 64);
+		sceIoClose(fd);
+	}
+	cs_texture = GL_LoadTexture ("crosshair", 8, 8, cs_data, 0, 1, 0);
 
 	// hack the version number directly into the pic
 
@@ -951,6 +975,25 @@ of the code.
 */
 void Draw_DebugChar (char num)
 {
+}
+
+void Draw_Crosshair(void)
+{
+	int x, y;
+	extern vrect_t scr_vrect;
+
+	if (crosshair.value == 2) {
+		x = scr_vrect.x + scr_vrect.width/2 + 1 + cl_crossx.value;
+		y = scr_vrect.y + scr_vrect.height/2  + cl_crossy.value;
+		
+		GL_EnableState(GL_MODULATE);
+		GL_Bind (cs_texture);
+		GL_Color(crosshaircolor_r.value, crosshaircolor_g.value, crosshaircolor_b.value, 1);
+		DrawQuad(x, y, 12, 12, 0, 0, 1, 1);
+		GL_EnableState(GL_REPLACE);
+	}
+	else if (crosshair.value)
+		Draw_Character (scr_vrect.x + scr_vrect.width/2 + cl_crossx.value, scr_vrect.y + scr_vrect.height/2 + cl_crossy.value, '+');
 }
 
 /*

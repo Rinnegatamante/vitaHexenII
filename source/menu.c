@@ -2075,7 +2075,9 @@ void M_AdjustSliders (int dir)
 		break;
 	
 	case 14: // crosshair
-		Cvar_SetValue ("crosshair", !crosshair.value);
+		crosshair.value = crosshair.value + 1;
+		if (crosshair.value > 2) crosshair.value = 0;
+		Cvar_SetValue ("crosshair", crosshair.value);
 		break;
 
 	case 15: // rumble effect
@@ -2207,7 +2209,9 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 60+(13*8), r);
 	
 	M_Print (16, 60+(14*8),	"        Show Crosshair");
-	M_DrawCheckbox (220, 60+(14*8), crosshair.value);
+	if (crosshair.value == 0) M_Print (220, 60+(14*8), "Off");
+	else if (crosshair.value == 1) M_Print (220, 60+(14*8), "Original");
+	else M_Print (220, 60+(14*8), "Custom");
 
 	M_Print (16, 60+(15*8), "         Rumble Effect");
 	M_DrawCheckbox (220, 60+(15*8), pstv_rumble.value);

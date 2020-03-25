@@ -44,6 +44,11 @@ cvar_t	v_ipitch_level = {"v_ipitch_level", "0.3", false};
 cvar_t	v_idlescale = {"v_idlescale", "0", false};
 
 cvar_t	crosshair = {"crosshair", "0", true};
+cvar_t	crosshaircolor_r = {"crosshaircolor_r","255", true};
+cvar_t	crosshaircolor_g = {"crosshaircolor_g","255", true};
+cvar_t	crosshaircolor_b = {"crosshaircolor_b","0", true};
+cvar_t	cl_crossx = {"cl_crossx","0", false};
+cvar_t	cl_crossy = {"cl_crossy","0", false};
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
@@ -1210,6 +1215,11 @@ void V_Init (void)
 
 	Cvar_RegisterVariable (&v_idlescale);
 	Cvar_RegisterVariable (&crosshair);
+	Cvar_RegisterVariable (&crosshaircolor_r);
+	Cvar_RegisterVariable (&crosshaircolor_g);
+	Cvar_RegisterVariable (&crosshaircolor_b);
+	Cvar_RegisterVariable (&cl_crossx);
+	Cvar_RegisterVariable (&cl_crossy);
 
 	Cvar_RegisterVariable (&scr_ofsx);
 	Cvar_RegisterVariable (&scr_ofsy);

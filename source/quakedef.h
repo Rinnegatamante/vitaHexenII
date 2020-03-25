@@ -8,7 +8,7 @@
 
 #define	QUAKE_GAME			// as opposed to utilities
 
-#define HEXEN2_VERSION		1.12
+#define HEXEN2_VERSION		2.30
 
 //define	PARANOID			// speed sapping error checking
 
