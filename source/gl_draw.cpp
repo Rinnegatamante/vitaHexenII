@@ -692,6 +692,9 @@ void Draw_Init (void)
 	Cvar_RegisterVariable (&gl_round_down);
 	Cvar_RegisterVariable (&gl_picmip);
 	Cvar_RegisterVariable (&gl_bilinear);
+	Cvar_RegisterVariable (&st_separation );
+	Cvar_RegisterVariable (&st_zeropdist );
+	Cvar_RegisterVariable (&st_fustbal );
 	
 	// 3dfx can only handle 256 wide textures
 	if (is_3dfx || is_PowerVR)

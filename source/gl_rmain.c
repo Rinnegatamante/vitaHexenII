@@ -129,6 +129,13 @@ cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","1",true};
 cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
 cvar_t	gl_waterripple = {"gl_waterripple","2"};
 
+// BEGIN STEREO DEFS
+int stereoCameraSelect = -1; // 1 = left, -1 = right
+cvar_t  st_separation = {"st_separation", "0", true};	// CON: st_separation -> separation Between Cameras
+cvar_t  st_zeropdist = {"st_zeropdist", "20", true};	// CON: st_zeropdist ->  Dist to zero parallax
+cvar_t  st_fustbal = {"st_fustbal", "1", true };		// CON: st_fustbal ->  frustumBalance adjust
+// END Stereo Defs
+
 extern	cvar_t	gl_ztrick;
 static qboolean AlwaysDrawModel;
 
@@ -1449,8 +1456,12 @@ void MYgluPerspective( GLdouble fovy, GLdouble aspect,
 
    xmin = ymin * aspect;
    xmax = ymax * aspect;
-
-   glFrustum( xmin, xmax, ymin, ymax, zNear, zFar );
+	
+   if (st_separation.value != 0) {
+      float stereo_add = (st_separation.value * st_fustbal.value * (4.0f / (4 + st_zeropdist.value))) * stereoCameraSelect;
+      glFrustum(xmin + stereo_add, xmax + stereo_add, ymin, ymax, zNear, zFar);
+      glTranslatef(st_separation.value * stereoCameraSelect, 0, 0);
+   } else glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
 }
 
 
@@ -1582,7 +1593,7 @@ R_Clear
 */
 void R_Clear (void)
 {
-	if (r_mirroralpha.value != 1.0)
+	if (r_mirroralpha.value != 1.0 && st_separation.value == 0)
 	{
 		if (gl_clear.value)
 			glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1694,7 +1705,7 @@ void R_Mirror (void)
 
 	glLoadMatrixf (r_base_world_matrix);
 
-	GL_Color(1,1,1,r_mirroralpha.value);
+	GL_Color(1,1,1,st_separation.value != 0 ? 1 : r_mirroralpha.value);
 	s = cl.worldmodel->textures[mirrortexturenum]->texturechain;
 	for ( ; s ; s=s->texturechain)
 		R_RenderBrushPoly (s, true);
@@ -1752,27 +1763,41 @@ void R_RenderView (void)
 
 	mirror = false;
 
-//	glFinish ();
-
-	R_Clear ();
-
-	// render normal view
-	R_RenderScene ();
-
-	glDepthMask(0);
-
-	R_DrawParticles ();
-
-	R_DrawTransEntitiesOnList( r_viewleaf->contents == CONTENTS_EMPTY ); // This restores the depth mask
-
-	R_DrawWaterSurfaces ();
-
-	R_DrawTransEntitiesOnList( r_viewleaf->contents != CONTENTS_EMPTY );
-
-	R_DrawViewModel();
-
-	// render mirror view
-	R_Mirror ();
+	if (st_separation.value != 0) {
+		stereoCameraSelect = 1;
+		glColorMask( GL_TRUE, GL_FALSE, GL_FALSE ,GL_TRUE );
+		R_Clear ();
+		R_RenderScene ();
+		glDepthMask(0);
+		R_DrawParticles ();
+		R_DrawTransEntitiesOnList( r_viewleaf->contents == CONTENTS_EMPTY ); // This restores the depth mask
+		R_DrawWaterSurfaces ();
+		R_DrawTransEntitiesOnList( r_viewleaf->contents != CONTENTS_EMPTY );
+		R_DrawViewModel();
+		R_Mirror ();
+		stereoCameraSelect = -1;
+		glColorMask( GL_FALSE, GL_TRUE, GL_TRUE ,GL_TRUE );
+		R_Clear ();
+		R_RenderScene ();
+		glDepthMask(0);
+		R_DrawParticles ();
+		R_DrawTransEntitiesOnList( r_viewleaf->contents == CONTENTS_EMPTY ); // This restores the depth mask
+		R_DrawWaterSurfaces ();
+		R_DrawTransEntitiesOnList( r_viewleaf->contents != CONTENTS_EMPTY );
+		R_DrawViewModel();
+		R_Mirror ();
+		glColorMask( GL_TRUE, GL_TRUE, GL_TRUE ,GL_TRUE );
+	} else {
+		R_Clear ();
+		R_RenderScene ();
+		glDepthMask(0);
+		R_DrawParticles ();
+		R_DrawTransEntitiesOnList( r_viewleaf->contents == CONTENTS_EMPTY ); // This restores the depth mask
+		R_DrawWaterSurfaces ();
+		R_DrawTransEntitiesOnList( r_viewleaf->contents != CONTENTS_EMPTY );
+		R_DrawViewModel();
+		R_Mirror ();
+	}
 
 	R_PolyBlend ();
 

@@ -21,6 +21,7 @@ extern cvar_t	pstv_rumble;
 extern cvar_t	retrotouch;
 extern cvar_t	always_run;
 extern cvar_t	show_fps;
+extern cvar_t	st_separation;
 extern cvar_t	motioncam;
 extern cvar_t	motion_sensitivity;
 extern cvar_t	motion_horizontal_sensitivity;
@@ -1970,7 +1971,7 @@ again:
 /* OPTIONS MENU */
 
 #define	SLIDER_RANGE	10
-#define OPTIONS_NUM 24
+#define OPTIONS_NUM 25
 
 int		options_cursor;
 
@@ -2128,6 +2129,11 @@ void M_AdjustSliders (int dir)
 		else if (gl_outline.value < 0) gl_outline.value = 0;
 		Cvar_SetValue ("gl_outline",gl_outline.value);
 		break;
+	
+	case 24: // anaglyph 3d
+		st_separation.value = st_separation.value == 0.5 ? 0.0 : 0.5;
+		Cvar_SetValue ("st_separation",st_separation.value);
+		break;
 		
 	}
 }
@@ -2234,6 +2240,9 @@ void M_Options_Draw (void)
 	M_Print (16, 60+(23*8), "           Cel Shading");
 	r = gl_outline.value / 6;
 	M_DrawSlider (220, 60+(23*8), r);
+	
+	M_Print (16, 60+(24*8), "           Anaglyph 3D");
+	M_DrawCheckbox (220, 60+(24*8), st_separation.value != 0);
 
 // cursor
 	M_DrawCharacter (200, 60 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -2294,6 +2303,7 @@ void M_Options_Key (int k)
 			vid_vsync.value = 1;
 			gl_bilinear.value = 1;
 			motioncam.value = 0;
+			st_separation.value = 0;
 			motion_horizontal_sensitivity.value = 3;
 			motion_vertical_sensitivity.value = 3;
 			Cvar_SetValue ("viewsize", scr_viewsize.value);
@@ -2313,6 +2323,7 @@ void M_Options_Key (int k)
 			Cvar_SetValue ("motioncam", motioncam.value);
 			Cvar_SetValue ("motion_horizontal_sensitivity", motion_horizontal_sensitivity.value);
 			Cvar_SetValue ("motion_vertical_sensitivity", motion_vertical_sensitivity.value);
+			Cvar_SetValue ("st_separation", st_separation.value);
 			SetResolution(960, 544);
 			SetAntiAliasing(msaa);
 			r_idx = -1;

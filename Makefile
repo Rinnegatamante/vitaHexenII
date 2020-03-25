@@ -6,7 +6,7 @@ INCLUDES	:=	include
 
 LIBS = -lvitaGL -lvorbisfile -lvorbis -logg -lspeexdsp -lmpg123 \
 	-lc -lpng -lz -lvita2d -lSceAudio_stub -lSceLibKernel_stub \
-	-lSceCommonDialog_stub -lSceDisplay_stub -lSceGxm_stub \
+	-lSceCommonDialog_stub -lSceDisplay_stub -lSceGxm_stub -lmathneon \
 	-lSceSysmodule_stub -lSceCtrl_stub -lSceTouch_stub -lm -lSceMotion_stub \
 	-lSceRtc_stub -lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub
 
