@@ -275,7 +275,7 @@ typedef struct
 #include "cvar.h"
 #include "screen.h"
 #include "net.h"
-#include "protocol.h"
+#include "PROTOCOL.H"
 #include "cmd.h"
 #include "sbar.h"
 #include "sound.h"

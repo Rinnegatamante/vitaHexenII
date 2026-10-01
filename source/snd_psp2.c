@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 #include <psp2/audioout.h>
 #include <psp2/types.h>
+#include <psp2/rtc.h>
+#include <psp2/kernel/threadmgr.h>
 #include "quakedef.h"
 
 #define u64 uint64_t
@@ -28,14 +30,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define AUDIOSIZE   16384
 
 u8 *audiobuffer;
-u64 initial_tick;
+SceRtcTick initial_tick;
 int snd_inited;
 int chn = -1;
 int stop_audio = false;
 //int update = false;
 float tickRate;
 
-static int audio_thread(int args, void *argp)
+static int audio_thread(SceSize args, void *argp)
 {
 	chn = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN, AUDIOSIZE / 2, SAMPLE_RATE, SCE_AUDIO_OUT_MODE_MONO);
 	sceAudioOutSetConfig(chn, -1, -1, -1);
@@ -73,7 +75,7 @@ qboolean SNDDMA_Init(void)
 	
 	tickRate = 1.0f / sceRtcGetTickResolution();
 	
-	SceUID audiothread = sceKernelCreateThread("Audio Thread", (void*)&audio_thread, 0x10000100, 0x10000, 0, 0, NULL);
+	SceUID audiothread = sceKernelCreateThread("Audio Thread", audio_thread, 0x10000100, 0x10000, 0, 0, NULL);
 	int res = sceKernelStartThread(audiothread, sizeof(audiothread), &audiothread);
 	if (res != 0){
 		Sys_Error("Failed to init audio thread (0x%x)", res);
@@ -91,9 +93,9 @@ int SNDDMA_GetDMAPos(void)
 	if(!snd_initialized)
 		return 0;
 
-	u64 tick;
+	SceRtcTick tick;
 	sceRtcGetCurrentTick(&tick);
-	const unsigned int deltaTick  = tick - initial_tick;
+	const unsigned int deltaTick  = tick.tick - initial_tick.tick;
 	const float deltaSecond = deltaTick * tickRate;
 	u64 samplepos = deltaSecond * SAMPLE_RATE;
 	shm->samplepos = samplepos;

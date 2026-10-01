@@ -5,7 +5,7 @@
  */
 
 #include "quakedef.h"
-#include "protocol.h"
+#include "PROTOCOL.H"
 #include "r_shared.h"
 
 extern	cvar_t	sv_flypitch;

@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
 #include <psp2/power.h>
+#include <psp2/kernel/processmgr.h>
+#include <psp2/kernel/threadmgr.h>
 #define u64 uint64_t
 #include "sys.h"
 #include "quakedef.h"
@@ -225,9 +227,9 @@ void Sys_Sleep (void)
 
 double Sys_FloatTime (void)
 {
-	u64 ticks;
+	SceRtcTick ticks;
 	sceRtcGetCurrentTick(&ticks);
-	return ticks * 0.000001;
+	return ticks.tick * 0.000001;
 }
 
 void SCE_KeyDown(int keys){
@@ -320,7 +322,7 @@ what we presently need in this engine.
 =================================================
 */
 
-static SceUID	*finddir;
+static SceUID finddir;
 static struct SceIoDirent	*finddata;
 static char		*findpath, *findpattern;
 
@@ -375,13 +377,13 @@ char *Sys_FindNextFile (void)
 
 void Sys_FindClose (void)
 {
-	if (finddir != NULL)
+	if (finddir != 0)
 		sceIoDclose(finddir);
 	if (findpath != NULL)
 		free (findpath);
 	if (findpattern != NULL)
 		free (findpattern);
-	finddir = NULL;
+	finddir = 0;
 	findpath = NULL;
 	findpattern = NULL;
 }
@@ -447,7 +449,7 @@ int main (int argc, char **argv)
 		vglInitExtended(0x1400000, scr_width, scr_height, 0x1000000, SCE_GXM_MULTISAMPLE_NONE);
 		break;
 	}
-	vglUseVram(GL_TRUE);
+
 	
 	// Disabling all FPU exceptions traps on main thread
 	sceKernelChangeThreadVfpException(0x0800009FU, 0x0);
@@ -478,7 +480,7 @@ int main (int argc, char **argv)
 	// Loading default config file
 	Cbuf_AddText ("exec config.cfg\n");
 	
-	u64 lastTick;
+	SceRtcTick lastTick;
 	sceRtcGetCurrentTick(&lastTick);
 		
 	vglWaitVblankStart(vid_vsync.value);
@@ -501,9 +503,9 @@ int main (int argc, char **argv)
 		}
 		
 		// Get current frame
-		u64 tick;
+		SceRtcTick tick;
 		sceRtcGetCurrentTick(&tick);
-		const unsigned int deltaTick  = tick - lastTick;
+		const unsigned int deltaTick  = tick.tick - lastTick.tick;
 		const float   deltaSecond = deltaTick * tickRate;
 		Host_Frame(deltaSecond);
 		lastTick = tick;

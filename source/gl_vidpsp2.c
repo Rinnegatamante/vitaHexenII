@@ -230,7 +230,7 @@ static float cur_clr[4];
 void GL_DrawPolygon(GLenum prim, int num){
 	if (state_mask == 0x05) glUniform4fv(modulcolor[0], 1, cur_clr);
 	else if (state_mask == 0x0D) glUniform4fv(modulcolor[1], 1, cur_clr);
-	vglDrawObjects(prim, num, GL_TRUE);
+	vglDrawObjects(prim, num);
 }
 
 void GL_Color(float r, float g, float b, float a){
@@ -423,7 +423,6 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 	*width = scr_width;
 	*height = scr_height;
 
-	vglStartRendering();
 	vglIndexPointerMapped(indices);
 	gVertexBuffer = gVertexBufferPtr;
 	gColorBuffer = gColorBufferPtr;
@@ -434,7 +433,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 void GL_EndRendering (void)
 {
 	GL_DrawFPS();
-	vglStopRendering();
+	vglSwapBuffers(GL_FALSE);
 }
 
 

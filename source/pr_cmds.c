@@ -3222,7 +3222,7 @@ void PF_updateInfoPlaque (void)
 	unsigned int check;
 	unsigned int index, mode;
 	
-	long *use;
+	unsigned int *use;
 	int  ofs = 0;
 
 	index = G_FLOAT(OFS_PARM0);

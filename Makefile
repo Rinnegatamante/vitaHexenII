@@ -8,7 +8,9 @@ LIBS = -lvitaGL -lvorbisfile -lvorbis -logg -lspeexdsp -lmpg123 \
 	-lc -lpng -lz -lvita2d -lSceAudio_stub -lSceLibKernel_stub \
 	-lSceCommonDialog_stub -lSceDisplay_stub -lSceGxm_stub -lmathneon \
 	-lSceSysmodule_stub -lSceCtrl_stub -lSceTouch_stub -lm -lSceMotion_stub \
-	-lSceRtc_stub -lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub
+	-lSceRtc_stub -lScePgf_stub -ljpeg -lSceRtc_stub -lc -lScePower_stub \
+	-lvitashark -lSceShaccCgExt -ltaihen_stub -lSceShaccCg_stub \
+	-lSceKernelDmacMgr_stub -lSceAppMgr_stub -lSceAppUtil_stub
 
 COMMON_OBJS =	source/chase.o \
 	source/cl_demo.o \
@@ -80,11 +82,11 @@ GXPFILES := $(CGFILES:.cg=.gxp)
 PREFIX  = arm-vita-eabi
 CC      = $(PREFIX)-gcc
 CXX      = $(PREFIX)-g++
-CFLAGS  = -w -Wl,-q -O3 -g -Did386="0" -DGLQUAKE -DHAVE_OGGVORBIS \
+CFLAGS  = -std=gnu17 -w -Wl,-q -O3 -g -Did386="0" -DGLQUAKE -DHAVE_OGGVORBIS \
 	-DHAVE_MPG123 -DHAVE_LIBSPEEXDSP -DUSE_AUDIO_RESAMPLER -DWANT_FMMIDI=1 \
 	-DQUAKE2RJ -DRJNET -fsigned-char -ffast-math -mtune=cortex-a9 -mfpu=neon \
 	-fno-short-enums
-CXXFLAGS  = $(CFLAGS) -fpermissive -fno-exceptions -std=gnu++11
+CXXFLAGS  = $(filter-out -std=gnu17,$(CFLAGS)) -fpermissive -fno-exceptions -std=gnu++11
 ASFLAGS = $(CFLAGS)
 
 all: $(TARGET).vpk
@@ -98,13 +100,14 @@ shaders: $(GXPFILES)
 	psp2cgc -profile sce_vp_psp2 $(@:_v.gxp=_v.cg) -Wperf -fastprecision -O3 -o $@
 
 $(TARGET).vpk: $(TARGET).velf
-	vita-make-fself -s $< build\eboot.bin
+	vita-make-fself -s $< build/eboot.bin
 	vita-mksfoex -s TITLE_ID=$(TITLE) -d ATTRIBUTE2=12 "$(TARGET)" param.sfo
 	cp -f param.sfo build/sce_sys/param.sfo
 	
-	#------------ Comment this if you don't have 7zip ------------------
-	7z a -tzip $(TARGET).vpk -r ./build/sce_sys ./build/eboot.bin ./build/shaders
-	#-------------------------------------------------------------------
+	vita-pack-vpk -s param.sfo -b build/eboot.bin \
+		--add build/sce_sys/icon0.png=sce_sys/icon0.png \
+		--add build/sce_sys/livearea=sce_sys/livearea \
+		--add build/shaders=shaders $(TARGET).vpk
 
 %.velf: %.elf
 	cp -f $< $@.unstripped.elf
@@ -118,3 +121,5 @@ clean:
 
 run: $(TARGET).velf
 	@sh run_homebrew_unity.sh $(TARGET).velf
+
+source/snd_psp2.o: CFLAGS := $(filter-out -w,$(CFLAGS)) -Wno-error=int-conversion

@@ -2,7 +2,7 @@
 
 #include "quakedef.h"
 
-int			skytexturenum;
+extern int skytexturenum;
 
 #ifndef GL_RGBA4
 #define	GL_RGBA4	0

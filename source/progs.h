@@ -122,6 +122,7 @@ extern	int			pr_xstatement;
 extern	unsigned short		pr_crc;
 
 void PR_RunError (char *error, ...);
+void PR_LoadInfoStrings(void);
 
 void ED_PrintEdicts (void);
 void ED_PrintNum (int ent);

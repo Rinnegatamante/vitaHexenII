@@ -6,6 +6,8 @@
  * $Header: /H2 Mission Pack/gl_draw.c 2     2/26/98 3:09p Jmonroe $
  */
 
+#include <psp2/io/fcntl.h>
+
 extern "C"{
 #include "quakedef.h"
 }

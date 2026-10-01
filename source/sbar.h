@@ -23,6 +23,7 @@ void SB_FinaleOverlay(void);
 void SB_InvChanged(void);
 void SB_InvReset(void);
 void SB_ViewSizeChanged(void);
+void Sbar_DeathmatchOverlay(void);
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 

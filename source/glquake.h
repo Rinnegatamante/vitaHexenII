@@ -19,6 +19,28 @@
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
 
+void GL_SubdivideSurface(msurface_t *fa);
+void GL_MakeAliasModelDisplayLists(model_t *m, aliashdr_t *hdr);
+int R_LightPoint(vec3_t p);
+void R_DrawBrushModel(entity_t *e, qboolean translucent);
+void R_AnimateLight(void);
+void R_DrawWorld(void);
+void R_RenderDlights(void);
+void R_DrawParticles(void);
+void R_DrawWaterSurfaces(void);
+void R_RenderBrushPoly(msurface_t *fa, qboolean override);
+void R_InitParticles(void);
+void R_ClearParticles(void);
+void GL_BuildLightmaps(void);
+void EmitBothSkyLayers(msurface_t *fa);
+void EmitWaterPolys(msurface_t *fa);
+void R_DrawSkyChain(msurface_t *s);
+qboolean R_CullBox(vec3_t mins, vec3_t maxs);
+void R_MarkLights(dlight_t *light, int bit, mnode_t *node);
+void R_RotateForEntity(entity_t *e);
+void R_StoreEfrags(efrag_t **ppefrag);
+
+
 #ifdef _WIN32
 // Function prototypes for the Texture Object Extension routines
 typedef GLboolean (APIENTRY *ARETEXRESFUNCPTR)(GLsizei, const GLuint *,

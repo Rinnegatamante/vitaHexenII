@@ -4,6 +4,7 @@
 
 #include "quakedef.h"
 #include <time.h>
+#include <ctype.h>
 #include <sys/stat.h>
 //#include <dirent.h>
 #include <unistd.h>
@@ -27,7 +28,7 @@ qboolean CL_CopyFiles(char *source, char *pat, char *dest);
 
 void WriteCommands (FILE *FH);
 
-unsigned int info_mask, info_mask2;
+extern unsigned int info_mask, info_mask2;
 
 #define TESTSAVE
 
